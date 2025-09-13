@@ -10,6 +10,4 @@
   </title>
 </head>
 <body>
-  <header>
-    placeholder header
-  </header>
+  

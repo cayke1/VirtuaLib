@@ -71,7 +71,16 @@ class Core
     private function executeController($controllerAndAction, $matches = [])
     {
         try {
-            [$currentController, $action] = explode('@', $controllerAndAction);
+            // Verifica se $controllerAndAction é um array associativo e extrai os valores
+            if (is_array($controllerAndAction) && isset($controllerAndAction['controller']) && isset($controllerAndAction['method'])) {
+                $currentController = $controllerAndAction['controller'];
+                $action = $controllerAndAction['method'];
+            } else if (is_string($controllerAndAction)) {
+                // Se for uma string, usa o explode como antes
+                [$currentController, $action] = explode('@', $controllerAndAction);
+            } else {
+                throw new Exception("Invalid controller and action format.");
+            }
             
             $controllerPath = __DIR__ . "/../controllers/$currentController.php";
             
