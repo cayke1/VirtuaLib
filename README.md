@@ -115,6 +115,7 @@ O sistema é projetado para oferecer uma **experiência intuitiva e responsiva**
 
 ---
 
+
 ## 🔗 Links Úteis
 
 - [📌 Trello do Projeto](https://trello.com/invite/b/689d4d47bab2daad9f60e335/ATTIc8f30abdc1bea10d466d116378b9c226F9DC5DA6/virtualib)  
