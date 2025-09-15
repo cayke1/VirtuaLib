@@ -5,7 +5,6 @@ class Database {
     private $user;
     private $password;
     private $port;
-
     public function getConnection()
     {
         $this->host = LoadEnv::get('DB_HOST');
@@ -13,18 +12,20 @@ class Database {
         $this->user = LoadEnv::get('DB_USER');
         $this->password = LoadEnv::get('DB_PASSWORD');
         $this->port = LoadEnv::get('DB_PORT');
-
         try {
             $pdo = new PDO(
                 "mysql:host=$this->host;port=$this->port;dbname=$this->database",
                 $this->user,
-                $this->password
+                $this->password,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_TIMEOUT => 10,
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
+                ]
             );
             return $pdo;
         } catch (PDOException $e) {
-            echo "" . $e;
-            //echo "Desculpa, erro interno, verifique o banco de dados!<br>";
-            exit();
+            die("Erro de conexão com o banco: " . $e->getMessage() . " (Código: " . $e->getCode() . ")");
         }
     }
 }
