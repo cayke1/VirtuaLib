@@ -1,3 +1,4 @@
+
 <?php
 class LoadEnv
 {
@@ -14,7 +15,7 @@ class LoadEnv
         }
 
         if (!file_exists($path)) {
-            throw new RuntimeException(".env não encontrado em: $path");
+            return;
         }
 
         $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
@@ -41,3 +42,4 @@ class LoadEnv
         return $_ENV[$name] ?? getenv($name) ?: null;
     }
 }
+
