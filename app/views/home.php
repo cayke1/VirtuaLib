@@ -1,59 +1,59 @@
 <?php
-$books = [
-    [
-        'title' => 'Dom Casmurro',
-        'author' => 'Machado de Assis',
-        'genre' => 'Romance',
-        'year' => 1899,
-        'description' => 'Um dos maiores clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasileira, que narra a história de Bentinho e sua obsessão por Capitu.',
-        'available' => true
-    ],
-    [
-        'title' => 'O Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiço',
-        'author' => 'Aluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azevedo',
-        'genre' => 'RomanceRomanceRomanceRomanceRomanceRomance',
-        'year' => 1890,
-        'description' => 'Obra naturalista que retrata a vida em um cortiço carioca do século XIX, explorando questões sociais da época.',
-        'available' => false
-    ],
-    [
-        'title' => 'Memórias Póstumas de Brás Cubas',
-        'author' => 'Machado de Assis',
-        'genre' => 'Romance',
-        'year' => 1881,
-        'description' => 'Romance narrado por um defunto autor, considerado marco do realismo brasileiro e obra-prima machadiana.',
-        'available' => true
-    ],
-    [
-        'title' => 'Iracema',
-        'author' => 'José de Alencar',
-        'genre' => 'Romance',
-        'year' => 1865,
-        'description' => 'Lenda do Ceará que narra o amor entre a índia Iracema e o português Martim, símbolo da formação do povo brasileiro.',
-        'available' => true
-    ],
-    [
-        'title' => 'O Guarani',
-        'author' => 'José de Alencar',
-        'genre' => 'Romance',
-        'year' => 1857,
-        'description' => 'Romance indianista que conta a história de amor entre Peri, um índio goitacá, e Ceci, filha de fidalgo português.',
-        'available' => false
-    ],
-    [
-        'title' => 'Senhora',
-        'author' => 'José de Alencar',
-        'genre' => 'Romance',
-        'year' => 1875,
-        'description' => 'Romance urbano que retrata a sociedade burguesa do Rio de Janeiro, criticando o casamento por interesse.',
-        'available' => true
-    ]
-];
+// $books = [
+//     [
+//         'title' => 'Dom Casmurro',
+//         'author' => 'Machado de Assis',
+//         'genre' => 'Romance',
+//         'year' => 1899,
+//         'description' => 'Um dos maiores clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasilees clássicos da literatura brasileira, que narra a história de Bentinho e sua obsessão por Capitu.',
+//         'available' => true
+//     ],
+//     [
+//         'title' => 'O Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiç Cortiço',
+//         'author' => 'Aluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azeveluísio Azevedo',
+//         'genre' => 'RomanceRomanceRomanceRomanceRomanceRomance',
+//         'year' => 1890,
+//         'description' => 'Obra naturalista que retrata a vida em um cortiço carioca do século XIX, explorando questões sociais da época.',
+//         'available' => false
+//     ],
+//     [
+//         'title' => 'Memórias Póstumas de Brás Cubas',
+//         'author' => 'Machado de Assis',
+//         'genre' => 'Romance',
+//         'year' => 1881,
+//         'description' => 'Romance narrado por um defunto autor, considerado marco do realismo brasileiro e obra-prima machadiana.',
+//         'available' => true
+//     ],
+//     [
+//         'title' => 'Iracema',
+//         'author' => 'José de Alencar',
+//         'genre' => 'Romance',
+//         'year' => 1865,
+//         'description' => 'Lenda do Ceará que narra o amor entre a índia Iracema e o português Martim, símbolo da formação do povo brasileiro.',
+//         'available' => true
+//     ],
+//     [
+//         'title' => 'O Guarani',
+//         'author' => 'José de Alencar',
+//         'genre' => 'Romance',
+//         'year' => 1857,
+//         'description' => 'Romance indianista que conta a história de amor entre Peri, um índio goitacá, e Ceci, filha de fidalgo português.',
+//         'available' => false
+//     ],
+//     [
+//         'title' => 'Senhora',
+//         'author' => 'José de Alencar',
+//         'genre' => 'Romance',
+//         'year' => 1875,
+//         'description' => 'Romance urbano que retrata a sociedade burguesa do Rio de Janeiro, criticando o casamento por interesse.',
+//         'available' => true
+//     ]
+// ];
 
-// Calcular estatísticas
-$totalBooks = count($books);
-$availableBooks = count(array_filter($books, function($book) { return $book['available']; }));
-$borrowedBooks = $totalBooks - $availableBooks;
+// // Calcular estatísticas
+// $totalBooks = count($books);
+// $availableBooks = count(array_filter($books, function($book) { return $book['']; }));
+// $borrowedBooks = $totalBooks - $availableBooks;
 ?>
 
 <div class="container">

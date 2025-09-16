@@ -1,5 +1,5 @@
 <?php
 
 $routes = [
-    "/" => "HomeController@index",
+    "/" => "BookController@listBooks",
 ];
