@@ -1,0 +1,180 @@
+.books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.book-card {
+    background-color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    border: 1px solid #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.book-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.book-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.book-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status-dot.available {
+    background-color: #10b981;
+}
+
+.status-dot.borrowed {
+    background-color: #ef4444;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.book-menu {
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.book-menu:hover {
+    color: #64748b;
+    background-color: #f1f5f9;
+}
+
+.book-content {
+    flex: 1;
+    margin-bottom: 1.5rem;
+}
+
+.book-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.book-author {
+    font-size: 1rem;
+    color: #64748b;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.book-genre-year {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 0.75rem;
+}
+
+.book-description {
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+}
+
+.book-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.action-button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-button.borrow {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.action-button.borrow:hover {
+    background-color: #2563eb;
+}
+
+.action-button.return {
+    background-color: #1e293b;
+    color: white;
+}
+
+.action-button.return:hover {
+    background-color: #0f172a;
+}
+
+.bookmark-icon {
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bookmark-icon:hover {
+    color: #3b82f6;
+    background-color: #f0f9ff;
+}
+
+.bookmark-icon.favorited {
+    color: #3b82f6;
+    background-color: #dbeafe;
+}
+
+.bookmark-icon.favorited svg path {
+    fill: #3b82f6;
+}
+
+@media (max-width: 768px) {
+    .books-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .book-card {
+        padding: 1rem;
+    }
+}
