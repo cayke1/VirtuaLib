@@ -1,39 +1,10 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>
-    <?php echo $title; ?>
-  </title>
-</head>
-<body>
-  <header class="main-header">
-    <nav class="navbar">
-      <div class="nav-container">
-        <div class="nav-logo">
-          <a href="/" class="logo-link">
-            VirtuaLib
-          </a>
-        </div>
-        
-        <div class="nav-menu">
-          <a href="/" class="nav-link">Início</a>
-          <a href="/books" class="nav-link">Livros</a>
-          <a href="/books/search" class="nav-link">Buscar</a>
-        </div>
-        
-        <div class="nav-toggle">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </div>
-      </div>
-    </nav>
-  </header>
-
+  <title><?php echo $title; ?></title>
+  
   <style>
     .main-header {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -77,6 +48,9 @@
       display: flex;
       gap: 30px;
       align-items: center;
+      list-style: none;
+      margin: 0;
+      padding: 0;
     }
 
     .nav-link {
@@ -145,23 +119,30 @@
       }
     }
   </style>
+</head>
+<body>
+  <?php require_once 'navbar.php'; ?>
 
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const navToggle = document.querySelector('.nav-toggle');
       const navMenu = document.querySelector('.nav-menu');
 
-      navToggle.addEventListener('click', function() {
-        navToggle.classList.toggle('active');
-        navMenu.classList.toggle('active');
-      });
-
-      // Fechar menu ao clicar em um link
-      document.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', function() {
-          navToggle.classList.remove('active');
-          navMenu.classList.remove('active');
+      if (navToggle && navMenu) {
+        navToggle.addEventListener('click', function() {
+          navToggle.classList.toggle('active');
+          navMenu.classList.toggle('active');
         });
-      });
+
+        // Fechar menu ao clicar em um link
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.addEventListener('click', function() {
+            navToggle.classList.remove('active');
+            navMenu.classList.remove('active');
+          });
+        });
+      }
     });
   </script>
+</body>
+</html>
