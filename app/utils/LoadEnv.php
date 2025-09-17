@@ -1,3 +1,4 @@
+
 <?php
 class LoadEnv
 {
@@ -41,3 +42,4 @@ class LoadEnv
         return $_ENV[$name] ?? getenv($name) ?: null;
     }
 }
+
