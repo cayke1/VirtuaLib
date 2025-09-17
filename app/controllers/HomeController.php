@@ -1,3 +1,4 @@
+
 <?php
 
 class HomeController extends RenderView {
@@ -9,4 +10,5 @@ class HomeController extends RenderView {
         $this->loadView('home', $args);
         $this->loadView('partials/footer', []);
     }
+
 }

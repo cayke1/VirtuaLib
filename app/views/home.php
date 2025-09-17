@@ -1,3 +1,4 @@
+
 <?php
 $books = [
     [
@@ -101,3 +102,4 @@ $borrowedBooks = $totalBooks - $availableBooks;
     </div>
     
 </div>
+
