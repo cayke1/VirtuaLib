@@ -1,31 +1,46 @@
 <?php
 
-class BookModel extends Database {
+class BookModel extends Database
+{
 
     private $pdo;
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->pdo = $this->getConnection();
-   
     }
 
-    public function getBooks(){
-        try{
+    public function getBooks()
+    {
+        try {
             $stmt = $this->pdo->prepare("SELECT * FROM Books");
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        }
-        catch(PDOException $e){
-            echo "Error: " . $e->getMessage();
+        } catch (PDOException $e) {
+            error_log("Database error in getBooks: " . $e->getMessage());
             return [];
-
         }
-        
+    }
 
-    
+    public function search(string $query)
+    {
+        $sql = "SELECT id, title, author, genre, year, description 
+                FROM Books 
+                WHERE title LIKE :query 
+                   OR author LIKE :query 
+                   OR genre LIKE :query 
+                   OR description LIKE :query
+                ORDER BY title ASC
+                LIMIT 10";
 
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $searchTerm = '%' . $query . '%';
+            $stmt->execute([":query" => $searchTerm]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in search: " . $e->getMessage());
+            return [];
+        }
     }
 }
-?>
-

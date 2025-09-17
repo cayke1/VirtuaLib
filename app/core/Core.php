@@ -13,25 +13,29 @@ class Core
         $url = $this->getCurrentUrl();
         $routerFound = false;
         
-        // Debug: descomente para ver a URL sendo processada
-        // echo "URL atual: '$url'<br>";
+        // Debug: ver a URL sendo processada
+        error_log("REQUEST_URI: " . $_SERVER['REQUEST_URI']);
+        error_log("URL processada: '$url'");
+        error_log("GET params: " . print_r($_GET, true));
         
         foreach ($this->getRoutes() as $path => $controllerAndAction) {
             $pattern = $this->buildRoutePattern($path);
             
-            // Debug: descomente para ver os padrões
-            // echo "Testando rota '$path' com padrão '$pattern'<br>";
+            // Debug: ver os padrões
+            error_log("Testando rota '$path' com padrão '$pattern'");
             
             if (preg_match($pattern, $url, $matches)) {
                 array_shift($matches); // Remove a URL completa dos matches
                 $routerFound = true;
                 
+                error_log("Rota encontrada: $path -> $controllerAndAction");
                 $this->executeController($controllerAndAction, $matches);
                 break; // Importante: sair do loop após encontrar a rota
             }
         }
         
         if (!$routerFound) {
+            error_log("Nenhuma rota encontrada para: $url");
             $this->handleNotFound();
         }
     }
@@ -41,11 +45,13 @@ class Core
      */
     private function getCurrentUrl()
     {
-        $url = $_SERVER['REQUEST_URI'];
-        
-        // if (isset($_GET['url']) && !empty($_GET['url'])) {
-        //     $url = '/' . trim($_GET['url'], '/');
-        // }
+        // Se há parâmetro 'url' do .htaccess, usar ele
+        if (isset($_GET['url']) && !empty($_GET['url'])) {
+            $url = '/' . trim($_GET['url'], '/');
+        } else {
+            // Caso contrário, usar REQUEST_URI e remover query string
+            $url = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        }
         
         return $url;
     }
