@@ -12,8 +12,8 @@ require_once __DIR__ . '/../../utils/TextUtils.php';
 <div class="book-card">
     <div class="book-card-header">
         <div class="book-status">
-            <span class="status-dot <?php echo $book['available'] ? 'available' : 'borrowed'; ?>"></span>
-            <span class="status-text"><?php echo $book['available'] ? 'Disponível' : 'Emprestado'; ?></span>
+            <span class="status-dot <?php echo $book['borrowed'] ? 'borrowed' : 'available'; ?>"></span>
+            <span class="status-text"><?php echo $book['borrowed'] ? 'Emprestado' : 'Disponível'; ?></span>
         </div>
         <div class="book-menu">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
