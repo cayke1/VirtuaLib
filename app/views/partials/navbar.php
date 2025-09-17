@@ -28,13 +28,4 @@
             </div>
         </div>
     </nav>
-    
-    <!-- Seção principal com título e subtítulo -->
-    <main class="main-content">
-        <div class="content-container">
-            <h1 class="main-title">Biblioteca Digital</h1>
-            <p class="main-subtitle">Gerencie empréstimos e devoluções de livros</p>
-        </div>
-    </main>
-</body>
-</html>
+

@@ -8,8 +8,8 @@ class BookModel extends Database {
         $this->pdo = $this->getConnection();
    
     }
-     #somente livros disponiveis
-    public function getAvaibleBooks(){
+
+    public function getBooks(){
         try{
             $stmt = $this->pdo->prepare("SELECT * FROM Books");
             $stmt->execute();
