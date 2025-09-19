@@ -1,40 +1,54 @@
-
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VirtuaLib - Biblioteca Digital</title>
-    <link rel="stylesheet" href="/app/views/public/css/navbar.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-</head>
-<body>
     <nav class="navbar">
-        <div class="nav-container">
-            <!-- Logo e nome da marca -->
-            <div class="nav-brand">
-                <div class="logo">
-                    <i class="fas fa-book"></i>
+    <div class="nav-container">
+        <!-- Logo e nome da marca -->
+        <div class="nav-brand">
+            <div class="logo">
+                <div class="logo-icon">
+                    <div class="square square-1"></div>
+                    <div class="square square-2"></div>
                 </div>
-                <span class="brand-name">VirtuaLib</span>
             </div>
-            
-            <!-- Barra de pesquisa -->
-            <div class="search-container">
-                <div class="search-box">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" placeholder="Buscar por título ou autor..." class="search-input">
+            <span class="brand-name">VirtualLib</span>
+        </div>
+
+        <!-- Barra de pesquisa -->
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="Buscar por título ou autor..." class="search-input" id="search-input">
+                <div class="search-results" id="search-results">
+                    <div class="search-loading" id="search-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Buscando...</span>
+                    </div>
+                    <div class="search-items" id="search-items"></div>
                 </div>
             </div>
         </div>
-    </nav>
-    
-    <!-- Seção principal com título e subtítulo -->
-    <main class="main-content">
-        <div class="content-container">
-            <h1 class="main-title">Biblioteca Digital</h1>
-            <p class="main-subtitle">Gerencie empréstimos e devoluções de livros</p>
+
+        <!-- Botão hambúrguer -->
+        <div class="hamburger" id="hamburger">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
         </div>
-    </main>
-</body>
-</html>
+    </div>
+
+    <!-- Menu mobile -->
+    <div class="nav-menu-mobile" id="nav-menu-mobile">
+        <div class="search-container-mobile">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" placeholder="Buscar por título ou autor..." class="search-input" id="search-input-mobile">
+                <div class="search-results" id="search-results-mobile">
+                    <div class="search-loading" id="search-loading-mobile">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <span>Buscando...</span>
+                    </div>
+                    <div class="search-items" id="search-items-mobile"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+<script src="/public/js/searchBook.js"></script>
