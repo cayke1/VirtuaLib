@@ -43,4 +43,16 @@ class BookModel extends Database
             return [];
         }
     }
+
+    public function return($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("UPDATE Books SET borrowed = 0 WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Database error in return: " . $e->getMessage());
+            return false;
+        }
+    }
 }
