@@ -44,6 +44,33 @@ class BookModel extends Database
         }
     }
 
+    public function borrowBook(int $bookId)
+    {
+        try {
+            $checkSql = "SELECT id, borrowed FROM Books WHERE id = :id";
+            $checkStmt = $this->pdo->prepare($checkSql);
+            $checkStmt->execute([':id' => $bookId]);
+            $book = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$book) {
+                return ['success' => false, 'message' => 'Livro não encontrado'];
+            }
+
+            if ($book['borrowed']) {
+                return ['success' => false, 'message' => 'Livro já está emprestado'];
+            }
+
+            $updateSql = "UPDATE Books SET borrowed = 1 WHERE id = :id";
+            $updateStmt = $this->pdo->prepare($updateSql);
+            $updateStmt->execute([':id' => $bookId]);
+
+            return ['success' => true, 'message' => 'Livro emprestado com sucesso'];
+        } catch (PDOException $e) {
+            error_log("Database error in borrowBook: " . $e->getMessage());
+            return ['success' => false, 'message' => 'Erro interno do servidor'];
+        }
+    }
+
     public function returnBook(int $bookId)
     {
         try {

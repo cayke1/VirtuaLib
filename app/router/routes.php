@@ -3,5 +3,6 @@
 $routes = [
     "/" => "BookController@listBooks",
     "/search" => "BookController@searchBooks",
-    "/return/{id}" => "BookController@returnBook",
+    "/borrow" => "BookController@borrowBook",
+    "/return" => "BookController@returnBook",
 ];
