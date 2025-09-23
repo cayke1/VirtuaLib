@@ -40,4 +40,19 @@ class BookController extends RenderView
             exit;
         }
     }
+
+    public function returnBook($id)
+    {
+        $bookModel = new BookModel();
+        $success = $bookModel->return($id);
+
+        if (!$success) {
+            return http_response_code(400);
+        }
+        header("Content-Type: application/json");
+        echo json_encode([
+            "success" => $success,
+            "message" => $success ? "Livro devolvido com sucesso" : "Erro ao devolver o livro"
+        ]);
+    }
 }
