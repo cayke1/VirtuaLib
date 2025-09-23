@@ -31,8 +31,8 @@ require_once __DIR__ . '/../../utils/TextUtils.php';
         <p class="book-description"><?php echo TextUtils::formatText($book['description'], 120); ?></p>
     </div>
     
-    <div class="book-actions">
-        <button class="action-button <?php echo $book['borrowed'] ? 'return' : 'borrow'; ?>">
+    <div class="book-actions" >
+        <button class="action-button <?php echo $book['borrowed'] ? 'return' : 'borrow'; ?>" data-book-id="<?php echo $book['id']; ?>">
             <?php echo $book['borrowed'] ? 'Devolver' : 'Emprestar'; ?>
         </button>
         <div class="bookmark-icon" onclick="toggleBookmark(this)">
@@ -42,3 +42,5 @@ require_once __DIR__ . '/../../utils/TextUtils.php';
         </div>
     </div>
 </div>
+
+<script src="/public/js/button.js"></script>
