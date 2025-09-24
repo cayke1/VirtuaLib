@@ -40,6 +40,20 @@ class BookController extends RenderView
             exit;
         }
     }
+    public function viewBookDetails($id)
+    {
+        $bookModel = new BookModel();
+        $book = $bookModel->getBookById($id);
+
+        if (!$book) {
+            http_response_code(404);
+            echo "Livro não encontrado";
+            exit;
+        }
+
+        $this->loadView('partials/header', ['titulo' => 'Detalhes do Livro']);
+        $this->loadView('components/book-details', ['book' => $book]);
+    }
 
     public function returnBook($id)
     {
