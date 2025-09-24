@@ -22,9 +22,8 @@ class Database {
             );
             return $pdo;
         } catch (PDOException $e) {
-            echo "" . $e;
-            //echo "Desculpa, erro interno, verifique o banco de dados!<br>";
-            exit();
+            error_log("Database connection error: " . $e->getMessage());
+            throw new Exception("Database connection failed");
         }
     }
 }
