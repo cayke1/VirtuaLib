@@ -17,4 +17,5 @@
     
     <script src="/public/js/navbar.js"></script>
     <script src="/public/js/bookmark.js"></script>
+    <script src="/public/js/borrow.js"></script>
 

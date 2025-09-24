@@ -9,7 +9,7 @@
 require_once __DIR__ . '/../../utils/TextUtils.php';
 ?>
 
-<div class="book-card">
+<div class="book-card" data-book-id="<?php echo $book['id']; ?>">
     <div class="book-card-header">
         <div class="book-status">
             <span class="status-dot <?php echo $book['borrowed'] ? 'borrowed' : 'available'; ?>"></span>
