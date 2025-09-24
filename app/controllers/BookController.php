@@ -55,10 +55,25 @@ class BookController extends RenderView
         $this->loadView('components/book-details', ['book' => $book]);
     }
 
+    public function borrowBook($id)
+    {
+        $bookModel = new BookModel();
+        $success = $bookModel->borrowBook($id);
+
+        if (!$success) {
+            return http_response_code(400);
+        }
+        header("Content-Type: application/json");
+        echo json_encode([
+            "success" => $success,
+            "message" => $success ? "Livro emprestado com sucesso" : "Erro ao emprestar o livro"
+        ]);
+    }
+
     public function returnBook($id)
     {
         $bookModel = new BookModel();
-        $success = $bookModel->return($id);
+        $success = $bookModel->returnBook($id);
 
         if (!$success) {
             return http_response_code(400);
