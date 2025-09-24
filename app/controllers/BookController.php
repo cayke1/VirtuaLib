@@ -9,7 +9,7 @@ class BookController extends RenderView
         $bookModel = new BookModel();
         $books = $bookModel->getBooks();
 
-        $this->loadView('partials/header', ['titulo' => 'Books']);
+        $this->loadView('partials/header', ['title' => 'Livros']);
         $this->loadView('home', ['books' => $books]);
     }
 
@@ -51,7 +51,7 @@ class BookController extends RenderView
             exit;
         }
 
-        $this->loadView('partials/header', ['titulo' => 'Detalhes do Livro']);
+        $this->loadView('partials/header', ['title' => $book['title']]);
         $this->loadView('components/book-details', ['book' => $book]);
     }
 
