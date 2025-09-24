@@ -43,7 +43,17 @@ class BookModel extends Database
             return [];
         }
     }
-
+    public function getBookById($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM Books WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getBookById: " . $e->getMessage());
+            return null;
+        }
+    }
     public function return($id)
     {
         try {
