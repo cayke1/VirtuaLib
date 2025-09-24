@@ -1,0 +1,38 @@
+CREATE TABLE IF NOT EXISTS Users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('user', 'admin') DEFAULT 'user',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS Books (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    genre VARCHAR(100) NOT NULL,
+    year INT NOT NULL,
+    description TEXT NOT NULL,
+    available BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+CREATE TABLE IF NOT EXISTS Borrows (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    book_id INT NOT NULL,
+    borrowed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    due_date DATE NOT NULL,
+    returned_at TIMESTAMP NULL,
+    status ENUM('borrowed', 'returned', 'late') DEFAULT 'borrowed'
+);
+
+
+ALTER TABLE Borrows
+ADD CONSTRAINT fk_borrow_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE;
+
+ALTER TABLE Borrows
+ADD CONSTRAINT fk_borrow_book FOREIGN KEY (book_id) REFERENCES Books(id) ON DELETE CASCADE;
