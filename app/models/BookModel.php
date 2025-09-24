@@ -108,4 +108,24 @@ class BookModel extends Database
             return ['success' => false, 'message' => 'Erro interno do servidor'];
         }
     }
+
+    public function createBook(array $data)
+    {
+        $sql = "INSERT INTO Books (title, author, genre, year, description, available) 
+                VALUES (:title, :author, :genre, :year, :description, :available)";
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':title', $data['title'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':author', $data['author'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':genre', $data['genre'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':year', (int)($data['year'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':description', $data['description'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':available', isset($data['available']) ? (int)(bool)$data['available'] : 1, PDO::PARAM_INT);
+            $stmt->execute();
+            return (int)$this->pdo->lastInsertId();
+        } catch (PDOException $e) {
+            error_log("Database error in createBook: " . $e->getMessage());
+            return 0;
+        }
+    }
 }

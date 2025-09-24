@@ -2,6 +2,7 @@
 
 class BookController extends RenderView
 {
+    use AuthGuard;
 
     public function listBooks()
     {
@@ -83,5 +84,48 @@ class BookController extends RenderView
             "success" => $success,
             "message" => $success ? "Livro devolvido com sucesso" : "Erro ao devolver o livro"
         ]);
+    }
+
+    public function createBook()
+    {
+        $this->requireRole('admin');
+        $payload = $this->readJsonBody();
+        if (!$this->validateCreatePayload($payload)) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Campos obrigatórios ausentes']);
+            return;
+        }
+
+        $model = new BookModel();
+        $id = $model->createBook($payload);
+        if (!$id) {
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Falha ao criar livro']);
+            return;
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode(['id' => $id, 'message' => 'Livro criado com sucesso']);
+    }
+
+    private function readJsonBody()
+    {
+        $raw = file_get_contents('php://input');
+        if (!$raw) { return null; }
+        $data = json_decode($raw, true);
+        return is_array($data) ? $data : null;
+    }
+
+    private function validateCreatePayload($data)
+    {
+        if (!is_array($data)) { return false; }
+        $required = ['title','author','genre','year','description'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) { return false; }
+        }
+        if (!is_numeric($data['year'])) { return false; }
+        return true;
     }
 }

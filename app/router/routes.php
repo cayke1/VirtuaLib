@@ -12,4 +12,6 @@ $routes = [
     "/api/auth/login" => "AuthController@login",
     "/api/auth/logout" => "AuthController@logout",
     "/api/auth/me" => "AuthController@me",
+
+    "/api/books" => "BookController@createBook",
 ];
