@@ -69,7 +69,7 @@ function renderResults(data, resultsContainer, loadingElement, itemsContainer) {
     itemsContainer.innerHTML = data
       .map(
         (book) => `
-          <div class="search-item" onclick="window.location.href='/book/${book.id}'">
+          <div class="search-item" onclick="window.location.href='/details/${book.id}'">
             <div class="search-item-title">${book.title || "Sem título"}</div>
             <div class="search-item-author">${book.author || "Autor desconhecido"}</div>
             <div class="search-item-year">${book.year || "Ano não informado"}</div>
