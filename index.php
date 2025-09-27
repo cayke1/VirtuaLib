@@ -29,5 +29,9 @@ spl_autoload_register(function ($file) {
     }
 });
 
-$core = new Core($routes);
+$isAdmin = isset($_SESSION['user']) && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin';
+
+$activeRoutes = $isAdmin ? $adminRoutes : $userRoutes;
+
+$core = new Core($activeRoutes);
 $core->run();
