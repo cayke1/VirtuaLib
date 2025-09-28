@@ -58,6 +58,7 @@ class BookController extends RenderView
 
     public function borrowBook($id)
     {
+        $this->requireAuth('user');
         $bookModel = new BookModel();
         $success = $bookModel->borrowBook($id);
 
@@ -73,6 +74,7 @@ class BookController extends RenderView
 
     public function returnBook($id)
     {
+        $this->requireAuth('user');
         $bookModel = new BookModel();
         $success = $bookModel->returnBook($id);
 
