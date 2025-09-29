@@ -11,6 +11,7 @@ $userRoutes = [
     "/api/auth/login" => "AuthController@login",
     "/api/auth/logout" => "AuthController@logout",
     "/api/auth/me" => "AuthController@me",
+    "/historico" => "BookController@viewHistory",
 ];
 
 $adminRoutes = [
