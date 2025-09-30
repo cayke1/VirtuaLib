@@ -130,4 +130,9 @@ class BookController extends RenderView
         if (!is_numeric($data['year'])) { return false; }
         return true;
     }
+
+    public function viewHistory()
+    {
+        $this->loadView('history', ['title' => 'Histórico']);
+    }
 }
