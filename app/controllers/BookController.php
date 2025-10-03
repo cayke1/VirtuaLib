@@ -135,4 +135,9 @@ class BookController extends RenderView
     {
         $this->loadView('history', ['title' => 'Histórico']);
     }
+    
+    public function viewDashboard()
+    {
+        $this->loadView('dashboard', ['title' => 'Dashboard']);
+    }
 }
