@@ -2,7 +2,7 @@
 $totalBooks = count($books);
 
 $availableBooks = count(array_filter($books, function($book) {
-    return !$book['borrowed']; // livros não emprestados
+    return isset($book['available']) && $book['available']; // livros disponíveis
 }));
 
 $borrowedBooks = $totalBooks - $availableBooks;

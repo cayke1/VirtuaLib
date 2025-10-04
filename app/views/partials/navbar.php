@@ -1,7 +1,7 @@
     <nav class="navbar">
     <div class="nav-container">
         <!-- Logo e nome da marca -->
-        <div class="nav-brand">
+        <a href="/" class="nav-brand">
             <div class="logo">
                 <div class="logo-icon">
                     <div class="square square-1"></div>
@@ -9,7 +9,7 @@
                 </div>
             </div>
             <span class="brand-name">VirtualLib</span>
-        </div>
+        </a>
 
         <!-- Barra de pesquisa -->
         <div class="search-container">
@@ -24,6 +24,22 @@
                     <div class="search-items" id="search-items"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- Menu de navegação desktop -->
+        <div class="nav-menu-desktop">
+            <a href="/profile" class="nav-link">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </a>
+            <a href="/historico" class="nav-link">
+                <i class="fas fa-history"></i>
+                <span>Histórico</span>
+            </a>
+            <a href="/login" class="nav-link logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
+            </a>
         </div>
 
         <!-- Botão hambúrguer -->
@@ -49,6 +65,32 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Menu de navegação mobile -->
+        <div class="nav-menu-mobile-links">
+            <a href="/profile" class="mobile-nav-link">
+                <i class="fas fa-user"></i>
+                <span>Perfil</span>
+            </a>
+            <a href="/historico" class="mobile-nav-link">
+                <i class="fas fa-history"></i>
+                <span>Histórico</span>
+            </a>
+            <a href="/login" class="mobile-nav-link logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
+            </a>
+        </div>
     </div>
 </nav>
+<style>
+    .nav-link {
+        color: #1e293b;
+    }
+    .mobile-nav-link {
+        color: #1e293b !important;
+    }
+</style>
+
 <script src="/public/js/searchBook.js"></script>
+<script src="/public/js/navbar.js"></script>

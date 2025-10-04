@@ -74,6 +74,21 @@ class AuthController
         return $this->json(['user' => $_SESSION['user']]);
     }
 
+    public function showLogin()
+    {
+        include __DIR__ . '/../views/auth/login.php';
+    }
+
+    public function showRegister()
+    {
+        include __DIR__ . '/../views/auth/register.php';
+    }
+
+    public function showProfile()
+    {
+        include __DIR__ . '/../views/profile.php';
+    }
+
     private function readJsonBody()
     {
         $raw = file_get_contents('php://input');
