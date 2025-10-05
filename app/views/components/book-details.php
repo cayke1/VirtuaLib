@@ -9,10 +9,10 @@
         <div>
             <div class="book-tags">
                 <span class="book-badge outline"><?php echo htmlspecialchars($book['genre']); ?></span>
-                <?php if ($book['borrowed']): ?>
-                    <span class="book-badge unavailable">Indisponível</span>
-                <?php else: ?>
+                <?php if (isset($book['available']) && $book['available']): ?>
                     <span class="book-badge available">Disponível</span>
+                <?php else: ?>
+                    <span class="book-badge unavailable">Indisponível</span>
                 <?php endif; ?>
             </div>
 
@@ -29,63 +29,9 @@
                 <button
                     class="action-button borrow"
                     data-book-id="<?php echo $book['id']; ?>">
-                    <?php echo $book['borrowed'] ? 'Devolver' : 'Emprestar'; ?>
+                    <?php echo (isset($book['available']) && $book['available']) ? 'Emprestar' : 'Devolver'; ?>
                 </button>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    document.addEventListener("click", async (e) => {
-        if (!e.target.classList.contains("action-button")) return;
-
-        const button = e.target;
-        const isReturn = button.classList.contains("return");
-        const bookId = button.getAttribute("data-book-id");
-
-        // Função para indicar estado de carregamento
-        const setLoadingState = (loading) => {
-            button.disabled = loading;
-            button.style.cursor = loading ? "not-allowed" : "pointer";
-            if (loading) {
-                button.textContent = isReturn ? "Devolvendo..." : "Emprestando...";
-            }
-        };
-
-        // Troca para estado "emprestado"
-        const setBorrowedState = () => {
-            button.classList.replace("borrow", "return");
-            button.textContent = "Devolver";
-        };
-
-        // Troca para estado "disponível"
-        const setReturnedState = () => {
-            button.classList.replace("return", "borrow");
-            button.textContent = "Emprestar";
-        };
-
-        try {
-            setLoadingState(true);
-
-            const response = await fetch(`/${isReturn ? "return" : "borrow"}/${bookId}`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                isReturn ? setReturnedState() : setBorrowedState();
-            } else {
-                alert("Erro na operação: " + result.message);
-            }
-        } catch (error) {
-            alert("Erro ao conectar com o servidor.");
-        }
-
-        setLoadingState(false);
-    });
-</script>

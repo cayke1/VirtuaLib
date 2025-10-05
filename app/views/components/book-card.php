@@ -16,12 +16,20 @@ require_once __DIR__ . '/../../utils/TextUtils.php';
     }
 </style>
 
+<?php
+$isAvailable = isset($book['available']) && (int)$book['available'] === 1;
+$borrowedByCurrentUser = !empty($book['borrowed_by_current_user']);
+$buttonClass = $isAvailable ? 'borrow' : ($borrowedByCurrentUser ? 'return' : 'borrow');
+$buttonDisabled = !$isAvailable && !$borrowedByCurrentUser;
+$buttonLabel = $isAvailable ? 'Emprestar' : ($borrowedByCurrentUser ? 'Devolver' : 'Emprestado');
+?>
+
 <div class="book-card" data-book-id="<?php echo $book['id']; ?>">
     <a href="/details/<?php echo $book['id']; ?>" class="book-link">
         <div class="book-card-header">
             <div class="book-status">
-                <span class="status-dot <?php echo $book['borrowed'] ? 'borrowed' : 'available'; ?>"></span>
-                <span class="status-text"><?php echo $book['borrowed'] ? 'Emprestado' : 'Disponível'; ?></span>
+                <span class="status-dot <?php echo $isAvailable ? 'available' : 'borrowed'; ?>"></span>
+                <span class="status-text"><?php echo $isAvailable ? 'Disponível' : 'Emprestado'; ?></span>
             </div>
             <div class="book-menu">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -41,8 +49,8 @@ require_once __DIR__ . '/../../utils/TextUtils.php';
     </a>
 
     <div class="book-actions">
-        <button class="action-button <?php echo $book['borrowed'] ? 'return' : 'borrow'; ?>" data-book-id="<?php echo $book['id']; ?>">
-            <?php echo $book['borrowed'] ? 'Devolver' : 'Emprestar'; ?>
+        <button class="action-button <?php echo $buttonClass; ?>" data-book-id="<?php echo $book['id']; ?>" <?php echo $buttonDisabled ? 'disabled' : ''; ?>>
+            <?php echo $buttonLabel; ?>
         </button>
         <div class="bookmark-icon" onclick="toggleBookmark(this)">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -52,4 +60,3 @@ require_once __DIR__ . '/../../utils/TextUtils.php';
     </div>
 </div>
 
-<script src="/public/js/button.js"></script>

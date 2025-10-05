@@ -26,7 +26,7 @@
 
             <form id="login-form" class="auth-form" novalidate>
                 <div class="form-group">
-                    <label for="email" class="form-label">E-mail ou usuário</label>
+                    <label for="email" class="form-label">E-mail</label>
                     <input type="text" id="email" name="email" class="form-input" placeholder="seu@email.com" required>
                 </div>
 
