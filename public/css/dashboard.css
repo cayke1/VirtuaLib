@@ -141,11 +141,10 @@ body {
     font-size: 13px;
     color: #666;
 }
-
-/* Bar Chart */
+/* Altere de align-items: flex-end para flex-start */
 .bar-chart {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start; /* MUDANÇA AQUI - era flex-end */
     justify-content: space-between;
     gap: 16px;
     height: 280px;
@@ -155,7 +154,7 @@ body {
 .bar-container {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse; /* ADICIONE ESTA LINHA */
     align-items: center;
     gap: 12px;
     height: 100%;
@@ -164,17 +163,13 @@ body {
 .bar {
     width: 100%;
     background: linear-gradient(180deg, #059669 0%, #047857 100%);
-    border-radius: 6px 6px 0 0;
+    border-radius: 6px 6px 0 0 ; /* MUDANÇA: era 6px 6px 0 0 */
     position: relative;
     min-height: 40px;
     display: flex;
-    align-items: flex-start;
+    align-items: flex-end; /* MUDANÇA: era flex-start */
     justify-content: center;
     transition: all 0.3s;
-}
-
-.bar:hover {
-    opacity: 0.8;
 }
 
 .bar-value {
@@ -188,7 +183,10 @@ body {
     font-size: 13px;
     color: #666;
     font-weight: 500;
-    margin-top: auto;
+    /* Remova o margin-top: auto se tiver */
+}
+.bar:hover {
+    opacity: 0.8;
 }
 
 /* Top Books */
