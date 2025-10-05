@@ -30,6 +30,18 @@ CREATE TABLE IF NOT EXISTS Borrows (
     status ENUM('borrowed', 'returned', 'late') DEFAULT 'borrowed'
 );
 
+CREATE TABLE IF NOT EXISTS Notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    data JSON NULL, 
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+
 
 ALTER TABLE Borrows
 ADD CONSTRAINT fk_borrow_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE;
