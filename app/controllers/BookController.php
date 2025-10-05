@@ -65,6 +65,15 @@ class BookController extends RenderView
         if (!$success) {
             return http_response_code(400);
         }
+        // Dispatch event for notifications
+        require_once __DIR__ . '/../core/EventDispatcher.php';
+        $book = $bookModel->getBookById($id);
+        $payload = [
+            'user_id' => $_SESSION['user']['id'] ?? null,
+            'book_id' => $id,
+            'book_title' => $book['title'] ?? null,
+        ];
+        EventDispatcher::dispatch('book.borrowed', $payload);
         header("Content-Type: application/json");
         echo json_encode([
             "success" => $success,
@@ -81,6 +90,15 @@ class BookController extends RenderView
         if (!$success) {
             return http_response_code(400);
         }
+        // Dispatch event for notifications
+        require_once __DIR__ . '/../core/EventDispatcher.php';
+        $book = $bookModel->getBookById($id);
+        $payload = [
+            'user_id' => $_SESSION['user']['id'] ?? null,
+            'book_id' => $id,
+            'book_title' => $book['title'] ?? null,
+        ];
+        EventDispatcher::dispatch('book.returned', $payload);
         header("Content-Type: application/json");
         echo json_encode([
             "success" => $success,

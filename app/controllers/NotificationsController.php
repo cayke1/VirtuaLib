@@ -97,7 +97,7 @@ class NotificationsController
 
     public function delete($id)
     {
-        $this->requireAuth('user');
+        $this->requireAuth();
         $userId = (int)($_SESSION['user']['id'] ?? 0);
 
         $model = new NotificationModel();
