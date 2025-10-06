@@ -29,6 +29,8 @@ spl_autoload_register(function ($file) {
     }
 });
 
+require_once __DIR__ . "/app/services/NotificationService.php";
+
 $isAdmin = isset($_SESSION['user']) && isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'admin';
 
 $activeRoutes = $isAdmin ? $adminRoutes : $userRoutes;
