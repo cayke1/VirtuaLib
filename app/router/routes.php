@@ -20,4 +20,13 @@ $userRoutes = [
 $adminRoutes = [
     ...$userRoutes,
     "/api/books" => "BookController@createBook",
+    "/api/stats/general" => "StatsController@getGeneralStats",
+    "/api/stats/books-by-genre" => "StatsController@getBooksByGenre",
+    "/api/stats/books-by-year" => "StatsController@getBooksByYear",
+    "/api/stats/borrows-by-period" => "StatsController@getBorrowsByPeriod",
+    "/api/stats/most-borrowed-books" => "StatsController@getMostBorrowedBooks",
+    "/api/stats/most-active-users" => "StatsController@getMostActiveUsers",
+    "/api/stats/late-stats" => "StatsController@getLateStats",
+    "/api/stats/performance" => "StatsController@getPerformanceStats",
+    "/api/stats/dashboard" => "StatsController@getDashboardStats",
 ];
