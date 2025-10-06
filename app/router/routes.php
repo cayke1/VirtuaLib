@@ -25,6 +25,4 @@ $userRoutes = [
 $adminRoutes = [
     ...$userRoutes,
     "/api/books" => "BookController@createBook",
-    "/api/notifications/create" => "NotificationsController@create",
-    "/api/notifications/create-bulk" => "NotificationsController@createBulk",
 ];

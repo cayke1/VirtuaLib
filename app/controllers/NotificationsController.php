@@ -22,46 +22,6 @@ class NotificationsController
         $this->json(['notifications' => $notifications]);
     }
 
-    public function create()
-    {
-        $this->requireRole('admin');
-
-        $raw = file_get_contents('php://input');
-        $payload = $raw ? json_decode($raw, true) : null;
-        if (!is_array($payload) || empty($payload['user_id']) || empty($payload['title']) || empty($payload['message'])) {
-            return $this->json(['error' => 'Invalid payload'], 400);
-        }
-
-        $model = new NotificationModel();
-        $data = $payload['data'] ?? null;
-        $id = $model->create((int)$payload['user_id'], $payload['title'], $payload['message'], $data);
-
-        if (!$id) {
-            return $this->json(['error' => 'Failed to create notification'], 500);
-        }
-
-        $this->json(['id' => $id, 'message' => 'Notification created'], 201);
-    }
-
-    public function createBulk()
-    {
-        // Only allow admins
-        $this->requireRole('admin');
-
-        $raw = file_get_contents('php://input');
-        $payload = $raw ? json_decode($raw, true) : null;
-        if (!is_array($payload) || empty($payload)) {
-            return $this->json(['error' => 'Invalid payload'], 400);
-        }
-
-        $model = new NotificationModel();
-        $ok = $model->createBulk($payload);
-        if (!$ok) {
-            return $this->json(['error' => 'Failed to create notifications'], 500);
-        }
-        $this->json(['message' => 'Notifications created']);
-    }
-
     public function unreadCount()
     {
         $this->requireAuth();
