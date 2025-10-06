@@ -54,4 +54,22 @@ class UserModel extends Database
         unset($user['password']);
         return [true, $user];
     }
+
+    public function getActiveUsersCount()
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT COUNT(DISTINCT u.id) as total
+                FROM Users u
+                INNER JOIN Borrows b ON u.id = b.user_id
+                WHERE b.borrowed_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            ");
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
+        } catch (PDOException $e) {
+            error_log("Database error in getActiveUsersCount: " . $e->getMessage());
+            return 0;
+        }
+    }
 }

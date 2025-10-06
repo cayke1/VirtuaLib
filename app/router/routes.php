@@ -1,6 +1,5 @@
 <?php
 
-
 $userRoutes = [
     "/" => "BookController@listBooks",
     "/search" => "BookController@searchBooks",
@@ -15,12 +14,22 @@ $userRoutes = [
     "/api/auth/logout" => "AuthController@logout",
     "/api/auth/me" => "AuthController@me",
     "/historico" => "BookController@viewHistory",
+    "/dashboard" => "BookController@viewDashboard",
+    "/api/notifications" => "NotificationsController@listForUser",
+    "/api/notifications/unread-count" => "NotificationsController@unreadCount",
+    "/api/notifications/{id}/read" => "NotificationsController@markAsRead",
+    "/api/notifications/{id}/delet" => "NotificationsController@delete",
+    "/api/notifications/mark-all-read" => "NotificationsController@markAllRead",
+    "/api/stats/general" => "StatsController@getGeneralStats",
+    "/api/stats/borrows-by-month" => "StatsController@getBorrowsByMonth",
+    "/api/stats/top-books" => "StatsController@getTopBooks",
+    "/api/stats/books-by-category" => "StatsController@getBooksByCategory",
+    "/api/stats/recent-activities" => "StatsController@getRecentActivities",
 ];
 
 $adminRoutes = [
     ...$userRoutes,
     "/api/books" => "BookController@createBook",
-    "/api/stats/general" => "StatsController@getGeneralStats",
     "/api/stats/books-by-genre" => "StatsController@getBooksByGenre",
     "/api/stats/books-by-year" => "StatsController@getBooksByYear",
     "/api/stats/borrows-by-period" => "StatsController@getBorrowsByPeriod",
