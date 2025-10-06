@@ -195,4 +195,9 @@ class BookController extends RenderView
             'currentUser' => $_SESSION['user'] ?? null,
         ]);
     }
+    public function viewDashboard()
+    {
+        $this->loadView('dashboard', ['title' => 'Dashboard']);
+    }
 }
+

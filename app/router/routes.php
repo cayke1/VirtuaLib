@@ -1,6 +1,5 @@
 <?php
 
-
 $userRoutes = [
     "/" => "BookController@listBooks",
     "/search" => "BookController@searchBooks",
@@ -15,6 +14,7 @@ $userRoutes = [
     "/api/auth/logout" => "AuthController@logout",
     "/api/auth/me" => "AuthController@me",
     "/historico" => "BookController@viewHistory",
+    "/dashboard" => "BookController@viewDashboard",
 ];
 
 $adminRoutes = [
