@@ -7,7 +7,6 @@ class BookController extends RenderView
     /**
      * Lista todos os livros disponíveis com informações de empréstimo.
      */
-
     public function listBooks()
     {
         $bookModel = new BookModel();
@@ -60,6 +59,7 @@ class BookController extends RenderView
             exit;
         }
     }
+
     public function viewBookDetails($id)
     {
         $bookModel = new BookModel();
@@ -195,9 +195,9 @@ class BookController extends RenderView
             'currentUser' => $_SESSION['user'] ?? null,
         ]);
     }
+
     public function viewDashboard()
     {
         $this->loadView('dashboard', ['title' => 'Dashboard']);
     }
 }
-
