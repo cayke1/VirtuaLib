@@ -4,11 +4,32 @@ class BookController extends RenderView
 {
     use AuthGuard;
 
+    /**
+     * Lista todos os livros disponíveis com informações de empréstimo.
+     */
     public function listBooks()
     {
-
         $bookModel = new BookModel();
         $books = $bookModel->getBooks();
+
+        $currentUserId = $_SESSION['user']['id'] ?? null;
+        $borrowedLookup = [];
+        if ($currentUserId) {
+            $borrowModel = new BorrowModel();
+            $borrowedIds = $borrowModel->getActiveBorrowedBookIdsByUser((int)$currentUserId);
+            if (!empty($borrowedIds)) {
+                $borrowedLookup = array_flip($borrowedIds);
+            }
+        }
+
+        foreach ($books as &$book) {
+            $bookId = (int)($book['id'] ?? 0);
+            $book['available'] = (int)($book['available'] ?? 0);
+            if ($borrowedLookup) {
+                $book['borrowed_by_current_user'] = isset($borrowedLookup[$bookId]);
+            }
+        }
+        unset($book);
 
         $this->loadView('partials/header', ['title' => 'Livros']);
         $this->loadView('home', ['books' => $books]);
@@ -17,9 +38,7 @@ class BookController extends RenderView
     public function searchBooks()
     {
         try {
-
             $query = $_GET['q'] ?? '';
-            error_log("Search query: " . $query);
 
             header('Content-Type: application/json; charset=utf-8');
 
@@ -31,7 +50,6 @@ class BookController extends RenderView
             $bookModel = new BookModel();
             $results = $bookModel->search($query);
 
-
             echo json_encode($results, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
         } catch (Exception $e) {
@@ -41,6 +59,7 @@ class BookController extends RenderView
             exit;
         }
     }
+
     public function viewBookDetails($id)
     {
         $bookModel = new BookModel();
@@ -58,52 +77,66 @@ class BookController extends RenderView
 
     public function borrowBook($id)
     {
-        $this->requireAuth('user');
-        $bookModel = new BookModel();
-        $success = $bookModel->borrowBook($id);
-
-        if (!$success) {
-            return http_response_code(400);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+            return;
         }
-        // Dispatch event for notifications
-        require_once __DIR__ . '/../core/EventDispatcher.php';
-        $book = $bookModel->getBookById($id);
-        $payload = [
-            'user_id' => $_SESSION['user']['id'] ?? null,
-            'book_id' => $id,
-            'book_title' => $book['title'] ?? null,
-        ];
-        EventDispatcher::dispatch('book.borrowed', $payload);
-        header("Content-Type: application/json");
-        echo json_encode([
-            "success" => $success,
-            "message" => $success ? "Livro emprestado com sucesso" : "Erro ao emprestar o livro"
-        ]);
+
+        $this->requireAuth();
+
+        $userId = $_SESSION['user']['id'] ?? null;
+        if (!$userId) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Usuário não autenticado.']);
+            return;
+        }
+
+        $borrowModel = new BorrowModel();
+        $result = $borrowModel->createBorrow((int)$id, (int)$userId);
+
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
+        if (isset($result['status'])) {
+            unset($result['status']);
+        }
+
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
     public function returnBook($id)
     {
-        $this->requireAuth('user');
-        $bookModel = new BookModel();
-        $success = $bookModel->returnBook($id);
-
-        if (!$success) {
-            return http_response_code(400);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+            return;
         }
-        // Dispatch event for notifications
-        require_once __DIR__ . '/../core/EventDispatcher.php';
-        $book = $bookModel->getBookById($id);
-        $payload = [
-            'user_id' => $_SESSION['user']['id'] ?? null,
-            'book_id' => $id,
-            'book_title' => $book['title'] ?? null,
-        ];
-        EventDispatcher::dispatch('book.returned', $payload);
-        header("Content-Type: application/json");
-        echo json_encode([
-            "success" => $success,
-            "message" => $success ? "Livro devolvido com sucesso" : "Erro ao devolver o livro"
-        ]);
+
+        $this->requireAuth();
+
+        $userId = $_SESSION['user']['id'] ?? null;
+        if (!$userId) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Usuário não autenticado.']);
+            return;
+        }
+
+        $borrowModel = new BorrowModel();
+        $result = $borrowModel->closeBorrow((int)$id, (int)$userId);
+
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
+        if (isset($result['status'])) {
+            unset($result['status']);
+        }
+
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
     public function createBook()
@@ -151,6 +184,20 @@ class BookController extends RenderView
 
     public function viewHistory()
     {
-        $this->loadView('history', ['title' => 'Histórico']);
+        $this->requireAuth();
+
+        $borrowModel = new BorrowModel();
+        $history = $borrowModel->getHistory();
+
+        $this->loadView('history', [
+            'title' => 'Histórico de Empréstimos',
+            'history' => $history,
+            'currentUser' => $_SESSION['user'] ?? null,
+        ]);
+    }
+
+    public function viewDashboard()
+    {
+        $this->loadView('dashboard', ['title' => 'Dashboard']);
     }
 }
