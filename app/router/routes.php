@@ -3,7 +3,7 @@
 $userRoutes = [
     "/" => "BookController@listBooks",
     "/search" => "BookController@searchBooks",
-    "/borrow/{id}" => "BookController@borrowBook",
+    "/request/{id}" => "BookController@requestBook",
     "/return/{id}" => "BookController@returnBook",
     "/details/{id}" => "BookController@viewBookDetails",
     "/login" => "AuthController@showLogin",
@@ -14,7 +14,7 @@ $userRoutes = [
     "/api/auth/logout" => "AuthController@logout",
     "/api/auth/me" => "AuthController@me",
     "/historico" => "BookController@viewHistory",
-    "/dashboard" => "BookController@viewDashboard",
+    
     "/api/notifications" => "NotificationsController@listForUser",
     "/api/notifications/unread-count" => "NotificationsController@unreadCount",
     "/api/notifications/{id}/read" => "NotificationsController@markAsRead",
@@ -25,4 +25,7 @@ $userRoutes = [
 $adminRoutes = [
     ...$userRoutes,
     "/api/books" => "BookController@createBook",
+    "/api/approve/{id}" => "BookController@approveBorrow",
+    "/api/reject/{id}" => "BookController@rejectRequest",
+    "/dashboard" => "BookController@viewDashboard",
 ];

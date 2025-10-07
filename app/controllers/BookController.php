@@ -14,20 +14,25 @@ class BookController extends RenderView
 
         $currentUserId = $_SESSION['user']['id'] ?? null;
         $borrowedLookup = [];
+        $pendingLookup = [];
         if ($currentUserId) {
             $borrowModel = new BorrowModel();
             $borrowedIds = $borrowModel->getActiveBorrowedBookIdsByUser((int)$currentUserId);
+            $pendingIds = $borrowModel->getPendingRequestBookIdsByUser((int)$currentUserId);
+
             if (!empty($borrowedIds)) {
                 $borrowedLookup = array_flip($borrowedIds);
+            }
+            if (!empty($pendingIds)) {
+                $pendingLookup = array_flip($pendingIds);
             }
         }
 
         foreach ($books as &$book) {
             $bookId = (int)($book['id'] ?? 0);
             $book['available'] = (int)($book['available'] ?? 0);
-            if ($borrowedLookup) {
-                $book['borrowed_by_current_user'] = isset($borrowedLookup[$bookId]);
-            }
+            $book['borrowed_by_current_user'] = isset($borrowedLookup[$bookId]);
+            $book['requested_by_current_user'] = isset($pendingLookup[$bookId]);
         }
         unset($book);
 
@@ -75,7 +80,7 @@ class BookController extends RenderView
         $this->loadView('components/book-details', ['book' => $book]);
     }
 
-    public function borrowBook($id)
+    public function requestBook($id)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
@@ -95,7 +100,40 @@ class BookController extends RenderView
         }
 
         $borrowModel = new BorrowModel();
-        $result = $borrowModel->createBorrow((int)$id, (int)$userId);
+        $result = $borrowModel->requestBorrow((int)$id, (int)$userId);
+
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
+        if (isset($result['status'])) {
+            unset($result['status']);
+        }
+
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    public function approveBorrow($requestId)
+    {
+
+        error_log("Aprovando solicitação de empréstimo ID: $requestId");
+        $this->requireAuth(['admin']);
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+            return;
+        }
+
+        $adminUserId = $_SESSION['user']['id'] ?? null;
+        if (!$adminUserId) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Administrador não autenticado.']);
+            return;
+        }
+
+        $borrowModel = new BorrowModel();
+        $result = $borrowModel->approveBorrow((int)$requestId, (int)$adminUserId);
 
         $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
         if (isset($result['status'])) {
@@ -127,7 +165,7 @@ class BookController extends RenderView
         }
 
         $borrowModel = new BorrowModel();
-        $result = $borrowModel->closeBorrow((int)$id, (int)$userId);
+        $result = $borrowModel->returnBook((int)$id, (int)$userId);
 
         $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
         if (isset($result['status'])) {
@@ -166,19 +204,27 @@ class BookController extends RenderView
     private function readJsonBody()
     {
         $raw = file_get_contents('php://input');
-        if (!$raw) { return null; }
+        if (!$raw) {
+            return null;
+        }
         $data = json_decode($raw, true);
         return is_array($data) ? $data : null;
     }
 
     private function validateCreatePayload($data)
     {
-        if (!is_array($data)) { return false; }
-        $required = ['title','author','genre','year','description'];
-        foreach ($required as $field) {
-            if (empty($data[$field])) { return false; }
+        if (!is_array($data)) {
+            return false;
         }
-        if (!is_numeric($data['year'])) { return false; }
+        $required = ['title', 'author', 'genre', 'year', 'description'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) {
+                return false;
+            }
+        }
+        if (!is_numeric($data['year'])) {
+            return false;
+        }
         return true;
     }
 
@@ -198,6 +244,53 @@ class BookController extends RenderView
 
     public function viewDashboard()
     {
-        $this->loadView('dashboard', ['title' => 'Dashboard']);
+        $this->requireAuth();
+
+        // Verificar se é admin
+        $isAdmin = $_SESSION['user']['role'] ?? null === 'admin';
+
+        $pendingRequests = [];
+        if ($isAdmin) {
+            $borrowModel = new BorrowModel();
+            $pendingRequests = $borrowModel->getPendingRequests();
+        }
+
+        $this->loadView('dashboard', [
+            'title' => 'Dashboard',
+            'pendingRequests' => $pendingRequests,
+            'isAdmin' => $isAdmin
+        ]);
+    }
+
+    public function rejectRequest($requestId)
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+            return;
+        }
+
+        $this->requireRole('admin');
+
+        $adminUserId = $_SESSION['user']['id'] ?? null;
+        if (!$adminUserId) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Administrador não autenticado.']);
+            return;
+        }
+
+        $borrowModel = new BorrowModel();
+        $result = $borrowModel->rejectRequest((int)$requestId, (int)$adminUserId);
+
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
+        if (isset($result['status'])) {
+            unset($result['status']);
+        }
+
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 }

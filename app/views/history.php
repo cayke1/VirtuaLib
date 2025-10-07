@@ -5,16 +5,19 @@ $history = $history ?? [];
 $currentUser = $currentUser ?? null;
 
 $statusAliases = [
-    'emprestado' => 'Emprestado',
-    'borrowed' => 'Emprestado',
-    'devolvido' => 'Devolvido',
+    'pending' => 'Pendente',
+    'approved' => 'Aprovado',
     'returned' => 'Devolvido',
-    'atrasado' => 'Atrasado',
     'late' => 'Atrasado',
 ];
 
 $statusConfig = [
-    'Emprestado' => [
+    'Pendente' => [
+        'icon' => '⏳',
+        'text' => 'Pendente',
+        'class' => 'status-pendente'
+    ],
+    'Aprovado' => [
         'icon' => '📖',
         'text' => 'Emprestado',
         'class' => 'status-ativo'
@@ -83,7 +86,8 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
                 </div>
                 <select class="filter-select">
                     <option value="">Filtrar por status</option>
-                    <option value="Emprestado">Emprestado</option>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Aprovado">Aprovado</option>
                     <option value="Devolvido">Devolvido</option>
                     <option value="Atrasado">Atrasado</option>
                 </select>
@@ -95,7 +99,7 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
                         <tr>
                             <th>Nome do Usuário</th>
                             <th>Livro Emprestado</th>
-                            <th>Data de Empréstimo</th>
+                            <th>Data de Solicitação</th>
                             <th>Data de Devolução</th>
                             <th>Status</th>
                         </tr>
@@ -118,7 +122,7 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
                                 <tr>
                                     <td><?php echo htmlspecialchars($loan['user_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                     <td><?php echo htmlspecialchars($loan['book_title'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td><?php echo formatHistoryDate($loan['borrowed_at']); ?></td>
+                                    <td><?php echo formatHistoryDate($loan['requested_at']); ?></td>
                                     <td><?php echo formatHistoryDate($loan['returned_at']); ?></td>
                                     <td>
                                         <span class="status <?php echo $status['class']; ?>">

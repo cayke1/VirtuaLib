@@ -15,9 +15,10 @@ class BorrowModel extends Database
     }
 
     /**
-     * Registra um novo empréstimo para o usuário informado.
+     * Registra uma nova solicitação de empréstimo para o usuário informado.
+     * O livro não é marcado como indisponível até ser aprovado pelo admin.
      */
-    public function createBorrow(int $bookId, int $userId): array
+    public function requestBorrow(int $bookId, int $userId): array
     {
         try {
             $this->pdo->beginTransaction();
@@ -37,41 +38,66 @@ class BorrowModel extends Database
                 ];
             }
 
-            if ((int)$book['available'] === 0) {
+            // Verificar se já existe uma solicitação pendente para este livro por este usuário
+            $existingRequestStmt = $this->pdo->prepare(
+                'SELECT id FROM Borrows 
+                 WHERE user_id = :user_id AND book_id = :book_id AND status = :status'
+            );
+            $existingRequestStmt->execute([
+                ':user_id' => $userId,
+                ':book_id' => $bookId,
+                ':status' => 'pending'
+            ]);
+
+            if ($existingRequestStmt->fetch()) {
                 $this->pdo->rollBack();
                 return [
                     'success' => false,
                     'status' => 409,
-                    'message' => 'Livro já está emprestado.'
+                    'message' => 'Você já possui uma solicitação pendente para este livro.'
                 ];
             }
 
-            $borrowedAt = new DateTimeImmutable('now');
-            $dueDate = $borrowedAt->add(new DateInterval('P' . self::DEFAULT_LOAN_DAYS . 'D'));
-
-            $insertBorrow = $this->pdo->prepare(
-                'INSERT INTO Borrows (user_id, book_id, borrowed_at, due_date, status)
-                 VALUES (:user_id, :book_id, :borrowed_at, :due_date, :status)'
+            // Verificar se já existe um empréstimo ativo para este livro por este usuário
+            $activeBorrowStmt = $this->pdo->prepare(
+                'SELECT id FROM Borrows 
+                 WHERE user_id = :user_id AND book_id = :book_id AND status IN (:status1, :status2)'
             );
-
-            $insertBorrow->execute([
+            $activeBorrowStmt->execute([
                 ':user_id' => $userId,
                 ':book_id' => $bookId,
-                ':borrowed_at' => $borrowedAt->format('Y-m-d H:i:s'),
-                ':due_date' => $dueDate->format('Y-m-d'),
-                ':status' => 'borrowed'
+                ':status1' => 'approved',
+                ':status2' => 'late'
             ]);
 
-            $updateBook = $this->pdo->prepare(
-                'UPDATE Books SET available = 0 WHERE id = :id'
+            if ($activeBorrowStmt->fetch()) {
+                $this->pdo->rollBack();
+                return [
+                    'success' => false,
+                    'status' => 409,
+                    'message' => 'Você já possui este livro emprestado.'
+                ];
+            }
+
+            $requestedAt = new DateTimeImmutable('now');
+
+            $insertRequest = $this->pdo->prepare(
+                'INSERT INTO Borrows (user_id, book_id, requested_at, status)
+                 VALUES (:user_id, :book_id, :requested_at, :status)'
             );
-            $updateBook->execute([':id' => $bookId]);
+
+            $insertRequest->execute([
+                ':user_id' => $userId,
+                ':book_id' => $bookId,
+                ':requested_at' => $requestedAt->format('Y-m-d H:i:s'),
+                ':status' => 'pending'
+            ]);
 
             $this->pdo->commit();
 
             // Disparar evento de notificação
             $bookTitle = $this->getBookTitle($bookId);
-            EventDispatcher::dispatch('book.borrowed', [
+            EventDispatcher::dispatch('book.requested', [
                 'user_id' => $userId,
                 'book_id' => $bookId,
                 'book_title' => $bookTitle
@@ -79,10 +105,107 @@ class BorrowModel extends Database
 
             return [
                 'success' => true,
-                'message' => 'Livro emprestado com sucesso.',
-                'borrow' => [
+                'message' => 'Solicitação de empréstimo realizada com sucesso. Aguarde a aprovação.',
+                'request' => [
                     'id' => (int)$this->pdo->lastInsertId(),
-                    'borrowed_at' => $borrowedAt->format(DATE_ATOM),
+                    'requested_at' => $requestedAt->format(DATE_ATOM),
+                    'status' => 'pending'
+                ]
+            ];
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('Database error in BorrowModel::requestBorrow: ' . $exception->getMessage());
+
+            return [
+                'success' => false,
+                'status' => 500,
+                'message' => 'Não foi possível registrar a solicitação no momento.'
+            ];
+        }
+    }
+
+    /**
+     * Aprova uma solicitação de empréstimo pendente (para uso por administradores).
+     * Marca o livro como indisponível e define a data de vencimento.
+     */
+    public function approveBorrow(int $requestId, int $adminUserId): array
+    {
+        try {
+            $this->pdo->beginTransaction();
+
+            $requestStmt = $this->pdo->prepare(
+                'SELECT id, user_id, book_id FROM Borrows 
+                 WHERE id = :id AND status = :status FOR UPDATE'
+            );
+            $requestStmt->execute([
+                ':id' => $requestId,
+                ':status' => 'pending'
+            ]);
+            $request = $requestStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$request) {
+                $this->pdo->rollBack();
+                return [
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Solicitação não encontrada ou já processada.'
+                ];
+            }
+
+            // Verificar se o livro ainda está disponível
+            $bookStmt = $this->pdo->prepare(
+                'SELECT available FROM Books WHERE id = :id FOR UPDATE'
+            );
+            $bookStmt->execute([':id' => $request['book_id']]);
+            $book = $bookStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$book || (int)$book['available'] === 0) {
+                $this->pdo->rollBack();
+                return [
+                    'success' => false,
+                    'status' => 409,
+                    'message' => 'Livro não está mais disponível.'
+                ];
+            }
+
+            $approvedAt = new DateTimeImmutable('now');
+            $dueDate = $approvedAt->add(new DateInterval('P' . self::DEFAULT_LOAN_DAYS . 'D'));
+
+            $updateRequest = $this->pdo->prepare(
+                'UPDATE Borrows 
+                 SET approved_at = :approved_at, due_date = :due_date, status = :status 
+                 WHERE id = :id'
+            );
+            $updateRequest->execute([
+                ':approved_at' => $approvedAt->format('Y-m-d H:i:s'),
+                ':due_date' => $dueDate->format('Y-m-d'),
+                ':status' => 'approved',
+                ':id' => $requestId
+            ]);
+
+            $updateBook = $this->pdo->prepare(
+                'UPDATE Books SET available = 0 WHERE id = :id'
+            );
+            $updateBook->execute([':id' => $request['book_id']]);
+
+            $this->pdo->commit();
+
+            // Disparar evento de notificação
+            $bookTitle = $this->getBookTitle($request['book_id']);
+            EventDispatcher::dispatch('book.approved', [
+                'user_id' => $request['user_id'],
+                'book_id' => $request['book_id'],
+                'book_title' => $bookTitle,
+                'approved_by' => $adminUserId
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Solicitação aprovada com sucesso.',
+                'approval' => [
+                    'approved_at' => $approvedAt->format(DATE_ATOM),
                     'due_date' => $dueDate->format('Y-m-d')
                 ]
             ];
@@ -90,20 +213,20 @@ class BorrowModel extends Database
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
-            error_log('Database error in BorrowModel::createBorrow: ' . $exception->getMessage());
+            error_log('Database error in BorrowModel::approveBorrow: ' . $exception->getMessage());
 
             return [
                 'success' => false,
                 'status' => 500,
-                'message' => 'Não foi possível registrar o empréstimo no momento.'
+                'message' => 'Não foi possível aprovar a solicitação no momento.'
             ];
         }
     }
 
     /**
-     * Finaliza o empréstimo aberto para o par usuário/livro.
+     * Finaliza o empréstimo aprovado para o par usuário/livro.
      */
-    public function closeBorrow(int $bookId, int $userId): array
+    public function returnBook(int $bookId, int $userId): array
     {
         try {
             $this->pdo->beginTransaction();
@@ -112,8 +235,8 @@ class BorrowModel extends Database
                                 "SELECT id, status FROM Borrows
                                  WHERE book_id = :book_id
                                      AND user_id = :user_id
-                                     AND status IN ('borrowed', 'late')
-                                 ORDER BY borrowed_at DESC
+                                     AND status IN ('approved', 'late')
+                                 ORDER BY approved_at DESC
                                  LIMIT 1
                                  FOR UPDATE"
             );
@@ -169,7 +292,7 @@ class BorrowModel extends Database
             if ($this->pdo->inTransaction()) {
                 $this->pdo->rollBack();
             }
-            error_log('Database error in BorrowModel::closeBorrow: ' . $exception->getMessage());
+            error_log('Database error in BorrowModel::returnBook: ' . $exception->getMessage());
 
             return [
                 'success' => false,
@@ -190,14 +313,15 @@ class BorrowModel extends Database
                     Borrows.id,
                     Users.name AS user_name,
                     Books.title AS book_title,
-                    Borrows.borrowed_at,
+                    Borrows.requested_at,
+                    Borrows.approved_at,
                     Borrows.due_date,
                     Borrows.returned_at,
                     Borrows.status
                  FROM Borrows
                  INNER JOIN Users ON Users.id = Borrows.user_id
                  INNER JOIN Books ON Books.id = Borrows.book_id
-                 ORDER BY Borrows.borrowed_at DESC'
+                 ORDER BY Borrows.requested_at DESC'
             );
 
             return $query->fetchAll(PDO::FETCH_ASSOC) ?: [];
@@ -208,7 +332,7 @@ class BorrowModel extends Database
     }
 
     /**
-     * Retorna os IDs dos livros atualmente emprestados pelo usuário.
+     * Retorna os IDs dos livros atualmente emprestados pelo usuário (aprovados).
      */
     public function getActiveBorrowedBookIdsByUser(int $userId): array
     {
@@ -216,7 +340,7 @@ class BorrowModel extends Database
             $stmt = $this->pdo->prepare(
                                 "SELECT book_id FROM Borrows
                                  WHERE user_id = :user_id
-                                     AND status IN ('borrowed', 'late')"
+                                     AND status IN ('approved', 'late')"
             );
             $stmt->execute([':user_id' => $userId]);
             $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -224,6 +348,117 @@ class BorrowModel extends Database
         } catch (Throwable $exception) {
             error_log('Database error in BorrowModel::getActiveBorrowedBookIdsByUser: ' . $exception->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Retorna os IDs dos livros com solicitações pendentes pelo usuário.
+     */
+    public function getPendingRequestBookIdsByUser(int $userId): array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT book_id FROM Borrows
+                 WHERE user_id = :user_id AND status = 'pending'"
+            );
+            $stmt->execute([':user_id' => $userId]);
+            $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return array_map('intval', $ids ?: []);
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getPendingRequestBookIdsByUser: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Retorna todas as solicitações pendentes com informações do usuário e livro.
+     */
+    public function getPendingRequests(): array
+    {
+        try {
+            $query = $this->pdo->query(
+                'SELECT
+                    Borrows.id,
+                    Borrows.user_id,
+                    Borrows.book_id,
+                    Borrows.requested_at,
+                    Users.name AS user_name,
+                    Users.email AS user_email,
+                    Books.title AS book_title,
+                    Books.author AS book_author,
+                    Books.available
+                 FROM Borrows
+                 INNER JOIN Users ON Users.id = Borrows.user_id
+                 INNER JOIN Books ON Books.id = Borrows.book_id
+                 WHERE Borrows.status = "pending"
+                 ORDER BY Borrows.requested_at ASC'
+            );
+
+            return $query->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getPendingRequests: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Rejeita uma solicitação de empréstimo (remove do sistema).
+     */
+    public function rejectRequest(int $requestId, int $adminUserId): array
+    {
+        try {
+            $this->pdo->beginTransaction();
+
+            $requestStmt = $this->pdo->prepare(
+                'SELECT id, user_id, book_id FROM Borrows 
+                 WHERE id = :id AND status = :status FOR UPDATE'
+            );
+            $requestStmt->execute([
+                ':id' => $requestId,
+                ':status' => 'pending'
+            ]);
+            $request = $requestStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$request) {
+                $this->pdo->rollBack();
+                return [
+                    'success' => false,
+                    'status' => 404,
+                    'message' => 'Solicitação não encontrada ou já processada.'
+                ];
+            }
+
+            $deleteStmt = $this->pdo->prepare(
+                'DELETE FROM Borrows WHERE id = :id'
+            );
+            $deleteStmt->execute([':id' => $requestId]);
+
+            $this->pdo->commit();
+
+            // Disparar evento de notificação
+            $bookTitle = $this->getBookTitle($request['book_id']);
+            EventDispatcher::dispatch('book.rejected', [
+                'user_id' => $request['user_id'],
+                'book_id' => $request['book_id'],
+                'book_title' => $bookTitle,
+                'rejected_by' => $adminUserId
+            ]);
+
+            return [
+                'success' => true,
+                'message' => 'Solicitação rejeitada com sucesso.'
+            ];
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('Database error in BorrowModel::rejectRequest: ' . $exception->getMessage());
+
+            return [
+                'success' => false,
+                'status' => 500,
+                'message' => 'Não foi possível rejeitar a solicitação no momento.'
+            ];
         }
     }
 

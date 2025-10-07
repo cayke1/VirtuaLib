@@ -19,9 +19,23 @@ require_once __DIR__ . '/../../utils/TextUtils.php';
 <?php
 $isAvailable = isset($book['available']) && (int)$book['available'] === 1;
 $borrowedByCurrentUser = !empty($book['borrowed_by_current_user']);
-$buttonClass = $isAvailable ? 'borrow' : ($borrowedByCurrentUser ? 'return' : 'borrow');
-$buttonDisabled = !$isAvailable && !$borrowedByCurrentUser;
-$buttonLabel = $isAvailable ? 'Emprestar' : ($borrowedByCurrentUser ? 'Devolver' : 'Emprestado');
+$requestedByCurrentUser = !empty($book['requested_by_current_user']);
+
+$buttonClass = 'borrow';
+$buttonDisabled = false;
+$buttonLabel = 'Solicitar';
+
+if ($borrowedByCurrentUser) {
+    $buttonClass = 'return';
+    $buttonLabel = 'Devolver';
+} elseif ($requestedByCurrentUser) {
+    $buttonClass = 'pending';
+    $buttonDisabled = true;
+    $buttonLabel = 'Pendente';
+} elseif (!$isAvailable) {
+    $buttonDisabled = true;
+    $buttonLabel = 'Emprestado';
+}
 ?>
 
 <div class="book-card" data-book-id="<?php echo $book['id']; ?>">

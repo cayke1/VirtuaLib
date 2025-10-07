@@ -21,11 +21,11 @@ document.addEventListener("click", async (e) => {
         return Number.isNaN(numeric) ? 0 : numeric;
     };
 
-    const setLoadingState = (loading) => {
+        const setLoadingState = (loading) => {
         button.disabled = loading;
         button.style.cursor = loading ? "not-allowed" : "pointer";
         if (loading) {
-            button.textContent = isReturn ? "Devolvendo..." : "Emprestando...";
+            button.textContent = isReturn ? "Devolvendo..." : "Solicitando...";
         }
     };
 
@@ -68,7 +68,7 @@ document.addEventListener("click", async (e) => {
 
     const setReturnedState = () => {
         button.classList.replace("return", "borrow");
-        button.textContent = "Emprestar";
+        button.textContent = "Solicitar";
         updateCounters(-1, +1);
 
         const card = button.closest(".book-card");
@@ -88,7 +88,7 @@ document.addEventListener("click", async (e) => {
     try {
         setLoadingState(true);
 
-        const response = await fetch(`/${isReturn ? "return" : "borrow"}/${bookId}`, {
+        const response = await fetch(`/${isReturn ? "return" : "request"}/${bookId}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

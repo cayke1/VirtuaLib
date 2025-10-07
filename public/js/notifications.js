@@ -153,12 +153,51 @@ class NotificationManager {
         const titleClass = type === 'mobile' ? 'notification-title-mobile' : 'notification-title';
         const messageClass = type === 'mobile' ? 'notification-message-mobile' : 'notification-message';
         const timeClass = type === 'mobile' ? 'notification-time-mobile' : 'notification-time';
+        const iconClass = type === 'mobile' ? 'notification-icon-mobile' : 'notification-icon';
+        const contentClass = type === 'mobile' ? 'notification-content-mobile' : 'notification-content';
+
+        // Parse notification data to get type
+        let notificationType = 'default';
+        let icon = 'fas fa-bell';
+        
+        try {
+            const data = notification.data ? JSON.parse(notification.data) : {};
+            notificationType = data.type || 'default';
+        } catch (e) {
+            // If parsing fails, use default
+        }
+
+        // Set icon based on type
+        switch (notificationType) {
+            case 'requested':
+                icon = 'fas fa-clock';
+                break;
+            case 'approved':
+                icon = 'fas fa-check';
+                break;
+            case 'rejected':
+                icon = 'fas fa-times';
+                break;
+            case 'borrowed':
+                icon = 'fas fa-book';
+                break;
+            case 'returned':
+                icon = 'fas fa-undo';
+                break;
+            default:
+                icon = 'fas fa-bell';
+        }
 
         return `
             <div class="${itemClass} ${isUnread ? 'unread' : ''}" data-id="${notification.id}">
-                <div class="${titleClass}">${this.escapeHtml(notification.title)}</div>
-                <div class="${messageClass}">${this.escapeHtml(notification.message)}</div>
-                <div class="${timeClass}">${timeAgo}</div>
+                <div class="${iconClass} ${notificationType}">
+                    <i class="${icon}"></i>
+                </div>
+                <div class="${contentClass}">
+                    <div class="${titleClass}">${this.escapeHtml(notification.title)}</div>
+                    <div class="${messageClass}">${this.escapeHtml(notification.message)}</div>
+                    <div class="${timeClass}">${timeAgo}</div>
+                </div>
             </div>
         `;
     }

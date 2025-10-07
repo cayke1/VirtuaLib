@@ -114,6 +114,9 @@
     cursor: pointer;
     transition: background-color 0.2s ease;
     position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .notification-item:hover {
@@ -147,6 +150,44 @@
     color: #94a3b8;
     font-size: 11px;
     font-weight: 500;
+}
+
+.notification-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: white;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notification-icon.requested {
+    background-color: #3b82f6;
+}
+
+.notification-icon.approved {
+    background-color: #10b981;
+}
+
+.notification-icon.rejected {
+    background-color: #ef4444;
+}
+
+.notification-icon.borrowed {
+    background-color: #8b5cf6;
+}
+
+.notification-icon.returned {
+    background-color: #6b7280;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
 }
 
 .notification-loading {
@@ -283,6 +324,9 @@
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .notification-item-mobile:hover {
@@ -316,6 +360,44 @@
     color: #94a3b8;
     font-size: 12px;
     font-weight: 500;
+}
+
+.notification-icon-mobile {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notification-icon-mobile.requested {
+    background-color: #3b82f6;
+}
+
+.notification-icon-mobile.approved {
+    background-color: #10b981;
+}
+
+.notification-icon-mobile.rejected {
+    background-color: #ef4444;
+}
+
+.notification-icon-mobile.borrowed {
+    background-color: #8b5cf6;
+}
+
+.notification-icon-mobile.returned {
+    background-color: #6b7280;
+}
+
+.notification-content-mobile {
+    flex: 1;
+    min-width: 0;
 }
 
 .notification-loading-mobile {

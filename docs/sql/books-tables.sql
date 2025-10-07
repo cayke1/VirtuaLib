@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS Borrows (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     book_id INT NOT NULL,
-    borrowed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    due_date DATE NOT NULL,
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    approved_at TIMESTAMP NULL,
+    due_date DATE NULL,
     returned_at TIMESTAMP NULL,
-    status ENUM('borrowed', 'returned', 'late') DEFAULT 'borrowed'
+    status ENUM('pending', 'approved', 'returned', 'late') DEFAULT 'pending'
 );
 
 CREATE TABLE IF NOT EXISTS Notifications (

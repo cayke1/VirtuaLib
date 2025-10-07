@@ -153,6 +153,26 @@
     background-color: #2e4472;
 }
 
+.action-button.pending {
+    background-color: #f59e0b;
+    color: #ffffff;
+    cursor: not-allowed;
+}
+
+.action-button.pending:hover {
+    background-color: #f59e0b;
+}
+
+.action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.action-button:disabled:hover {
+    transform: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+}
+
 .bookmark-icon {
     color: #94a3b8;
     cursor: pointer;
