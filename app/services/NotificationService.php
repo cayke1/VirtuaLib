@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../services/NotificationService.php';
+require_once __DIR__ . '/../models/NotificationModel.php';
 require_once __DIR__ . '/../core/EventDispatcher.php';
 
 class NotificationService

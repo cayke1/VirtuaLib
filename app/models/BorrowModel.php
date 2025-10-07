@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../core/EventDispatcher.php';
+
 class BorrowModel extends Database
 {
     private const DEFAULT_LOAN_DAYS = 14;
@@ -66,6 +68,14 @@ class BorrowModel extends Database
             $updateBook->execute([':id' => $bookId]);
 
             $this->pdo->commit();
+
+            // Disparar evento de notificação
+            $bookTitle = $this->getBookTitle($bookId);
+            EventDispatcher::dispatch('book.borrowed', [
+                'user_id' => $userId,
+                'book_id' => $bookId,
+                'book_title' => $bookTitle
+            ]);
 
             return [
                 'success' => true,
@@ -140,6 +150,14 @@ class BorrowModel extends Database
 
             $this->pdo->commit();
 
+            // Disparar evento de notificação
+            $bookTitle = $this->getBookTitle($bookId);
+            EventDispatcher::dispatch('book.returned', [
+                'user_id' => $userId,
+                'book_id' => $bookId,
+                'book_title' => $bookTitle
+            ]);
+
             return [
                 'success' => true,
                 'message' => 'Livro devolvido com sucesso.',
@@ -206,6 +224,22 @@ class BorrowModel extends Database
         } catch (Throwable $exception) {
             error_log('Database error in BorrowModel::getActiveBorrowedBookIdsByUser: ' . $exception->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * Obtém o título do livro pelo ID.
+     */
+    private function getBookTitle(int $bookId): string
+    {
+        try {
+            $stmt = $this->pdo->prepare('SELECT title FROM Books WHERE id = :id');
+            $stmt->execute([':id' => $bookId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? $result['title'] : 'Livro desconhecido';
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getBookTitle: ' . $exception->getMessage());
+            return 'Livro desconhecido';
         }
     }
 }
