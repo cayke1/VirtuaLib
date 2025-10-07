@@ -36,7 +36,7 @@
                         <i class="fas fa-book"></i>
                     </div>
                     <div class="stat-info">
-                        <h3 class="stat-number" id="books-borrowed">0</h3>
+                        <h3 class="stat-number" id="books-borrowed">—</h3>
                         <p class="stat-label">Livros Emprestados</p>
                     </div>
                 </div>
@@ -45,7 +45,7 @@
                         <i class="fas fa-history"></i>
                     </div>
                     <div class="stat-info">
-                        <h3 class="stat-number" id="books-history">0</h3>
+                        <h3 class="stat-number" id="books-history">—</h3>
                         <p class="stat-label">Histórico Total</p>
                     </div>
                 </div>
@@ -54,7 +54,7 @@
                         <i class="fas fa-calendar"></i>
                     </div>
                     <div class="stat-info">
-                        <h3 class="stat-number" id="member-since">0</h3>
+                        <h3 class="stat-number" id="member-since">—</h3>
                         <p class="stat-label">Dias como Membro</p>
                     </div>
                 </div>

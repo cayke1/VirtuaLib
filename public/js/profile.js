@@ -32,36 +32,51 @@ export class ProfileManager {
 
   initialize() {
     this.loadStats();
-    this.setMemberSince();
   }
 
   // ==============================
   //   MÉTODOS DE EXIBIÇÃO
   // ==============================
 
-  loadStats() {
-    this.stats.borrowed.textContent = Math.floor(Math.random() * 4) + 1;
-    this.stats.history.textContent = Math.floor(Math.random() * 10 + 3);
-  }
-
-  setMemberSince() {
-    const createdEl = this.profileData.infoCreated;
-    const user = JSON.parse(localStorage.getItem("user"));
-    const createdAt = user.created_at;
-    if (createdAt) {
-      const days = Math.floor(
-        (new Date() - new Date(createdAt)) / (1000 * 60 * 60 * 24)
-      );
-      this.stats.memberSince.textContent = days;
-      if (days <= 0) {
-        this.stats.memberSince.textContent = "0";
+  async loadStats() {
+    try {
+      const response = await fetch('/api/stats/user-profile');
+      
+      // Verificar se a resposta é JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Resposta não é JSON:', text);
+        throw new Error('Resposta do servidor não é JSON válido');
       }
-      createdEl.textContent = this.formatDate(createdAt);
-    } else {
-      createdEl.textContent = "—";
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao carregar estatísticas do perfil');
+      }
+      
+      const data = await response.json();
+      
+      if (data.stats) {
+        this.stats.borrowed.textContent = data.stats.active_borrows;
+        this.stats.history.textContent = data.stats.total_borrows;
+        this.stats.memberSince.textContent = data.stats.member_since_days;
+        
+        // Atualizar data de criação se disponível
+        if (data.stats.created_at) {
+          const createdEl = this.profileData.infoCreated;
+          createdEl.textContent = this.formatDate(data.stats.created_at);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
+      // Fallback para valores padrão em caso de erro
+      this.stats.borrowed.textContent = "—";
+      this.stats.history.textContent = "—";
       this.stats.memberSince.textContent = "—";
     }
   }
+
 
   formatDate(dateStr) {
     const date = new Date(dateStr);

@@ -232,7 +232,7 @@ class BorrowModel extends Database
             $this->pdo->beginTransaction();
 
             $borrowStmt = $this->pdo->prepare(
-                                "SELECT id, status FROM Borrows
+                "SELECT id, status FROM Borrows
                                  WHERE book_id = :book_id
                                      AND user_id = :user_id
                                      AND status IN ('approved', 'late')
@@ -338,7 +338,7 @@ class BorrowModel extends Database
     {
         try {
             $stmt = $this->pdo->prepare(
-                                "SELECT book_id FROM Borrows
+                "SELECT book_id FROM Borrows
                                  WHERE user_id = :user_id
                                      AND status IN ('approved', 'late')"
             );
@@ -475,6 +475,175 @@ class BorrowModel extends Database
         } catch (Throwable $exception) {
             error_log('Database error in BorrowModel::getBookTitle: ' . $exception->getMessage());
             return 'Livro desconhecido';
+        }
+    }
+
+    public function getBorrowsByMonth(): array
+    {
+        try {
+            $query = $this->pdo->query(
+                "SELECT 
+                    DATE_FORMAT(requested_at, '%Y-%m') AS month, 
+                    COUNT(*) AS total_borrows 
+                 FROM Borrows 
+                 GROUP BY month 
+                 ORDER BY month ASC"
+            );
+
+            return $query->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getBorrowsByMonth: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    public function getTopBorrowedBooks(int $limit = 5): array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT 
+                    Books.id,
+                    Books.title,
+                    Books.author,
+                    COUNT(Borrows.id) AS borrow_count
+                 FROM Borrows
+                 INNER JOIN Books ON Books.id = Borrows.book_id
+                 GROUP BY Books.id, Books.title, Books.author
+                 ORDER BY borrow_count DESC
+                 LIMIT :limit"
+            );
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getTopBorrowedBooks: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    public function getBooksByCategory(): array
+    {
+        try {
+            $query = $this->pdo->query(
+                "SELECT 
+                    category, 
+                    COUNT(*) AS book_count 
+                 FROM Books 
+                 GROUP BY category"
+            );
+
+            return $query->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getBooksByCategory: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    public function getRecentActivities(int $limit = 10): array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT
+                    Borrows.id,
+                    Users.name AS user_name,
+                    Books.title AS book_title,
+                    Borrows.requested_at,
+                    Borrows.approved_at,
+                    Borrows.due_date,
+                    Borrows.returned_at,
+                    Borrows.status
+                 FROM Borrows
+                 INNER JOIN Users ON Users.id = Borrows.user_id
+                 INNER JOIN Books ON Books.id = Borrows.book_id
+                 ORDER BY 
+                    CASE 
+                        WHEN Borrows.status = 'returned' THEN Borrows.returned_at
+                        WHEN Borrows.status = 'approved' THEN Borrows.approved_at
+                        WHEN Borrows.status = 'pending' THEN Borrows.requested_at
+                        ELSE Borrows.requested_at
+                    END DESC
+                 LIMIT :limit"
+            );
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getRecentActivities: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    public function getActiveBorrowsCount(): int
+    {
+        try {
+            $query = $this->pdo->query(
+                "SELECT COUNT(*) AS active_count 
+                 FROM Borrows 
+                 WHERE status = 'borrowed'"
+            );
+
+            $result = $query->fetch(PDO::FETCH_ASSOC);
+            return $result ? (int)$result['active_count'] : 0;
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getActiveBorrowsCount: ' . $exception->getMessage());
+            return 0;
+        }
+    }
+
+    public function getTodayBorrowsCount(): int
+    {
+        try {
+            $today = (new DateTimeImmutable('now'))->format('Y-m-d');
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) AS today_count 
+                 FROM Borrows 
+                 WHERE DATE(approved_at) = :today AND status = 'borrowed'"
+            );
+            $stmt->execute([':today' => $today]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? (int)$result['today_count'] : 0;
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getTodayBorrowsCount: ' . $exception->getMessage());
+            return 0;
+        }
+    }
+
+    public function getActiveBorrowsCountByUser(int $userId): int
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) AS active_count 
+                 FROM Borrows 
+                 WHERE user_id = :user_id AND status = 'borrowed'"
+            );
+            $stmt->execute([':user_id' => $userId]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? (int)$result['active_count'] : 0;
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getActiveBorrowsCountByUser: ' . $exception->getMessage());
+            return 0;
+        }
+    }
+
+    public function getTotalBorrowsCountByUser(int $userId): int
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT COUNT(*) AS total_count 
+                 FROM Borrows 
+                 WHERE user_id = :user_id AND status IN ('borrowed', 'returned')"
+            );
+            $stmt->execute([':user_id' => $userId]);
+
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $result ? (int)$result['total_count'] : 0;
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getTotalBorrowsCountByUser: ' . $exception->getMessage());
+            return 0;
         }
     }
 }
