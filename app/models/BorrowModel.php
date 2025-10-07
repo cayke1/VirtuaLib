@@ -57,7 +57,7 @@ class BorrowModel extends Database
                 ':book_id' => $bookId,
                 ':borrowed_at' => $borrowedAt->format('Y-m-d H:i:s'),
                 ':due_date' => $dueDate->format('Y-m-d'),
-                ':status' => 'Emprestado'
+                ':status' => 'borrowed'
             ]);
 
             $updateBook = $this->pdo->prepare(
@@ -99,13 +99,13 @@ class BorrowModel extends Database
             $this->pdo->beginTransaction();
 
             $borrowStmt = $this->pdo->prepare(
-                "SELECT id, status FROM Borrows
-                 WHERE book_id = :book_id
-                   AND user_id = :user_id
-                   AND status IN ('Emprestado', 'Atrasado')
-                 ORDER BY borrowed_at DESC
-                 LIMIT 1
-                 FOR UPDATE"
+                                "SELECT id, status FROM Borrows
+                                 WHERE book_id = :book_id
+                                     AND user_id = :user_id
+                                     AND status IN ('borrowed', 'late')
+                                 ORDER BY borrowed_at DESC
+                                 LIMIT 1
+                                 FOR UPDATE"
             );
             $borrowStmt->execute([
                 ':book_id' => $bookId,
@@ -129,7 +129,7 @@ class BorrowModel extends Database
             );
             $updateBorrow->execute([
                 ':returned_at' => $returnedAt->format('Y-m-d H:i:s'),
-                ':status' => 'Devolvido',
+                ':status' => 'returned',
                 ':id' => $borrow['id'],
             ]);
 
@@ -196,9 +196,9 @@ class BorrowModel extends Database
     {
         try {
             $stmt = $this->pdo->prepare(
-                "SELECT book_id FROM Borrows
-                 WHERE user_id = :user_id
-                   AND status IN ('Emprestado', 'Atrasado')"
+                                "SELECT book_id FROM Borrows
+                                 WHERE user_id = :user_id
+                                     AND status IN ('borrowed', 'late')"
             );
             $stmt->execute([':user_id' => $userId]);
             $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);
