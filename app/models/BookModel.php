@@ -74,4 +74,50 @@ class BookModel extends Database
             return 0;
         }
     }
+
+    public function getTotalBooks()
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) as total FROM Books");
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
+        } catch (PDOException $e) {
+            error_log("Database error in getTotalBooks: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getBooksByCategory()
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    genre as nome,
+                    COUNT(*) as total,
+                    ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Books)), 1) as percentual
+                FROM Books 
+                GROUP BY genre 
+                ORDER BY total DESC
+            ");
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $colors = ['#059669', '#3b82f6', '#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+            $categories = [];
+            
+            foreach ($results as $index => $result) {
+                $categories[] = [
+                    'nome' => $result['nome'] ?: 'Sem categoria',
+                    'percentual' => (float)$result['percentual'],
+                    'color' => $colors[$index % count($colors)]
+                ];
+            }
+
+            return $categories;
+        } catch (PDOException $e) {
+            error_log("Database error in getBooksByCategory: " . $e->getMessage());
+            return [];
+        }
+    }
 }

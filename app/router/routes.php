@@ -20,6 +20,11 @@ $userRoutes = [
     "/api/notifications/{id}/read" => "NotificationsController@markAsRead",
     "/api/notifications/{id}/delet" => "NotificationsController@delete",
     "/api/notifications/mark-all-read" => "NotificationsController@markAllRead",
+    "/api/stats/general" => "StatsController@getGeneralStats",
+    "/api/stats/borrows-by-month" => "StatsController@getBorrowsByMonth",
+    "/api/stats/top-books" => "StatsController@getTopBooks",
+    "/api/stats/books-by-category" => "StatsController@getBooksByCategory",
+    "/api/stats/recent-activities" => "StatsController@getRecentActivities",
 ];
 
 $adminRoutes = [

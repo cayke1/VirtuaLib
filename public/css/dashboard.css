@@ -15,7 +15,6 @@ body {
     min-height: 100vh;
 }
 
-/* Main Content */
 .main-content {
     flex: 1;
     margin-left: 255px;
@@ -43,7 +42,6 @@ body {
     font-size: 14px;
 }
 
-/* Content */
 .content {
     padding: 32px 40px;
 }
@@ -336,6 +334,21 @@ body {
     .pie-chart-container {
         flex-direction: column;
     }
+}
+
+/* Mensagens de carregamento */
+.loading-message {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #64748b;
+    font-style: italic;
+}
+
+.loading-message:before {
+    content: "⏳";
+    margin-right: 0.5rem;
 }
 
 @media (max-width: 768px) {

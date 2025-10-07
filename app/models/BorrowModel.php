@@ -208,4 +208,129 @@ class BorrowModel extends Database
             return [];
         }
     }
+
+    public function getActiveBorrowsCount(): int
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) as total FROM Borrows WHERE status IN ('Emprestado', 'Atrasado')");
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getActiveBorrowsCount: ' . $exception->getMessage());
+            return 0;
+        }
+    }
+
+    public function getTodayBorrowsCount(): int
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) as total FROM Borrows WHERE DATE(borrowed_at) = CURDATE()");
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getTodayBorrowsCount: ' . $exception->getMessage());
+            return 0;
+        }
+    }
+
+    public function getBorrowsByMonth(): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    DATE_FORMAT(borrowed_at, '%b') as mes,
+                    COUNT(*) as total
+                FROM Borrows 
+                WHERE borrowed_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+                GROUP BY DATE_FORMAT(borrowed_at, '%Y-%m')
+                ORDER BY borrowed_at ASC
+            ");
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $mesesPt = [
+                'Jan' => 'Jan', 'Feb' => 'Fev', 'Mar' => 'Mar', 'Apr' => 'Abr',
+                'May' => 'Mai', 'Jun' => 'Jun', 'Jul' => 'Jul', 'Aug' => 'Ago',
+                'Sep' => 'Set', 'Oct' => 'Out', 'Nov' => 'Nov', 'Dec' => 'Dez'
+            ];
+
+            $data = [];
+            foreach ($results as $result) {
+                $mesPt = $mesesPt[$result['mes']] ?? $result['mes'];
+                $data[$mesPt] = (int)$result['total'];
+            }
+
+            return $data;
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getBorrowsByMonth: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    public function getTopBorrowedBooks(int $limit = 5): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    b.title as titulo,
+                    b.author as autor,
+                    COUNT(bor.id) as emprestimos
+                FROM Borrows bor
+                INNER JOIN Books b ON bor.book_id = b.id
+                GROUP BY b.id, b.title, b.author
+                ORDER BY emprestimos DESC
+                LIMIT :limit
+            ");
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getTopBorrowedBooks: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    public function getRecentActivities(int $limit = 10): array
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    'emprestimo' as tipo,
+                    CONCAT('Livro emprestado: ', b.title) as texto,
+                    CONCAT(b.author, ' - há ', TIMESTAMPDIFF(MINUTE, bor.borrowed_at, NOW()), ' min') as detalhe,
+                    '#3b82f6' as color
+                FROM Borrows bor
+                INNER JOIN Books b ON bor.book_id = b.id
+                INNER JOIN Users u ON bor.user_id = u.id
+                WHERE bor.borrowed_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+                
+                UNION ALL
+                
+                SELECT 
+                    'devolucao' as tipo,
+                    CONCAT('Livro devolvido: ', b.title) as texto,
+                    CONCAT(b.author, ' - há ', TIMESTAMPDIFF(MINUTE, bor.returned_at, NOW()), ' min') as detalhe,
+                    '#f59e0b' as color
+                FROM Borrows bor
+                INNER JOIN Books b ON bor.book_id = b.id
+                INNER JOIN Users u ON bor.user_id = u.id
+                WHERE bor.returned_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)
+                
+                ORDER BY 
+                    CASE 
+                        WHEN tipo = 'emprestimo' THEN borrowed_at
+                        WHEN tipo = 'devolucao' THEN returned_at
+                    END DESC
+                LIMIT :limit
+            ");
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getRecentActivities: ' . $exception->getMessage());
+            return [];
+        }
+    }
 }
