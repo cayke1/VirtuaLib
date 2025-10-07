@@ -13,17 +13,11 @@ class Core
         $url = $this->getCurrentUrl();
         $routerFound = false;
         
-        // Debug: ver a URL sendo processada
-        error_log("REQUEST_URI: " . $_SERVER['REQUEST_URI']);
+        
         error_log("URL processada: '$url'");
-        error_log("GET params: " . print_r($_GET, true));
         
         foreach ($this->getRoutes() as $path => $controllerAndAction) {
             $pattern = $this->buildRoutePattern($path);
-            
-            // Debug: ver os padrões
-            error_log("Testando rota '$path' com padrão '$pattern'");
-            
             if (preg_match($pattern, $url, $matches)) {
                 array_shift($matches); // Remove a URL completa dos matches
                 $routerFound = true;
@@ -46,7 +40,7 @@ class Core
     private function getCurrentUrl()
     {
         // Se há parâmetro 'url' do .htaccess, usar ele
-        if (isset($_GET['url']) && !empty($_GET['url'])) {
+        if (isset($_GET['url'])) {
             $url = '/' . trim($_GET['url'], '/');
         } else {
             // Caso contrário, usar REQUEST_URI e remover query string

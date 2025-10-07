@@ -35,10 +35,6 @@
                     <input type="email" id="email" name="email" class="form-input" placeholder="seu@email.com" required>
                 </div>
 
-                <div class="form-group">
-                    <label for="username" class="form-label">Nome de usuário</label>
-                    <input type="text" id="username" name="username" class="form-input" placeholder="usuario123" required>
-                </div>
 
                 <div class="form-group">
                     <label for="password" class="form-label">Senha</label>
@@ -66,11 +62,18 @@
         </div>
     </div>
 
+<script src="/public/js/auth.js"></script>
 <script>
-(() => {
+document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('register-form');
   const errorMessage = document.getElementById('error-message');
   const errorText = document.getElementById('error-text');
+
+  // Verifica se já está logado
+  if (window.AuthService?.isAuthenticated) {
+    window.location.href = '/';
+    return;
+  }
 
   function showError(text) {
     errorText.textContent = text;
@@ -87,43 +90,50 @@
 
     const name = document.getElementById('fullname').value.trim();
     const email = document.getElementById('email').value.trim();
-    const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
     const confirm = document.getElementById('confirm-password').value;
 
-    if (!name || !email || !username || !password || !confirm) {
+    // Validações
+    if (!name || !email || !password || !confirm) {
       showError('Preencha todos os campos obrigatórios.');
       return;
     }
+
+    if (name.length < 2) {
+      showError('O nome deve ter pelo menos 2 caracteres.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showError('Por favor, insira um email válido.');
+      return;
+    }
+
+    if (password.length < 6) {
+      showError('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
     if (password !== confirm) {
       showError('As senhas não coincidem. Verifique e tente novamente.');
       return;
     }
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({ name, email, username, password })
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (res.status === 201) {
-        if (data.token) localStorage.setItem('auth_token', data.token);
-        if (data.user) localStorage.setItem('user', JSON.stringify(data.user));
+      const result = await window.AuthService.register(name, email, password);
+      
+      if (result.success) {
         window.location.href = '/';
-      } else if (res.status === 409) {
-        showError('E-mail já está em uso. Tente outro e-mail.');
       } else {
-        showError(data.error || 'Erro interno do servidor. Tente novamente.');
+        showError(result.error || 'Erro ao criar conta. Tente novamente.');
       }
     } catch (err) {
+      console.error('Erro no registro:', err);
       showError('Erro de conexão. Verifique sua internet e tente novamente.');
     }
   });
-})();
+});
 </script>
 </body>
 </html>

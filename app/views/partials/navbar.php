@@ -36,7 +36,7 @@
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>
-            <a href="/login" class="nav-link logout">
+            <a href="#" class="nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
             </a>
@@ -76,7 +76,7 @@
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>
-            <a href="/login" class="mobile-nav-link logout">
+            <a href="#" class="mobile-nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
             </a>
@@ -92,5 +92,3 @@
     }
 </style>
 
-<script src="/public/js/searchBook.js"></script>
-<script src="/public/js/navbar.js"></script>
