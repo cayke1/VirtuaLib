@@ -1,3 +1,4 @@
+<link rel="stylesheet" href="/public/css/sidebar.css">
 <aside class="sidebar">
         <div class="logo">
             <div class="logo-icon">📚</div>

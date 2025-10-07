@@ -9,12 +9,34 @@
 </head>
 <body>
     <?php
-    $stats = [
-        'total_livros' => ['valor' => '...', 'descricao' => 'Carregando...', 'icon' => '📖', 'color' => '#3b82f6'],
-        'livros_emprestados' => ['valor' => '...', 'descricao' => 'Carregando...', 'icon' => '📚', 'color' => '#f59e0b'],
-        'usuarios_ativos' => ['valor' => '...', 'descricao' => 'Carregando...', 'icon' => '👥', 'color' => '#10b981'],
-        'emprestimos_hoje' => ['valor' => '...', 'descricao' => 'Carregando...', 'icon' => '📅', 'color' => '#6366f1']
-    ];
+    // Dados serão carregados via JavaScript das APIs
+
+    // Dados das solicitações pendentes (passados pelo controller)
+    $pendingRequests = $pendingRequests ?? [];
+    $isAdmin = $isAdmin ?? false;
+
+    function formatRequestDate(?string $value): string
+    {
+        if (!$value) {
+            return '—';
+        }
+
+        try {
+            $date = new DateTimeImmutable($value);
+            $now = new DateTimeImmutable();
+            $diff = $now->diff($date);
+            
+            if ($diff->days > 0) {
+                return $diff->days . ' dia' . ($diff->days > 1 ? 's' : '') . ' atrás';
+            } elseif ($diff->h > 0) {
+                return $diff->h . ' hora' . ($diff->h > 1 ? 's' : '') . ' atrás';
+            } else {
+                return $diff->i . ' minuto' . ($diff->i > 1 ? 's' : '') . ' atrás';
+            }
+        } catch (Exception $exception) {
+            return htmlspecialchars($value);
+        }
+    }
     ?>
 
     <aside class="sidebar">
@@ -35,48 +57,87 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Total de Livros</p>
-                            <h2 class="stat-value"><?php echo $stats['total_livros']['valor']; ?></h2>
-                            <p class="stat-desc"><?php echo $stats['total_livros']['descricao']; ?></p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
-                        <div class="stat-icon" style="background: <?php echo $stats['total_livros']['color']; ?>20; color: <?php echo $stats['total_livros']['color']; ?>">
-                            <?php echo $stats['total_livros']['icon']; ?>
+                        <div class="stat-icon" style="background: #3b82f620; color: #3b82f6">
+                            📖
                         </div>
                     </div>
 
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Livros Emprestados</p>
-                            <h2 class="stat-value"><?php echo $stats['livros_emprestados']['valor']; ?></h2>
-                            <p class="stat-desc"><?php echo $stats['livros_emprestados']['descricao']; ?></p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
-                        <div class="stat-icon" style="background: <?php echo $stats['livros_emprestados']['color']; ?>20; color: <?php echo $stats['livros_emprestados']['color']; ?>">
-                            <?php echo $stats['livros_emprestados']['icon']; ?>
+                        <div class="stat-icon" style="background: #f59e0b20; color: #f59e0b">
+                            📚
                         </div>
                     </div>
 
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Usuários Ativos</p>
-                            <h2 class="stat-value"><?php echo $stats['usuarios_ativos']['valor']; ?></h2>
-                            <p class="stat-desc"><?php echo $stats['usuarios_ativos']['descricao']; ?></p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
-                        <div class="stat-icon" style="background: <?php echo $stats['usuarios_ativos']['color']; ?>20; color: <?php echo $stats['usuarios_ativos']['color']; ?>">
-                            <?php echo $stats['usuarios_ativos']['icon']; ?>
+                        <div class="stat-icon" style="background: #10b98120; color: #10b981">
+                            👥
                         </div>
                     </div>
 
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Empréstimos Hoje</p>
-                            <h2 class="stat-value"><?php echo $stats['emprestimos_hoje']['valor']; ?></h2>
-                            <p class="stat-desc"><?php echo $stats['emprestimos_hoje']['descricao']; ?></p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
-                        <div class="stat-icon" style="background: <?php echo $stats['emprestimos_hoje']['color']; ?>20; color: <?php echo $stats['emprestimos_hoje']['color']; ?>">
-                            <?php echo $stats['emprestimos_hoje']['icon']; ?>
+                        <div class="stat-icon" style="background: #6366f120; color: #6366f1">
+                            📅
                         </div>
                     </div>
                 </div>
 
+                <?php if ($isAdmin && !empty($pendingRequests)): ?>
+                <!-- Seção de Solicitações Pendentes -->
+                <div class="pending-requests-section">
+                    <div class="section-header">
+                        <h2>⏳ Solicitações Pendentes</h2>
+                        <span class="request-count"><?php echo count($pendingRequests); ?> solicitação(ões)</span>
+                    </div>
+                    
+                    <div class="requests-grid">
+                        <?php foreach ($pendingRequests as $request): ?>
+                            <div class="request-card" data-request-id="<?php echo $request['id']; ?>">
+                                <div class="request-info">
+                                    <div class="request-user">
+                                        <span class="user-name"><?php echo htmlspecialchars($request['user_name']); ?></span>
+                                        <span class="user-email"><?php echo htmlspecialchars($request['user_email']); ?></span>
+                                    </div>
+                                    <div class="request-book">
+                                        <h4><?php echo htmlspecialchars($request['book_title']); ?></h4>
+                                        <p><?php echo htmlspecialchars($request['book_author']); ?></p>
+                                    </div>
+                                    <div class="request-time">
+                                        <span class="time-badge"><?php echo formatRequestDate($request['requested_at']); ?></span>
+                                    </div>
+                                </div>
+                                <div class="request-actions">
+                                    <button class="approve-btn" onclick="approveRequest(<?php echo $request['id']; ?>)">
+                                        ✅ Aprovar
+                                    </button>
+                                    <button class="reject-btn" onclick="rejectRequest(<?php echo $request['id']; ?>)">
+                                        ❌ Rejeitar
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Gráficos e Dados -->
                 <div class="charts-grid">
                     <div class="chart-card">
                         <div class="chart-header">
@@ -135,7 +196,7 @@
             </div>
         </main>
     </div>
-    
+
     <script src="/public/js/dashboard.js"></script>
 </body>
 </html>

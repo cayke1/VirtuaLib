@@ -7,6 +7,7 @@ class DashboardStats {
         try {
             await this.loadAllStats();
             this.setupRefreshInterval();
+            this.setupRequestHandlers();
         } catch (error) {
             console.error('Erro ao inicializar dashboard:', error);
         }
@@ -103,13 +104,20 @@ class DashboardStats {
 
     updateBorrowsByMonthChart(data) {
         const chartContainer = document.querySelector('.bar-chart');
-        if (!chartContainer || !data) return;
+        if (!chartContainer || !data || data.length === 0) return;
 
-        const maxValue = Math.max(...Object.values(data));
+        // Converter array de objetos para objeto com chave-valor
+        const chartData = {};
+        data.forEach(item => {
+            const monthKey = item.month;
+            chartData[monthKey] = parseInt(item.total_borrows);
+        });
+
+        const maxValue = Math.max(...Object.values(chartData));
         
         chartContainer.innerHTML = '';
         
-        Object.entries(data).forEach(([month, value]) => {
+        Object.entries(chartData).forEach(([month, value]) => {
             const barContainer = document.createElement('div');
             barContainer.className = 'bar-container';
             
@@ -139,10 +147,10 @@ class DashboardStats {
             bookItem.innerHTML = `
                 <span class="book-rank">${index + 1}</span>
                 <div class="book-info">
-                    <p class="book-title">${book.titulo}</p>
-                    <p class="book-author">${book.autor}</p>
+                    <p class="book-title">${book.title}</p>
+                    <p class="book-author">${book.author}</p>
                 </div>
-                <span class="book-count">${book.emprestimos}x</span>
+                <span class="book-count">${book.borrow_count}x</span>
             `;
             
             topBooksContainer.appendChild(bookItem);
@@ -205,11 +213,39 @@ class DashboardStats {
             const activityItem = document.createElement('div');
             activityItem.className = 'activity-item';
             
+            // Determinar tipo de atividade e cor baseado no status
+            let activityText = '';
+            let activityDetail = '';
+            let color = '#3b82f6';
+            
+            switch(activity.status) {
+                case 'pending':
+                    activityText = 'Solicitação de empréstimo';
+                    activityDetail = `${activity.book_title} - ${activity.user_name}`;
+                    color = '#f59e0b';
+                    break;
+                case 'approved':
+                case 'borrowed':
+                    activityText = 'Livro emprestado';
+                    activityDetail = `${activity.book_title} - ${activity.user_name}`;
+                    color = '#10b981';
+                    break;
+                case 'returned':
+                    activityText = 'Livro devolvido';
+                    activityDetail = `${activity.book_title} - ${activity.user_name}`;
+                    color = '#6366f1';
+                    break;
+                default:
+                    activityText = 'Atividade no sistema';
+                    activityDetail = `${activity.book_title} - ${activity.user_name}`;
+                    color = '#6b7280';
+            }
+            
             activityItem.innerHTML = `
-                <span class="activity-dot" style="background: ${activity.color}"></span>
+                <span class="activity-dot" style="background: ${color}"></span>
                 <div class="activity-info">
-                    <p class="activity-text">${activity.texto}</p>
-                    <p class="activity-detail">${activity.detalhe}</p>
+                    <p class="activity-text">${activityText}</p>
+                    <p class="activity-detail">${activityDetail}</p>
                 </div>
             `;
             
@@ -227,6 +263,93 @@ class DashboardStats {
     showError(message) {
         // Implementar notificação de erro se necessário
         console.warn(message);
+    }
+
+    // Métodos para gerenciar solicitações pendentes
+    setupRequestHandlers() {
+        // Tornar as funções globais para uso nos botões onclick
+        window.approveRequest = (requestId) => this.approveRequest(requestId);
+        window.rejectRequest = (requestId) => this.rejectRequest(requestId);
+    }
+
+    async approveRequest(requestId) {
+        if (!confirm('Tem certeza que deseja aprovar esta solicitação?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/approve/${requestId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this.showSuccessMessage('Solicitação aprovada com sucesso!');
+                this.removeRequestCard(requestId);
+            } else {
+                this.showErrorMessage(result.message || 'Erro ao aprovar solicitação');
+            }
+        } catch (error) {
+            this.showErrorMessage('Erro ao conectar com o servidor');
+            console.error('Error:', error);
+        }
+    }
+
+    async rejectRequest(requestId) {
+        if (!confirm('Tem certeza que deseja rejeitar esta solicitação?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/reject/${requestId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                this.showSuccessMessage('Solicitação rejeitada com sucesso!');
+                this.removeRequestCard(requestId);
+            } else {
+                this.showErrorMessage(result.message || 'Erro ao rejeitar solicitação');
+            }
+        } catch (error) {
+            this.showErrorMessage('Erro ao conectar com o servidor');
+            console.error('Error:', error);
+        }
+    }
+
+    removeRequestCard(requestId) {
+        const requestCard = document.querySelector(`[data-request-id="${requestId}"]`);
+        if (requestCard) {
+            requestCard.remove();
+            this.updateRequestCount();
+        }
+    }
+
+    updateRequestCount() {
+        const requestCount = document.querySelector('.request-count');
+        if (requestCount) {
+            const remainingRequests = document.querySelectorAll('.request-card').length;
+            requestCount.textContent = `${remainingRequests} solicitação(ões)`;
+        }
+    }
+
+    showSuccessMessage(message) {
+        // Implementar notificação de sucesso
+        alert(message); // Por enquanto usando alert, pode ser melhorado com toast notifications
+    }
+
+    showErrorMessage(message) {
+        // Implementar notificação de erro
+        alert(message); // Por enquanto usando alert, pode ser melhorado com toast notifications
     }
 }
 

@@ -152,14 +152,19 @@ tr:hover {
     font-weight: 500;
 }
 
-.status-devolvido {
-    background: #d1fae5;
-    color: #065f46;
+.status-pendente {
+    background: #fef3c7;
+    color: #92400e;
 }
 
 .status-ativo {
     background: #dbeafe;
     color: #1e40af;
+}
+
+.status-devolvido {
+    background: #d1fae5;
+    color: #065f46;
 }
 
 .status-atrasado {

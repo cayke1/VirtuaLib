@@ -118,4 +118,46 @@ class StatsController
             $this->json(['error' => 'Erro ao carregar atividades recentes'], 500);
         }
     }
+
+    public function getUserProfileStats()
+    {
+        $this->requireAuth();
+        
+        try {
+            // Debug: verificar se a sessão está correta
+            if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+                $this->json(['error' => 'Usuário não encontrado na sessão'], 401);
+                return;
+            }
+            
+            $userId = $_SESSION['user']['id'];
+            $borrowModel = new BorrowModel();
+            $userModel = new UserModel();
+
+            // Buscar estatísticas do usuário
+            $activeBorrows = $borrowModel->getActiveBorrowsCountByUser($userId);
+            $totalBorrows = $borrowModel->getTotalBorrowsCountByUser($userId);
+            $userInfo = $userModel->getUserById($userId);
+
+            // Calcular dias como membro
+            $memberSinceDays = 0;
+            $createdAt = null;
+            if ($userInfo && isset($userInfo['created_at'])) {
+                $createdAt = $userInfo['created_at'];
+                $memberSinceDays = floor((time() - strtotime($createdAt)) / (60 * 60 * 24));
+            }
+
+            $stats = [
+                'active_borrows' => $activeBorrows,
+                'total_borrows' => $totalBorrows,
+                'member_since_days' => $memberSinceDays,
+                'created_at' => $createdAt
+            ];
+
+            $this->json(['stats' => $stats]);
+        } catch (Exception $e) {
+            error_log("Error in getUserProfileStats: " . $e->getMessage());
+            $this->json(['error' => 'Erro ao carregar estatísticas do perfil'], 500);
+        }
+    }
 }

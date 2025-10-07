@@ -1,7 +1,9 @@
 <?php
 
-class AuthController
+class AuthController extends RenderView
 {
+    use AuthGuard;
+
     private $userModel;
 
     public function __construct()
@@ -86,13 +88,18 @@ class AuthController
 
     public function showProfile()
     {
-        include __DIR__ . '/../views/profile.php';
+        $this->requireAuth();
+
+        $this->loadView('partials/header', ['title' => 'Meu Perfil']);
+        $this->render('profile', ['user' => $_SESSION['user']]);
     }
 
     private function readJsonBody()
     {
         $raw = file_get_contents('php://input');
-        if (!$raw) { return null; }
+        if (!$raw) {
+            return null;
+        }
         $data = json_decode($raw, true);
         return is_array($data) ? $data : null;
     }

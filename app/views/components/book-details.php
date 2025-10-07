@@ -29,7 +29,13 @@
                 <button
                     class="action-button borrow"
                     data-book-id="<?php echo $book['id']; ?>">
-                    <?php echo (isset($book['available']) && $book['available']) ? 'Emprestar' : 'Devolver'; ?>
+                    <?php 
+                    if (isset($book['available']) && $book['available']) {
+                        echo 'Solicitar';
+                    } else {
+                        echo 'Devolver';
+                    }
+                    ?>
                 </button>
             </div>
         </div>
