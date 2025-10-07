@@ -2,7 +2,7 @@
 $totalBooks = count($books);
 
 $availableBooks = count(array_filter($books, function($book) {
-    return !$book['borrowed']; // livros não emprestados
+    return isset($book['available']) && $book['available']; // livros disponíveis
 }));
 
 $borrowedBooks = $totalBooks - $availableBooks;
@@ -18,11 +18,11 @@ $borrowedBooks = $totalBooks - $availableBooks;
         <div class="stats">
             <div class="stat-item available">
                 <i class="fas fa-book-open"></i>
-                <span><?php echo $availableBooks; ?> livros disponíveis</span>
+                <span id="books-available" data-label="livros disponíveis"><?php echo $availableBooks; ?> livros disponíveis</span>
             </div>
             <div class="stat-item borrowed">
                 <i class="fas fa-book"></i>
-                <span><?php echo $borrowedBooks; ?> emprestados</span>
+                <span id="books-borrowed" data-label="emprestados"><?php echo $borrowedBooks; ?> emprestados</span>
             </div>
         </div>
         

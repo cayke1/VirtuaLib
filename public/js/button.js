@@ -8,58 +8,108 @@ document.addEventListener("click", async (e) => {
     const borrowedCounter = document.getElementById("books-borrowed");
     const availableCounter = document.getElementById("books-available");
 
-    // Função para indicar estado de carregamento
-    const setLoadingState = (loading) => {
+    const borrowedSuffix = borrowedCounter
+        ? borrowedCounter.dataset.label ?? borrowedCounter.textContent.replace(/\d+/g, "").trim()
+        : null;
+    const availableSuffix = availableCounter
+        ? availableCounter.dataset.label ?? availableCounter.textContent.replace(/\d+/g, "").trim()
+        : null;
+
+    const parseCounterValue = (element) => {
+        if (!element) return null;
+        const numeric = parseInt(element.textContent, 10);
+        return Number.isNaN(numeric) ? 0 : numeric;
+    };
+
+        const setLoadingState = (loading) => {
         button.disabled = loading;
         button.style.cursor = loading ? "not-allowed" : "pointer";
         if (loading) {
-            button.textContent = isReturn ? "Devolvendo..." : "Emprestando...";
+            button.textContent = isReturn ? "Devolvendo..." : "Solicitando...";
         }
     };
 
-    // Função para atualizar os contadores
     const updateCounters = (borrowedChange, availableChange) => {
-        borrowedCounter.textContent =
-            parseInt(borrowedCounter.textContent) + borrowedChange + " emprestados";
-        availableCounter.textContent =
-            parseInt(availableCounter.textContent) + availableChange + " livros disponíveis";
+        const borrowedValue = parseCounterValue(borrowedCounter);
+        if (borrowedValue !== null && borrowedCounter) {
+            const newValue = borrowedValue + borrowedChange;
+            borrowedCounter.textContent = borrowedSuffix
+                ? `${newValue} ${borrowedSuffix}`.trim()
+                : `${newValue}`;
+        }
+
+        const availableValue = parseCounterValue(availableCounter);
+        if (availableValue !== null && availableCounter) {
+            const newValue = availableValue + availableChange;
+            availableCounter.textContent = availableSuffix
+                ? `${newValue} ${availableSuffix}`.trim()
+                : `${newValue}`;
+        }
     };
 
-    // Troca para estado "emprestado"
     const setBorrowedState = () => {
         button.classList.replace("borrow", "return");
         button.textContent = "Devolver";
         updateCounters(+1, -1);
+
+        const card = button.closest(".book-card");
+        if (card) {
+            const statusText = card.querySelector(".status-text");
+            const statusDot = card.querySelector(".status-dot");
+            if (statusText) {
+                statusText.textContent = "Emprestado";
+            }
+            if (statusDot) {
+                statusDot.classList.remove("available");
+                statusDot.classList.add("borrowed");
+            }
+        }
     };
 
-    // Troca para estado "disponível"
     const setReturnedState = () => {
         button.classList.replace("return", "borrow");
-        button.textContent = "Emprestar";
+        button.textContent = "Solicitar";
         updateCounters(-1, +1);
+
+        const card = button.closest(".book-card");
+        if (card) {
+            const statusText = card.querySelector(".status-text");
+            const statusDot = card.querySelector(".status-dot");
+            if (statusText) {
+                statusText.textContent = "Disponível";
+            }
+            if (statusDot) {
+                statusDot.classList.remove("borrowed");
+                statusDot.classList.add("available");
+            }
+        }
     };
 
     try {
         setLoadingState(true);
 
-        // Corrigido uso de template string no fetch
-        const response = await fetch(`/${isReturn ? "return" : "borrow"}/${bookId}`, {
+        const response = await fetch(`/${isReturn ? "return" : "request"}/${bookId}`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
         });
 
-        const result = await response.json();
+        let result = {};
+        try {
+            result = await response.json();
+        } catch (parseError) {
+            result = {};
+        }
 
-        if (result.success) {
+        if (response.ok && result.success) {
             isReturn ? setReturnedState() : setBorrowedState();
         } else {
-            alert("Erro na operação: " + result.message);
+            const message = result.message || "Erro na operação";
+            alert(message);
         }
     } catch (error) {
-        // console.error(error);
-        // alert("Erro ao conectar com o servidor.");
+        alert("Erro ao conectar com o servidor.");
     }
 
     setLoadingState(false);

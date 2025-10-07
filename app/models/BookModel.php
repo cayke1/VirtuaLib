@@ -55,57 +55,69 @@ class BookModel extends Database
         }
     }
     
-    public function borrowBook(int $bookId)
+    public function createBook(array $data)
     {
+        $sql = "INSERT INTO Books (title, author, genre, year, description, available) 
+                VALUES (:title, :author, :genre, :year, :description, :available)";
         try {
-            $checkSql = "SELECT id, borrowed FROM Books WHERE id = :id";
-            $checkStmt = $this->pdo->prepare($checkSql);
-            $checkStmt->execute([':id' => $bookId]);
-            $book = $checkStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$book) {
-                return ['success' => false, 'message' => 'Livro não encontrado'];
-            }
-
-            if ($book['borrowed']) {
-                return ['success' => false, 'message' => 'Livro já está emprestado'];
-            }
-
-            $updateSql = "UPDATE Books SET borrowed = 1 WHERE id = :id";
-            $updateStmt = $this->pdo->prepare($updateSql);
-            $updateStmt->execute([':id' => $bookId]);
-
-            return ['success' => true, 'message' => 'Livro emprestado com sucesso'];
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':title', $data['title'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':author', $data['author'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':genre', $data['genre'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':year', (int)($data['year'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':description', $data['description'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':available', isset($data['available']) ? (int)(bool)$data['available'] : 1, PDO::PARAM_INT);
+            $stmt->execute();
+            return (int)$this->pdo->lastInsertId();
         } catch (PDOException $e) {
-            error_log("Database error in borrowBook: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Erro interno do servidor'];
+            error_log("Database error in createBook: " . $e->getMessage());
+            return 0;
         }
     }
 
-    public function returnBook(int $bookId)
+    public function getTotalBooks()
     {
         try {
-            $checkSql = "SELECT id, borrowed FROM Books WHERE id = :id";
-            $checkStmt = $this->pdo->prepare($checkSql);
-            $checkStmt->execute([':id' => $bookId]);
-            $book = $checkStmt->fetch(PDO::FETCH_ASSOC);
-
-            if (!$book) {
-                return ['success' => false, 'message' => 'Livro não encontrado'];
-            }
-
-            if (!$book['borrowed']) {
-                return ['success' => false, 'message' => 'Livro já está disponível'];
-            }
-
-            $updateSql = "UPDATE Books SET borrowed = 0 WHERE id = :id";
-            $updateStmt = $this->pdo->prepare($updateSql);
-            $updateStmt->execute([':id' => $bookId]);
-
-            return ['success' => true, 'message' => 'Livro devolvido com sucesso'];
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) as total FROM Books");
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
         } catch (PDOException $e) {
-            error_log("Database error in returnBook: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Erro interno do servidor'];
+            error_log("Database error in getTotalBooks: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getBooksByCategory()
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    genre as nome,
+                    COUNT(*) as total,
+                    ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Books)), 1) as percentual
+                FROM Books 
+                GROUP BY genre 
+                ORDER BY total DESC
+            ");
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $colors = ['#059669', '#3b82f6', '#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+            $categories = [];
+            
+            foreach ($results as $index => $result) {
+                $categories[] = [
+                    'nome' => $result['nome'] ?: 'Sem categoria',
+                    'percentual' => (float)$result['percentual'],
+                    'color' => $colors[$index % count($colors)]
+                ];
+            }
+
+            return $categories;
+        } catch (PDOException $e) {
+            error_log("Database error in getBooksByCategory: " . $e->getMessage());
+            return [];
         }
     }
 }
