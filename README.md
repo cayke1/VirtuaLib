@@ -120,5 +120,8 @@ O sistema é projetado para oferecer uma **experiência intuitiva e responsiva**
 
 - [📌 Trello do Projeto](https://trello.com/invite/b/689d4d47bab2daad9f60e335/ATTIc8f30abdc1bea10d466d116378b9c226F9DC5DA6/virtualib)  
 - [🎨 Protótipo no Figma](https://www.figma.com/design/7xDDLk1pqLlJ8qGoq74Suh/Untitled?node-id=0-1&t=d5UdozK2nkhF82av-1)  
+- [PDF - SPRINT 1](./docs/sprints//Planejamento%20Tec%20Sprint%201%20-%20ES.pdf)
+- [PDF - SPRINT 2](./docs//sprints/Planejamento%20Tec%20Sprint%202%20-%20ES.pdf)
+- [PDF - SPRINT 3](./docs/sprints/Planejamento%20Tec%20Sprint%203%20-%20ES.pdf)
 
 ---
