@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Verifica se já está logado
   if (window.AuthService?.isAuthenticated) {
-    window.location.href = 'login';
+    redirecionarParaPorta(8080, '/auth/login');
     return;
   }
 
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await window.AuthService.register(name, email, password);
       
       if (result.success) {
-        window.location.href = 'login';
+        redirecionarParaPorta(8080, '/auth/login');
       } else {
         showError(result.error || 'Erro ao criar conta. Tente novamente.');
       }

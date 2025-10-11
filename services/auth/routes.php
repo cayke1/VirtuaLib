@@ -33,6 +33,7 @@ class AuthRouter {
         // Remover query string
         $uri = strtok($uri, '?');
         
+        
         // Encontrar rota correspondente
         foreach ($this->routes as $route => $handler) {
             if ($this->matchRoute($route, $uri)) {

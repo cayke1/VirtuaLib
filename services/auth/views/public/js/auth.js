@@ -3,10 +3,10 @@
  * Gerencia login, logout, verificação de usuário e interceptação de erros
  */
     function redirecionarParaPorta(novaPorta, caminho = '/') {
-      const { protocol, hostname } = window.location;
-      const url = `${protocol}//${hostname}:${novaPorta}${caminho}`;
-      window.location.href = url;
-    }
+    const { protocol, hostname, search, hash } = window.location;
+    const url = `${protocol}//${hostname}:${novaPorta}${caminho}${search}${hash}`;
+    window.location.href = url;
+  }
 class AuthService {
     constructor() {
         this.currentUser = null;
@@ -32,7 +32,7 @@ class AuthService {
     
     async checkAuth() {
         try {
-            const response = await this.fetchWithTimeout('/api/me', {
+            const response = await this.fetchWithTimeout('/auth/api/me', {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: { 'Accept': 'application/json' }
@@ -45,6 +45,23 @@ class AuthService {
                     return true;
                 }
             }
+            else {
+                response = await this.fetchWithTimeout('/api/me', {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (response.ok) {
+                const data = await response.json();
+                if (data?.user) {
+                    this.setUser(data.user);
+                    return true;
+                }else{
+                    this.clearUser();
+                    return false;
+                }
+            }
+        }
             
             this.clearUser();
             return false;
@@ -60,7 +77,7 @@ class AuthService {
      */
     async login(email, password) {
         try {
-            const response = await this.fetchWithTimeout('/api/login', {
+            const response = await this.fetchWithTimeout('/auth/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -71,6 +88,17 @@ class AuthService {
             });
 
             const data = await response.json();
+            if (!response.ok) {
+                response = await this.fetchWithTimeout('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ email, password })
+            });
+            }
 
             if (response.ok && data.user) {
                 this.setUser(data.user);
@@ -106,7 +134,7 @@ class AuthService {
      */
     async register(name, email, password) {
         try {
-            const response = await this.fetchWithTimeout('/api/register', {
+            const response = await this.fetchWithTimeout('/auth/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -117,12 +145,29 @@ class AuthService {
             });
 
             const data = await response.json();
-
+            
             if (response.ok && data.user) {
                 this.setUser(data.user);
+                
                 return { success: true, user: data.user, message: data.message };
             } else {
-                return { success: false, error: data.error || 'Erro no registro' };
+                const response = await this.fetchWithTimeout('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ name, email, password })});
+                const data = await response.json();
+                if (response.ok && data.user) {
+                    this.setUser(data.user);
+                    
+                    return { success: true, user: data.user, message: data.message };
+                } else {
+                    return { success: false, error: data.error || 'Erro ao registrar' };
+                }
+               
             }
         } catch (error) {
             return { success: false, error: 'Erro de conexão' };
