@@ -10,7 +10,7 @@
     <nav class="navbar">
     <div class="nav-container">
         <!-- Logo e nome da marca -->
-        <a href="http://localhost:8080/books" class="nav-brand">
+        <a href="#" class="nav-brand" id="rota">
             <div class="logo">
                 <div class="logo-icon">
                     <div class="square square-1"></div>

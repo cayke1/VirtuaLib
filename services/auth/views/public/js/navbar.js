@@ -1,3 +1,14 @@
+
+    function redirecionarParaPorta(novaPorta, caminho = '/') {
+    const { protocol, hostname, search, hash } = window.location;
+    const url = `${protocol}//${hostname}:${novaPorta}${caminho}${search}${hash}`;
+    window.location.href = url;
+  }
+  document.getElementById('rota').addEventListener('click', function (e) {
+    e.preventDefault();
+    redirecionarParaPorta(8080, '/books');
+  });
+
 document.addEventListener('DOMContentLoaded', function() {
     const hamburger = document.getElementById('hamburger');
     const navMenuMobile = document.getElementById('nav-menu-mobile');

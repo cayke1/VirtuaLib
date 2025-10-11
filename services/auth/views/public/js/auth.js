@@ -2,6 +2,11 @@
  * AuthService - Serviço centralizado para autenticação
  * Gerencia login, logout, verificação de usuário e interceptação de erros
  */
+    function redirecionarParaPorta(novaPorta, caminho = '/') {
+      const { protocol, hostname } = window.location;
+      const url = `${protocol}//${hostname}:${novaPorta}${caminho}`;
+      window.location.href = url;
+    }
 class AuthService {
     constructor() {
         this.currentUser = null;
@@ -24,6 +29,7 @@ class AuthService {
     /**
      * Verifica se o usuário está autenticado
      */
+    
     async checkAuth() {
         try {
             const response = await this.fetchWithTimeout('/api/me', {
@@ -68,7 +74,7 @@ class AuthService {
 
             if (response.ok && data.user) {
                 this.setUser(data.user);
-                window.location.href = 'http://localhost:8080/books';
+                redirecionarParaPorta(8080, '/books');
                 return { success: true, user: data.user, message: data.message };
             } else {
                 return { success: false, error: data.error || 'Erro no login' };

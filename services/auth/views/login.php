@@ -59,6 +59,7 @@
     <?php include __DIR__ . '/public/js/auth.js'; ?>
   </script>
   <script>
+    
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('login-form');
       const errorMessage = document.getElementById('error-message');
@@ -66,7 +67,7 @@
 
       // Verifica se já está logado
       if (window.AuthService?.isAuthenticated) {
-        window.location.href = 'localhost:8081/profile';
+        redirecionarParaPorta(8080, '/books');
         return;
       }
 
@@ -102,7 +103,7 @@
           const result = await window.AuthService.login(email, password);
           
           if (result.success) {
-            window.location.href = 'localhost:8081/profile';
+            redirecionarParaPorta(8080, '/books');
           } else {
             showError(result.error || 'Erro ao fazer login. Tente novamente.');
           }
