@@ -5,10 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VirtuaLib - Login</title>
-  
+  <link rel="stylesheet" href="/public/css/auth.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-
+<style>
+  <?php include __DIR__ . '/public/css/auth.css'; ?>
+</style>
 <body>
   <div class="container">
     <div class="auth-card">
@@ -52,10 +54,10 @@
       </div>
     </div>
   </div>
-  <style>
-    <?php require_once __DIR__ . '/public/css/auth.css' ?>
-  </style>
-  <script src="/public/js/auth.js"></script>
+
+  <script >
+    <?php include __DIR__ . '/public/js/auth.js'; ?>
+  </script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const form = document.getElementById('login-form');
@@ -64,7 +66,7 @@
 
       // Verifica se já está logado
       if (window.AuthService?.isAuthenticated) {
-        window.location.href = '/';
+        window.location.href = 'localhost:8081/profile';
         return;
       }
 
@@ -100,7 +102,7 @@
           const result = await window.AuthService.login(email, password);
           
           if (result.success) {
-            window.location.href = '/';
+            window.location.href = 'localhost:8081/profile';
           } else {
             showError(result.error || 'Erro ao fazer login. Tente novamente.');
           }
