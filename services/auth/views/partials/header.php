@@ -11,12 +11,11 @@
 
 
     <title><?php echo $title; ?> - VirtuaLib</title>
+    
     <style><?php
         include __DIR__ . "../../public/css/base.css";
         include __DIR__ . "../../public/css/navbar.css";
-        include __DIR__ . "../../public/css/layout.css";
-        include __DIR__ . "../../public/css/stats.css";
-        include __DIR__ . "../../public/css/book-card.css";
+        include __DIR__ . "../../public/css/layout.css";        
         include __DIR__ . "../../public/css/profile.css";
         include __DIR__ . "../../public/css/notifications.css";
     ?>

@@ -102,7 +102,7 @@ class AuthService {
 
             if (response.ok && data.user) {
                 this.setUser(data.user);
-                redirecionarParaPorta(8080, '/books');
+                redirecionarParaPorta(80, '/books');
                 return { success: true, user: data.user, message: data.message };
             } else {
                 return { success: false, error: data.error || 'Erro no login' };
@@ -117,15 +117,21 @@ class AuthService {
      */
     async logout() {
         try {
-            await this.fetchWithTimeout('/api/logout', {
+            const response= await this.fetchWithTimeout('/api/logout', {
                 method: 'POST',
                 credentials: 'same-origin'
             });
+            if (!response.ok) {
+                await this.fetchWithTimeout('/auth/api/logout', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+            }
         } catch (error) {
             console.warn('Erro ao fazer logout:', error);
         } finally {
             this.clearUser();
-            window.location.href = '/login';
+            window.location.href = '/auth/login';
         }
     }
 
@@ -151,7 +157,7 @@ class AuthService {
                 
                 return { success: true, user: data.user, message: data.message };
             } else {
-                const response = await this.fetchWithTimeout('/api/register', {
+                const response = await this.fetchWithTimeout('/auth/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -179,7 +185,7 @@ class AuthService {
      */
     async updateProfile(name, email) {
         try {
-            const response = await this.fetchWithTimeout('/api/update-profile', {
+            const response = await this.fetchWithTimeout('/auth/api/update-profile', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -207,7 +213,7 @@ class AuthService {
      */
     async changePassword(currentPassword, newPassword) {
         try {
-            const response = await this.fetchWithTimeout('/api/change-password', {
+            const response = await this.fetchWithTimeout('/auth/api/change-password', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -288,7 +294,7 @@ class AuthService {
      */
     requireAuth() {
         if (!this.isAuthenticated) {
-            window.location.href = 'login';
+            redirecionarParaPorta(80, '/auth/login');
             return false;
         }
         return true;
@@ -307,7 +313,7 @@ class AuthService {
     requireRole(role) {
         if (!this.requireAuth()) return false;
         if (!this.hasRole(role)) {
-            window.location.href = 'login';
+            redirecionarParaPorta(80, '/auth/login');
             return false;
         }
         return true;
@@ -316,7 +322,7 @@ class AuthService {
     /**
      * Fetch com timeout e tratamento de erros de autenticação
      */
-    async fetchWithTimeout(url, options = {}, timeout = 10000) {
+    async fetchWithTimeout(url, options = {}, timeout = 1000) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
         
@@ -330,8 +336,8 @@ class AuthService {
             // Intercepta erros de autenticação
             if (response.status === 401) {
                 this.clearUser();
-                if (window.location.pathname !== 'login') {
-                    window.location.href = 'login';
+                if (window.location.pathname !== '/auth/login') {
+                    redirecionarParaPorta(80, '/auth/login');
                 }
                 throw new Error('Não autenticado');
             }

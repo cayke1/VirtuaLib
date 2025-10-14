@@ -23,6 +23,7 @@ class AuthRouter {
             '/api/logout' => ['AuthController', 'logout'],
             '/api/me' => ['AuthController', 'me'],
             '/api/update-profile' => ['AuthController', 'updateProfile'],
+            '/api/user-stats' => ['AuthController', 'getUserProfileStats'],
         ];
     }
     

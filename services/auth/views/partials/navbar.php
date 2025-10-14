@@ -61,11 +61,11 @@
                 </div>
             </div>
 
-            <a href="/profile" class="nav-link">
+            <a href="/auth/profile" class="nav-link">
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/historico" class="nav-link">
+            <a href="/history" class="nav-link">
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>
@@ -126,7 +126,7 @@
                 </div>
             </div>
 
-            <a href="/profile" class="mobile-nav-link">
+            <a href="/auth/profile" class="mobile-nav-link">
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>

@@ -67,7 +67,7 @@
 
       // Verifica se já está logado
       if (window.AuthService?.isAuthenticated) {
-        redirecionarParaPorta(8080, '/books');
+        redirecionarParaPorta(80, '/books');
         return;
       }
 
@@ -103,7 +103,7 @@
           const result = await window.AuthService.login(email, password);
           
           if (result.success) {
-            redirecionarParaPorta(8080, '/books');
+            redirecionarParaPorta(80, '/books');
           } else {
             showError(result.error || 'Erro ao fazer login. Tente novamente.');
           }

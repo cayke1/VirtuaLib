@@ -6,7 +6,7 @@
   }
   document.getElementById('rota').addEventListener('click', function (e) {
     e.preventDefault();
-    redirecionarParaPorta(8080, '/books');
+    redirecionarParaPorta(80, '/books');
   });
 
 document.addEventListener('DOMContentLoaded', function() {
