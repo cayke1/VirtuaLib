@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     unzip \
     curl \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && docker-php-ext-install pdo pdo_mysql \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
