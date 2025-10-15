@@ -23,6 +23,7 @@ class AuthRouter {
             '/api/logout' => ['AuthController', 'logout'],
             '/api/me' => ['AuthController', 'me'],
             '/api/update-profile' => ['AuthController', 'updateProfile'],
+            '/api/user-stats' => ['AuthController', 'getUserProfileStats'],
         ];
     }
     
@@ -32,6 +33,7 @@ class AuthRouter {
         
         // Remover query string
         $uri = strtok($uri, '?');
+        
         
         // Encontrar rota correspondente
         foreach ($this->routes as $route => $handler) {

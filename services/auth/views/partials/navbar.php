@@ -1,7 +1,16 @@
+<style>
+    <?php 
+        include __DIR__ . '../../public/css/notifications.css';
+        include __DIR__ . '../../public/css/navbar.css';
+     ?>
+
+</style>
+
+<body>    
     <nav class="navbar">
     <div class="nav-container">
         <!-- Logo e nome da marca -->
-        <a href="http://loacalhost:8080/books" class="nav-brand">
+        <a href="#" class="nav-brand" id="rota">
             <div class="logo">
                 <div class="logo-icon">
                     <div class="square square-1"></div>
@@ -52,15 +61,15 @@
                 </div>
             </div>
 
-            <a href="/profile" class="nav-link">
+            <a href="/auth/profile" class="nav-link">
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/historico" class="nav-link">
+            <a href="/history" class="nav-link">
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>
-            <a href="#" class="nav-link logout" onclick="window.logout(); return false;">
+            <a href="#" class="nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
             </a>
@@ -117,7 +126,7 @@
                 </div>
             </div>
 
-            <a href="/profile" class="mobile-nav-link">
+            <a href="/auth/profile" class="mobile-nav-link">
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
@@ -132,6 +141,14 @@
         </div>
     </div>
 </nav>
+<script>
+
+    <?php 
+        include __DIR__ . '../../public/js/auth.js';
+        include __DIR__ . '../../public/js/navbar.js'; 
+        include __DIR__ . '../../public/js/notifications.js';
+    ?>
+</script>
 <style>
     .nav-link {
         color: #1e293b;

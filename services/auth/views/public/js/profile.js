@@ -40,7 +40,7 @@ export class ProfileManager {
 
   async loadStats() {
     try {
-      const response = await fetch('/api/stats/user-profile');
+      const response = await fetch('/auth/api/user-stats');
       
       // Verificar se a resposta é JSON
       const contentType = response.headers.get('content-type');
