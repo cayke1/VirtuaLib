@@ -18,16 +18,11 @@ RUN a2enmod rewrite headers proxy proxy_http \
 # Configurar VirtualHost para SOA
 COPY apache-soa.conf /etc/apache2/sites-available/000-default.conf
 
-# Configurar entrypoint para diferentes serviços
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
 # Copiar arquivos da aplicação (exceto arquivos desnecessários)
 COPY app/ /var/www/html/app/
 COPY services/ /var/www/html/services/
 COPY public/ /var/www/html/public/
 COPY apache-soa.conf /var/www/html/
-COPY docker-entrypoint.sh /var/www/html/
 
 # Criar arquivo index.php básico
 RUN echo "<?php echo 'Virtual Library API Gateway'; ?>" > /var/www/html/index.php
@@ -36,7 +31,24 @@ RUN echo "<?php echo 'Virtual Library API Gateway'; ?>" > /var/www/html/index.ph
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
+# Criar script de inicialização
+RUN echo '#!/bin/bash' > /usr/local/bin/init-service.sh && \
+    echo 'if [ -n "$SERVICE_NAME" ]; then' >> /usr/local/bin/init-service.sh && \
+    echo '  echo "Configurando container para servico: $SERVICE_NAME"' >> /usr/local/bin/init-service.sh && \
+    echo '  case $SERVICE_NAME in' >> /usr/local/bin/init-service.sh && \
+    echo '    "auth") ln -sf /var/www/html/services/auth/index.php /var/www/html/index.php ;;' >> /usr/local/bin/init-service.sh && \
+    echo '    "books") ln -sf /var/www/html/services/books/index.php /var/www/html/index.php ;;' >> /usr/local/bin/init-service.sh && \
+    echo '    "notifications") ln -sf /var/www/html/services/notifications/index.php /var/www/html/index.php ;;' >> /usr/local/bin/init-service.sh && \
+    echo '    "dashboard") ln -sf /var/www/html/services/dashboard/index.php /var/www/html/index.php ;;' >> /usr/local/bin/init-service.sh && \
+    echo '    *) echo "Usando API Gateway como padrao" ;;' >> /usr/local/bin/init-service.sh && \
+    echo '  esac' >> /usr/local/bin/init-service.sh && \
+    echo 'else' >> /usr/local/bin/init-service.sh && \
+    echo '  echo "Nenhum servico especifico configurado, usando API Gateway"' >> /usr/local/bin/init-service.sh && \
+    echo 'fi' >> /usr/local/bin/init-service.sh && \
+    echo 'exec "$@"' >> /usr/local/bin/init-service.sh && \
+    chmod +x /usr/local/bin/init-service.sh
+
 EXPOSE 80
 
-ENTRYPOINT ["docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/init-service.sh"]
 CMD ["apache2-foreground"]
