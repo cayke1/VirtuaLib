@@ -52,7 +52,7 @@ async function searchBooks(query, resultsContainer, loadingElement, itemsContain
     showLoading(resultsContainer, loadingElement, itemsContainer);
 
     try {
-        const res = await fetch("/search?q=" + encodeURIComponent(query));
+        const res = await fetch("/api/search?q=" + encodeURIComponent(query));
         const data = await res.json();
         cache.set(query, data);
         renderResults(data, resultsContainer, loadingElement, itemsContainer);
