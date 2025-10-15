@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/public/css/book-card.css">
     <link rel="stylesheet" href="/public/css/profile.css">
     <link rel="stylesheet" href="/public/css/notifications.css">
+    <link rel="stylesheet" href="/public/css/toast.css">
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -23,3 +24,5 @@
     <script src="/public/js/navbar.js"></script>
     <script src="/public/js/bookmark.js"></script>
     <script src="/public/js/notifications.js"></script>
+    <script src="/public/js/toast.js"></script>
+    <script src="/public/js/borrow.js"></script>
