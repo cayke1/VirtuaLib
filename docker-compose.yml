@@ -68,11 +68,11 @@ services:
     environment:
       - SERVICE_NAME=notifications
       - SERVICE_PORT=8083
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=jd6e9t.h.filess.io
+      - DB_PORT=3307
+      - DB_NAME=vituralib_postdeepup
+      - DB_USER=vituralib_postdeepup
+      - DB_PASSWORD=2a7f702e3f584523efba8585401f930b15f70335
 
   # Dashboard Service
   dashboard-service:
