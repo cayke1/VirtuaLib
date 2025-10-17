@@ -1,86 +1,162 @@
 <?php
-/**
- * Book Model - Serviço de Livros
- */
 
-class BookModel {
+class BookModel extends Database
+{
+
     private $pdo;
-    
-    public function __construct() {
-        $this->connectDatabase();
+
+    public function __construct()
+    {
+        $this->pdo = $this->getConnection();
     }
-    
-    /**
-     * Conectar ao banco de dados
-     */
-    private function connectDatabase() {
+
+
+    public function getBooks()
+    {
         try {
-            $host = $_ENV['DB_HOST'];
-            $port = $_ENV['DB_PORT'];
-            $dbname = $_ENV['DB_NAME'];
-            $username = $_ENV['DB_USER'];
-            $password = $_ENV['DB_PASSWORD'];
-            
-            $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
-            $this->pdo = new PDO($dsn, $username, $password, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false
-            ]);
+            $stmt = $this->pdo->prepare("SELECT * FROM Books");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            // Fallback para dados simulados se não conseguir conectar
-            $this->pdo = null;
+            error_log("Database error in getBooks: " . $e->getMessage());
+            return [];
         }
     }
-    
-    /**
-     * Obter lista de livros
-     */
-    public function getBooksList() {
-        if ($this->pdo) {
-            try {
-                $stmt = $this->pdo->query("SELECT * FROM books ORDER BY title");
-                $books = $stmt->fetchAll();
-                return $books ?: $this->getFallbackBooksData();
-            } catch (PDOException $e) {
-                return $this->getFallbackBooksData();
+
+    public function search(string $query)
+    {
+        $sql = "SELECT id, title, author, genre, year, description 
+                FROM Books 
+                WHERE title LIKE :query 
+                   OR author LIKE :query 
+                   OR genre LIKE :query 
+                   OR description LIKE :query
+                ORDER BY title ASC
+                LIMIT 10";
+
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $searchTerm = '%' . $query . '%';
+            $stmt->execute([":query" => $searchTerm]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in search: " . $e->getMessage());
+            return [];
+        }
+    }
+    public function getBookById($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM Books WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Database error in getBookById: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function createBook(array $data)
+    {
+        $sql = "INSERT INTO Books (title, author, genre, year, description, available) 
+                VALUES (:title, :author, :genre, :year, :description, :available)";
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->bindValue(':title', $data['title'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':author', $data['author'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':genre', $data['genre'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':year', (int)($data['year'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':description', $data['description'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':available', isset($data['available']) ? (int)(bool)$data['available'] : 1, PDO::PARAM_INT);
+            $stmt->execute();
+            return (int)$this->pdo->lastInsertId();
+        } catch (PDOException $e) {
+            error_log("Database error in createBook: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getTotalBooks()
+    {
+        try {
+            $stmt = $this->pdo->prepare("SELECT COUNT(*) as total FROM Books");
+            $stmt->execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
+        } catch (PDOException $e) {
+            error_log("Database error in getTotalBooks: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getBooksByCategory()
+    {
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT 
+                    genre as nome,
+                    COUNT(*) as total,
+                    ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Books)), 1) as percentual
+                FROM Books 
+                GROUP BY genre 
+                ORDER BY total DESC
+            ");
+            $stmt->execute();
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $colors = ['#059669', '#3b82f6', '#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+            $categories = [];
+
+            foreach ($results as $index => $result) {
+                $categories[] = [
+                    'nome' => $result['nome'] ?: 'Sem categoria',
+                    'percentual' => (float)$result['percentual'],
+                    'color' => $colors[$index % count($colors)]
+                ];
             }
+
+            return $categories;
+        } catch (PDOException $e) {
+            error_log("Database error in getBooksByCategory: " . $e->getMessage());
+            return [];
         }
-        
-        return $this->getFallbackBooksData();
     }
-    
+
     /**
      * Dados de fallback quando não há conexão com banco
      */
-    private function getFallbackBooksData() {
+    private function getFallbackBooks()
+    {
         return [
             [
                 'id' => 1,
-                'title' => 'O Senhor dos Anéis',
-                'author' => 'J.R.R. Tolkien',
-                'isbn' => '978-85-359-0277-8',
-                'category' => 'Fantasia',
-                'borrowed' => false,
-                'description' => 'Uma das maiores obras da literatura fantástica.'
+                'title' => 'Dom Casmurro',
+                'author' => 'Machado de Assis',
+                'genre' => 'Romance',
+                'year' => 1899,
+                'description' => 'Um dos maiores clássicos da literatura brasileira, narrado por Bentinho e sua dúvida sobre Capitu.',
+                'available' => 1,
+                'created_at' => '2024-01-01 10:00:00'
             ],
             [
                 'id' => 2,
                 'title' => '1984',
                 'author' => 'George Orwell',
-                'isbn' => '978-85-359-0278-5',
-                'category' => 'Ficção Científica',
-                'borrowed' => true,
-                'description' => 'Um clássico da literatura distópica.'
+                'genre' => 'Ficção Científica',
+                'year' => 1949,
+                'description' => 'Uma distopia política sobre um regime totalitário que vigia todos os cidadãos.',
+                'available' => 1,
+                'created_at' => '2024-01-01 10:00:00'
             ],
             [
                 'id' => 3,
-                'title' => 'Dom Casmurro',
-                'author' => 'Machado de Assis',
-                'isbn' => '978-85-359-0279-2',
-                'category' => 'Literatura Brasileira',
-                'borrowed' => false,
-                'description' => 'Uma das obras-primas da literatura brasileira.'
+                'title' => 'O Senhor dos Anéis: A Sociedade do Anel',
+                'author' => 'J.R.R. Tolkien',
+                'genre' => 'Fantasia',
+                'year' => 1954,
+                'description' => 'Primeiro volume da trilogia épica que segue a jornada de Frodo para destruir o Um Anel.',
+                'available' => 1,
+                'created_at' => '2024-01-01 10:00:00'
             ]
         ];
     }
