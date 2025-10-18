@@ -20,8 +20,6 @@ RUN a2enmod rewrite headers proxy proxy_http \
 # Configurar VirtualHost para SOA
 COPY apache-soa.conf /etc/apache2/sites-available/000-default.conf
 
-
-
 # Copiar arquivos da aplicação (exceto arquivos desnecessários)
 COPY app/ /var/www/html/app/
 COPY services/ /var/www/html/services/
@@ -44,8 +42,6 @@ RUN echo '#!/bin/bash' > /usr/local/bin/init-service.sh && \
     echo 'fi' >> /usr/local/bin/init-service.sh && \
     echo 'exec "$@"' >> /usr/local/bin/init-service.sh && \
     chmod +x /usr/local/bin/init-service.sh
-
-
 
 # Criar arquivo index.php básico
 RUN echo "<?php echo 'Virtual Library API Gateway'; ?>" > /var/www/html/index.php
