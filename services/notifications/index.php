@@ -22,7 +22,7 @@ spl_autoload_register(function ($class) {
 // Carregar dependências
 require_once __DIR__ . "/../utils/LoadEnv.php";
 require_once __DIR__ . "/../utils/AuthGuard.php";
-require_once __DIR__ . "/NotificationService.php";
+require_once __DIR__ . "/services/NotificationService.php";
 require_once __DIR__ . "/routes.php";
 
 // Carregar configurações
