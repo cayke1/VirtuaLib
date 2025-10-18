@@ -23,6 +23,7 @@ class NotificationsRouter {
             '/api/notifications/{id}/delete' => ['NotificationsController', 'delete'],
             '/api/notifications/mark-all-read' => ['NotificationsController', 'markAllRead'],
             '/api/notifications/create' => ['NotificationsController', 'createNotification'],
+            '/api/notifications/event' => ['NotificationsController', 'processEvent'],
         ];
     }
     
@@ -30,10 +31,8 @@ class NotificationsRouter {
         $uri = $_SERVER['REQUEST_URI'];
         $method = $_SERVER['REQUEST_METHOD'];
         
-        // Remover query string
         $uri = strtok($uri, '?');
         
-        // Encontrar rota correspondente
         foreach ($this->routes as $route => $handler) {
             if ($this->matchRoute($route, $uri)) {
                 $this->executeHandler($handler, $uri, $route);
@@ -41,12 +40,10 @@ class NotificationsRouter {
             }
         }
         
-        // Rota não encontrada
         $this->notFound();
     }
     
     private function matchRoute($route, $uri) {
-        // Implementação simples de matching com parâmetros
         $routePattern = preg_replace('/\{[^}]+\}/', '([^/]+)', $route);
         return preg_match('#^' . $routePattern . '$#', $uri);
     }
@@ -54,7 +51,6 @@ class NotificationsRouter {
     private function executeHandler($handler, $uri, $route) {
         list($controller, $method) = $handler;
         
-        // Extrair parâmetros da URL
         $params = $this->extractParams($route, $uri);
         
         if (class_exists($controller)) {
