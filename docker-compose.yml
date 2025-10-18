@@ -9,6 +9,10 @@ services:
       - "8080:80"
     env_file:
       - .env
+    environment:
+      - SESSION_SAVE_HANDLER=redis
+      - SESSION_SAVE_PATH=tcp://redis:6379?database=0&prefix=PHPSESSID
+      - SESSION_NAME=PHPSESSID
     volumes:
       - .:/var/www/html
     depends_on:
@@ -16,6 +20,7 @@ services:
       - books-service
       - notifications-service
       - dashboard-service
+      - redis
 
   # Auth Service
   auth-service:
@@ -30,11 +35,11 @@ services:
     environment:
       - SERVICE_NAME=auth
       - SERVICE_PORT=8081
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - SESSION_SAVE_HANDLER=redis
+      - SESSION_SAVE_PATH=tcp://redis:6379?database=0&prefix=PHPSESSID
+    depends_on:
+      - mysql
+      - redis
 
   # Books Service
   books-service:
@@ -49,11 +54,8 @@ services:
     environment:
       - SERVICE_NAME=books
       - SERVICE_PORT=8082
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      - mysql
 
   # Notifications Service
   notifications-service:
@@ -68,11 +70,8 @@ services:
     environment:
       - SERVICE_NAME=notifications
       - SERVICE_PORT=8083
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      - mysql
 
   # Dashboard Service
   dashboard-service:
@@ -87,11 +86,8 @@ services:
     environment:
       - SERVICE_NAME=dashboard
       - SERVICE_PORT=8084
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_NAME=${DB_NAME}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      - mysql
 
 
   # Nginx Load Balancer (opcional)
@@ -104,4 +100,34 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
     depends_on:
       - api-gateway
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: virtualib_mysql
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=virtualib
+      - MYSQL_USER=virtualib_user
+      - MYSQL_PASSWORD=virtualib_pass
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docs/sql:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Redis para sessões PHP compartilhadas
+  redis:
+    image: redis:6.2-alpine
+    container_name: virtualib_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+volumes:
+  mysql-data:
+  redis-data:
 

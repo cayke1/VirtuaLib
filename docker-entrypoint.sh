@@ -2,7 +2,7 @@
 
 # Configurar variáveis de ambiente baseadas no serviço
 if [ -n "$SERVICE_NAME" ]; then
-    echo "Configurando container para serviço: $SERVICE_NAME"
+    echo "Configurando container para servico: $SERVICE_NAME"
     
     # Criar link simbólico para o serviço específico
     case $SERVICE_NAME in
@@ -20,11 +20,11 @@ if [ -n "$SERVICE_NAME" ]; then
             ;;
         *)
             # API Gateway - usar o arquivo padrão
-            echo "Usando API Gateway como padrão"
+            echo "Usando API Gateway como padrao"
             ;;
     esac
 else
-    echo "Nenhum serviço específico configurado, usando API Gateway"
+    echo "Nenhum servico especifico configurado, usando API Gateway"
 fi
 
 # Executar comando original
