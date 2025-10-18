@@ -26,6 +26,13 @@ COPY services/ /var/www/html/services/
 COPY public/ /var/www/html/public/
 COPY apache-soa.conf /var/www/html/
 
+# Criar arquivo index.php básico
+RUN echo "<?php echo 'Virtual Library API Gateway'; ?>" > /var/www/html/index.php
+
+# Configurar permissões
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
+
 # Criar script de inicialização
 RUN echo '#!/bin/bash' > /usr/local/bin/init-service.sh && \
     echo 'if [ -n "$SERVICE_NAME" ]; then' >> /usr/local/bin/init-service.sh && \
@@ -42,13 +49,6 @@ RUN echo '#!/bin/bash' > /usr/local/bin/init-service.sh && \
     echo 'fi' >> /usr/local/bin/init-service.sh && \
     echo 'exec "$@"' >> /usr/local/bin/init-service.sh && \
     chmod +x /usr/local/bin/init-service.sh
-
-# Criar arquivo index.php básico
-RUN echo "<?php echo 'Virtual Library API Gateway'; ?>" > /var/www/html/index.php
-
-# Configurar permissões
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html
 
 EXPOSE 80
 
