@@ -30,4 +30,16 @@ class DashboardController {
         // Render the view
         View::display('dashboard', $data);
     }
+
+    public function showHistory() {
+        $history = $this->statsModel->getRecentActivities();
+        
+        $data = [
+            'title' => 'Histórico - Virtual Library',
+            'history' => $history
+        ];
+        
+        // Render the view
+        View::display('history', $data);
+    }
 }

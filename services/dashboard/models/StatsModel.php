@@ -84,4 +84,51 @@ class StatsModel {
             'popular_category' => 'Ficção Científica'
         ];
     }
+
+    /**
+     * Dados de fallback para atividades recentes quando não há conexão com o banco
+     */
+    private function getFallbackRecentActivities() {
+        // Retorna uma lista simples de atividades simuladas com mesmas chaves esperadas
+        $now = new DateTime();
+        $activities = [];
+
+        for ($i = 0; $i < 10; $i++) {
+            $requested = clone $now;
+            $requested->modify("-{$i} days");
+
+            $due = clone $requested;
+            $due->modify('+14 days');
+
+            $activities[] = [
+                'user_name' => "Usuário {$i}",
+                'book_title' => "Livro Exemplo {$i}",
+                'requested_at' => $requested->format('Y-m-d H:i:s'),
+                'due_date' => $due->format('Y-m-d H:i:s'),
+                'status' => ($i % 3 === 0) ? 'pendente' : (($i % 3 === 1) ? 'emprestado' : 'atrasado')
+            ];
+        }
+
+        return $activities;
+    }
+
+    public function getRecentActivities() {
+        if ($this->pdo) {
+            try {
+                $stmt = $this->pdo->query("
+                    SELECT u.name AS user_name, b.title AS book_title, br.requested_at, br.due_date, br.status
+                    FROM borrows br
+                    JOIN users u ON br.user_id = u.id
+                    JOIN books b ON br.book_id = b.id
+                    ORDER BY br.requested_at DESC
+                    LIMIT 100
+                ");
+                return $stmt->fetchAll();
+            } catch (PDOException $e) {
+                return $this->getFallbackRecentActivities();
+            }
+        }
+        
+        return $this->getFallbackRecentActivities();
+    }
 }

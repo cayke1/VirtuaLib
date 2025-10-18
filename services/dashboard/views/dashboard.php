@@ -3,162 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= View::escape($title ?? 'Dashboard Service - Virtual Library') ?></title>
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background: #f5f5f5; 
-        }
-        .container { 
-            max-width: 1200px; 
-            margin: 0 auto; 
-        }
-        .service-info { 
-            text-align: center; 
-            margin-bottom: 20px; 
-            color: #666; 
-            font-size: 14px; 
-        }
-        h1 { 
-            color: #333; 
-        }
-        .stats-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-            gap: 20px; 
-            margin: 20px 0; 
-        }
-        .stat-card { 
-            background: white; 
-            padding: 25px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
-            text-align: center;
-            transition: transform 0.2s ease;
-        }
-        .stat-card:hover {
-            transform: translateY(-2px);
-        }
-        .stat-number { 
-            font-size: 2.5em; 
-            font-weight: bold; 
-            color: #007bff; 
-            margin-bottom: 10px; 
-        }
-        .stat-label { 
-            color: #666; 
-            font-size: 14px; 
-            margin-bottom: 5px; 
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .stat-description { 
-            color: #999; 
-            font-size: 12px; 
-        }
-        .model-info { 
-            background: #f8f9fa; 
-            padding: 15px; 
-            border-radius: 4px; 
-            margin-bottom: 20px; 
-        }
-        .model-info h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        .model-info ul {
-            text-align: left;
-            color: #555;
-        }
-        .empty-state {
-            text-align: center;
-            color: #666;
-            padding: 40px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .chart-placeholder {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-top: 20px;
-            text-align: center;
-            color: #666;
-        }
-        .chart-placeholder h3 {
-            color: #333;
-            margin-top: 0;
-        }
-    </style>
+    <title>Dashboard - VirtuaLib</title>
+    <link rel="stylesheet" href="/public/css/dashboard.css">
+    <link rel="stylesheet" href="/public/css/stats.css">
 </head>
 <body>
-    <div class="container">
-        <div class="service-info">📊 Dashboard Service</div>
-        
-        <h1>Dashboard e Estatísticas</h1>
-        
-        <div class="model-info">
-            <h3>Métodos disponíveis no StatsModel:</h3>
-            <ul>
-                <li>getGeneralStats() - Retorna estatísticas gerais do sistema</li>
-            </ul>
-        </div>
-        
-        <?php if (empty($stats)): ?>
-            <div class="empty-state">
-                <h3>📊 Nenhuma estatística disponível</h3>
-                <p>Os dados do sistema ainda não foram coletados.</p>
-            </div>
-        <?php else: ?>
-            <div class="stats-grid">
-                <?php foreach ($stats as $key => $value): ?>
-                    <?php 
-                    $label = ucwords(str_replace('_', ' ', $key));
-                    $icon = '';
-                    
-                    // Add icons based on stat type
-                    switch (strtolower($key)) {
-                        case 'total_users':
-                        case 'users':
-                            $icon = '👥';
-                            break;
-                        case 'total_books':
-                        case 'books':
-                            $icon = '📚';
-                            break;
-                        case 'total_borrows':
-                        case 'borrows':
-                        case 'active_borrows':
-                            $icon = '📖';
-                            break;
-                        case 'total_notifications':
-                        case 'notifications':
-                            $icon = '🔔';
-                            break;
-                        default:
-                            $icon = '📈';
-                    }
-                    ?>
-                    <div class="stat-card">
-                        <div class="stat-number">
-                            <?= $icon ?> <?= is_numeric($value) ? number_format($value) : View::escape($value) ?>
-                        </div>
-                        <div class="stat-label"><?= View::escape($label) ?></div>
-                        <div class="stat-description">Estatística do sistema</div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+    <?php
+    // Dados serão carregados via JavaScript das APIs
+
+    // Dados das solicitações pendentes (passados pelo controller)
+    $pendingRequests = $pendingRequests ?? [];
+    $isAdmin = $isAdmin ?? false;
+
+    function formatRequestDate(?string $value): string
+    {
+        if (!$value) {
+            return '—';
+        }
+
+        try {
+            $date = new DateTimeImmutable($value);
+            $now = new DateTimeImmutable();
+            $diff = $now->diff($date);
             
-            <div class="chart-placeholder">
-                <h3>📊 Gráficos e Analytics</h3>
-                <p>Os gráficos detalhados serão implementados em futuras versões.</p>
-                <p>Por enquanto, você pode visualizar as estatísticas básicas acima.</p>
+            if ($diff->days > 0) {
+                return $diff->days . ' dia' . ($diff->days > 1 ? 's' : '') . ' atrás';
+            } elseif ($diff->h > 0) {
+                return $diff->h . ' hora' . ($diff->h > 1 ? 's' : '') . ' atrás';
+            } else {
+                return $diff->i . ' minuto' . ($diff->i > 1 ? 's' : '') . ' atrás';
+            }
+        } catch (Exception $exception) {
+            return htmlspecialchars($value);
+        }
+    }
+    ?>
+
+    <aside class="sidebar">
+        <?php include __DIR__."/components/sidebar.php"?>
+    </aside>
+    
+    <div class="container">
+        <main class="main-content">
+            <header class="header">
+                <h1>Dashboard</h1>
+                <div class="user-info">
+                    <span>👤 Admin: João Silva</span>
+                </div>
+            </header>
+
+            <div class="content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <p class="stat-label">Total de Livros</p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
+                        </div>
+                        <div class="stat-icon" style="background: #3b82f620; color: #3b82f6">
+                            📖
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <p class="stat-label">Livros Emprestados</p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
+                        </div>
+                        <div class="stat-icon" style="background: #f59e0b20; color: #f59e0b">
+                            📚
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <p class="stat-label">Usuários Ativos</p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
+                        </div>
+                        <div class="stat-icon" style="background: #10b98120; color: #10b981">
+                            👥
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-info">
+                            <p class="stat-label">Empréstimos Hoje</p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
+                        </div>
+                        <div class="stat-icon" style="background: #6366f120; color: #6366f1">
+                            📅
+                        </div>
+                    </div>
+                </div>
+
+                <?php if ($isAdmin && !empty($pendingRequests)): ?>
+                <!-- Seção de Solicitações Pendentes -->
+                <div class="pending-requests-section">
+                    <div class="section-header">
+                        <h2>⏳ Solicitações Pendentes</h2>
+                        <span class="request-count"><?php echo count($pendingRequests); ?> solicitação(ões)</span>
+                    </div>
+                    
+                    <div class="requests-grid">
+                        <?php foreach ($pendingRequests as $request): ?>
+                            <div class="request-card" data-request-id="<?php echo $request['id']; ?>">
+                                <div class="request-info">
+                                    <div class="request-user">
+                                        <span class="user-name"><?php echo htmlspecialchars($request['user_name']); ?></span>
+                                        <span class="user-email"><?php echo htmlspecialchars($request['user_email']); ?></span>
+                                    </div>
+                                    <div class="request-book">
+                                        <h4><?php echo htmlspecialchars($request['book_title']); ?></h4>
+                                        <p><?php echo htmlspecialchars($request['book_author']); ?></p>
+                                    </div>
+                                    <div class="request-time">
+                                        <span class="time-badge"><?php echo formatRequestDate($request['requested_at']); ?></span>
+                                    </div>
+                                </div>
+                                <div class="request-actions">
+                                    <button class="approve-btn" onclick="approveRequest(<?php echo $request['id']; ?>)">
+                                        ✅ Aprovar
+                                    </button>
+                                    <button class="reject-btn" onclick="rejectRequest(<?php echo $request['id']; ?>)">
+                                        ❌ Rejeitar
+                                    </button>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <!-- Gráficos e Dados -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h3> Empréstimos por Mês</h3>
+                                <p class="chart-subtitle">Estatísticas de empréstimos dos últimos 6 meses</p>
+                            </div>
+                        </div>
+                        <div class="bar-chart">
+                            <div class="loading-message">Carregando dados...</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h3> Livros Mais Emprestados</h3>
+                                <p class="chart-subtitle">Top 5 livros mais populares</p>
+                            </div>
+                        </div>
+                        <div class="top-books">
+                            <div class="loading-message">Carregando dados...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h3> Distribuição por Categoria</h3>
+                                <p class="chart-subtitle">Livros por categoria no acervo</p>
+                            </div>
+                        </div>
+                        <div class="pie-chart-container">
+                            <svg class="pie-chart" viewBox="0 0 200 200">
+                            </svg>
+                            <div class="pie-legend">
+                                <div class="loading-message">Carregando dados...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div>
+                                <h3> Atividades Recentes</h3>
+                                <p class="chart-subtitle">Últimas ações no sistema</p>
+                            </div>
+                        </div>
+                        <div class="activities">
+                            <div class="loading-message">Carregando dados...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        <?php endif; ?>
+        </main>
     </div>
+
+    <script src="/public/js/dashboard.js"></script>
 </body>
 </html>
