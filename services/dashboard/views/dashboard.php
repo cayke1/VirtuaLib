@@ -57,7 +57,7 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Total de Livros</p>
-                            <h2 class="stat-value">—</h2>
+                            <h2 class="stat-value"><?php echo $stats['total_books'] ?></h2>
                             <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #3b82f620; color: #3b82f6">
@@ -68,7 +68,7 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Livros Emprestados</p>
-                            <h2 class="stat-value">—</h2>
+                            <h2 class="stat-value"><?php echo $stats['borrowed_books'] ?></h2>
                             <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #f59e0b20; color: #f59e0b">
@@ -79,7 +79,7 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Usuários Ativos</p>
-                            <h2 class="stat-value">—</h2>
+                            <h2 class="stat-value"><?php echo $stats['total_users'] ?></h2>
                             <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #10b98120; color: #10b981">
@@ -90,7 +90,7 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Empréstimos Hoje</p>
-                            <h2 class="stat-value">—</h2>
+                            <h2 class="stat-value"><?php echo $stats['pending_requests'] ?></h2>
                             <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #6366f120; color: #6366f1">
