@@ -25,6 +25,7 @@ class DashboardRouter {
             '/api/stats/books-by-category' => ['DashboardController', 'getBooksByCategory'],
             '/api/stats/recent-activities' => ['DashboardController', 'getRecentActivities'],
             '/api/stats/user-profile' => ['DashboardController', 'getUserProfileStats'],
+            '/api/stats/history' => ['DashboardController', 'getHistory'],
         ];
     }
     

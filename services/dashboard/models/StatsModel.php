@@ -263,4 +263,42 @@ class StatsModel {
         
         return $this->getFallbackRecentActivities();
     }
+
+    
+    public function getHistory($limit = 100) {
+        if ($this->pdo) {
+            try {
+                $stmt = $this->pdo->prepare("
+                    SELECT u.name AS user_name, b.title AS book_title, br.requested_at, br.returned_at, br.status
+                    FROM borrows br
+                    JOIN users u ON br.user_id = u.id
+                    JOIN books b ON br.book_id = b.id
+                    ORDER BY br.requested_at DESC
+                    LIMIT :limit
+                ");
+                $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+                $stmt->execute();
+                return $stmt->fetchAll();
+            } catch (PDOException $e) {
+                // fallback
+            }
+        }
+       // Fallback: 5 empréstimos simulados
+        $now = new DateTimeImmutable();
+        $history = [];
+        $statusList = ['pending', 'approved', 'returned', 'late'];
+        for ($i = 1; $i <= 5; $i++) {
+            $requested = $now->modify("-{$i} days")->format('Y-m-d H:i:s');
+            $returned = ($i % 3 === 0) ? $now->modify("-".($i-1)." days")->format('Y-m-d H:i:s') : null;
+            $history[] = [
+                'user_name' => "Usuário {$i}",
+                'book_title' => "Livro Exemplo {$i}",
+                'requested_at' => $requested,
+                'returned_at' => $returned,
+                'status' => $statusList[$i % count($statusList)]
+            ];
+        }
+        return $history;
+    }
+
 }

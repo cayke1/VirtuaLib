@@ -1,3 +1,12 @@
+import { 
+    loadGeneralStats, 
+    loadBorrowsByMonth, 
+    loadTopBooks, 
+    loadBooksByCategory, 
+    loadRecentActivities,
+    loadFallbackStats 
+} from './dashboard-api.js';
+
 class DashboardStats {
     constructor() {
         this.init();
@@ -27,23 +36,20 @@ class DashboardStats {
 
     async loadGeneralStats() {
         try {
-            const response = await fetch('/api/stats/general');
-            if (!response.ok) throw new Error('Erro ao carregar estatísticas gerais');
-            
-            const data = await response.json();
+            const data = await loadGeneralStats();
             this.updateGeneralStats(data.stats);
         } catch (error) {
             console.error('Erro ao carregar estatísticas gerais:', error);
             this.showError('Erro ao carregar estatísticas gerais');
+            // Tentar carregar dados de fallback
+            const fallback = await loadFallbackStats();
+            this.updateGeneralStats(fallback.stats);
         }
     }
 
     async loadBorrowsByMonth() {
         try {
-            const response = await fetch('/api/stats/borrows-by-month');
-            if (!response.ok) throw new Error('Erro ao carregar empréstimos por mês');
-            
-            const data = await response.json();
+            const data = await loadBorrowsByMonth();
             this.updateBorrowsByMonthChart(data.data);
         } catch (error) {
             console.error('Erro ao carregar empréstimos por mês:', error);
@@ -52,10 +58,7 @@ class DashboardStats {
 
     async loadTopBooks() {
         try {
-            const response = await fetch('/api/stats/top-books');
-            if (!response.ok) throw new Error('Erro ao carregar top livros');
-            
-            const data = await response.json();
+            const data = await loadTopBooks();
             this.updateTopBooks(data.books);
         } catch (error) {
             console.error('Erro ao carregar top livros:', error);
@@ -64,10 +67,7 @@ class DashboardStats {
 
     async loadBooksByCategory() {
         try {
-            const response = await fetch('/api/stats/books-by-category');
-            if (!response.ok) throw new Error('Erro ao carregar categorias');
-            
-            const data = await response.json();
+            const data = await loadBooksByCategory();
             this.updateBooksByCategoryChart(data.categories);
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
@@ -76,10 +76,7 @@ class DashboardStats {
 
     async loadRecentActivities() {
         try {
-            const response = await fetch('/api/stats/recent-activities');
-            if (!response.ok) throw new Error('Erro ao carregar atividades recentes');
-            
-            const data = await response.json();
+            const data = await loadRecentActivities();
             this.updateRecentActivities(data.activities);
         } catch (error) {
             console.error('Erro ao carregar atividades recentes:', error);

@@ -93,15 +93,28 @@ class DashboardController {
         echo json_encode(['stats' => $stats], JSON_UNESCAPED_UNICODE);
     }   
 
+
     public function showHistory() {
-        $history = $this->statsModel->getRecentActivities();
-        
+        $history = $this->statsModel->getHistory(100);
+        $isApi = isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/') === 0;
+        if ($isApi) {
+            echo json_encode(['history' => $history], JSON_UNESCAPED_UNICODE);
+            header('Content-Type: application/json; charset=utf-8');
+            return;
+        }
+
         $data = [
             'title' => 'Histórico - Virtual Library',
             'history' => $history
         ];
-        
-        // Render the view
         View::display('history', $data);
+        
+    }
+
+    // função endpoint api
+    public function getHistory() {
+        header('Content-Type: application/json; charset=utf-8');
+        $history = $this->statsModel->getHistory(100);
+        echo json_encode(['history' => $history], JSON_UNESCAPED_UNICODE);
     }
 }

@@ -105,33 +105,7 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($history)): ?>
-                            <tr>
-                                <td colspan="5" class="no-data">
-                                    Nenhum empréstimo encontrado
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($history as $loan): ?>
-                                <?php
-                                    $rawStatus = $loan['status'] ?? 'Emprestado';
-                                    $normalizedKey = strtolower($rawStatus);
-                                    $normalizedStatus = $statusAliases[$normalizedKey] ?? $rawStatus;
-                                    $status = $statusConfig[$normalizedStatus] ?? $statusConfig['Emprestado'];
-                                ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($loan['user_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td><?php echo htmlspecialchars($loan['book_title'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                    <td><?php echo formatHistoryDate($loan['requested_at']); ?></td>
-                                    <td><?php echo formatHistoryDate($loan['returned_at']); ?></td>
-                                    <td>
-                                        <span class="status <?php echo $status['class']; ?>">
-                                            <?php echo $status['icon']; ?> <?php echo $status['text']; ?>
-                                        </span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                        <!-- Conteúdo será preenchido via JavaScript -->
                     </tbody>
                 </table>
             </div>
@@ -157,4 +131,5 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
         </div>
     </main>
 </body>
+<script src="/public/js/history.js"></script>
 </html>
