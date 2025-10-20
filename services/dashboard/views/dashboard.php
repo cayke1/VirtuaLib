@@ -99,43 +99,7 @@
                     </div>
                 </div>
 
-                <?php if ($isAdmin && !empty($pendingRequests)): ?>
-                <!-- Seção de Solicitações Pendentes -->
-                <div class="pending-requests-section">
-                    <div class="section-header">
-                        <h2>⏳ Solicitações Pendentes</h2>
-                        <span class="request-count"><?php echo count($pendingRequests); ?> solicitação(ões)</span>
-                    </div>
-                    
-                    <div class="requests-grid">
-                        <?php foreach ($pendingRequests as $request): ?>
-                            <div class="request-card" data-request-id="<?php echo $request['id']; ?>">
-                                <div class="request-info">
-                                    <div class="request-user">
-                                        <span class="user-name"><?php echo htmlspecialchars($request['user_name']); ?></span>
-                                        <span class="user-email"><?php echo htmlspecialchars($request['user_email']); ?></span>
-                                    </div>
-                                    <div class="request-book">
-                                        <h4><?php echo htmlspecialchars($request['book_title']); ?></h4>
-                                        <p><?php echo htmlspecialchars($request['book_author']); ?></p>
-                                    </div>
-                                    <div class="request-time">
-                                        <span class="time-badge"><?php echo formatRequestDate($request['requested_at']); ?></span>
-                                    </div>
-                                </div>
-                                <div class="request-actions">
-                                    <button class="approve-btn" onclick="approveRequest(<?php echo $request['id']; ?>)">
-                                        ✅ Aprovar
-                                    </button>
-                                    <button class="reject-btn" onclick="rejectRequest(<?php echo $request['id']; ?>)">
-                                        ❌ Rejeitar
-                                    </button>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
+                <!-- Seção de Solicitações Pendentes removida - não é responsabilidade do serviço de dashboard -->
 
                 <!-- Gráficos e Dados -->
                 <div class="charts-grid">
@@ -197,6 +161,6 @@
         </main>
     </div>
 
-    <script src="/public/js/dashboard.js"></script>
+    <script type="module" src="/public/js/dashboard.js"></script>
 </body>
 </html>

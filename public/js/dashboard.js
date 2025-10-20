@@ -1,11 +1,37 @@
-import { 
-    loadGeneralStats, 
-    loadBorrowsByMonth, 
-    loadTopBooks, 
-    loadBooksByCategory, 
-    loadRecentActivities,
-    loadFallbackStats 
-} from './dashboard-api.js';
+// Funções de API consolidadas
+async function fetchJson(url, opts = {}) {
+    const res = await fetch(url, opts);
+    if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+    return res.json();
+}
+
+async function loadGeneralStats() {
+    return fetchJson('/api/stats/general');
+}
+
+async function loadBorrowsByMonth() {
+    return fetchJson('/api/stats/borrows-by-month');
+}
+
+async function loadTopBooks() {
+    return fetchJson('/api/stats/top-books');
+}
+
+async function loadBooksByCategory() {
+    return fetchJson('/api/stats/books-by-category');
+}
+
+async function loadRecentActivities() {
+    return fetchJson('/api/stats/recent-activities');
+}
+
+async function loadUserProfile() {
+    return fetchJson('/api/stats/user-profile');
+}
+
+async function loadFallbackStats() {
+    return fetchJson('/api/stats/fallback');
+}
 
 class DashboardStats {
     constructor() {
@@ -16,7 +42,6 @@ class DashboardStats {
         try {
             await this.loadAllStats();
             this.setupRefreshInterval();
-            this.setupRequestHandlers();
         } catch (error) {
             console.error('Erro ao inicializar dashboard:', error);
         }
@@ -262,92 +287,7 @@ class DashboardStats {
         console.warn(message);
     }
 
-    // Métodos para gerenciar solicitações pendentes
-    setupRequestHandlers() {
-        // Tornar as funções globais para uso nos botões onclick
-        window.approveRequest = (requestId) => this.approveRequest(requestId);
-        window.rejectRequest = (requestId) => this.rejectRequest(requestId);
-    }
-
-    async approveRequest(requestId) {
-        if (!confirm('Tem certeza que deseja aprovar esta solicitação?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/approve/${requestId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                this.showSuccessMessage('Solicitação aprovada com sucesso!');
-                this.removeRequestCard(requestId);
-            } else {
-                this.showErrorMessage(result.message || 'Erro ao aprovar solicitação');
-            }
-        } catch (error) {
-            this.showErrorMessage('Erro ao conectar com o servidor');
-            console.error('Error:', error);
-        }
-    }
-
-    async rejectRequest(requestId) {
-        if (!confirm('Tem certeza que deseja rejeitar esta solicitação?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/reject/${requestId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                this.showSuccessMessage('Solicitação rejeitada com sucesso!');
-                this.removeRequestCard(requestId);
-            } else {
-                this.showErrorMessage(result.message || 'Erro ao rejeitar solicitação');
-            }
-        } catch (error) {
-            this.showErrorMessage('Erro ao conectar com o servidor');
-            console.error('Error:', error);
-        }
-    }
-
-    removeRequestCard(requestId) {
-        const requestCard = document.querySelector(`[data-request-id="${requestId}"]`);
-        if (requestCard) {
-            requestCard.remove();
-            this.updateRequestCount();
-        }
-    }
-
-    updateRequestCount() {
-        const requestCount = document.querySelector('.request-count');
-        if (requestCount) {
-            const remainingRequests = document.querySelectorAll('.request-card').length;
-            requestCount.textContent = `${remainingRequests} solicitação(ões)`;
-        }
-    }
-
-    showSuccessMessage(message) {
-        // Implementar notificação de sucesso
-        alert(message); // Por enquanto usando alert, pode ser melhorado com toast notifications
-    }
-
-    showErrorMessage(message) {
-        // Implementar notificação de erro
-        alert(message); // Por enquanto usando alert, pode ser melhorado com toast notifications
-    }
+    // Métodos de aprovação/rejeição removidos - não são responsabilidade do serviço de dashboard
 }
 
 document.addEventListener('DOMContentLoaded', () => {

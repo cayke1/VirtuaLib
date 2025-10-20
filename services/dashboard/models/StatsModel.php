@@ -72,7 +72,7 @@ class StatsModel {
     /**
      * Dados de fallback quando não há conexão com banco
      */
-    private function getFallbackStatsData() {
+    public function getFallbackStatsData() {
         return [
             'total_books' => 150,
             'borrowed_books' => 45,
@@ -88,7 +88,7 @@ class StatsModel {
     /**
      * Dados de fallback para atividades recentes quando não há conexão com o banco
      */
-    private function getFallbackRecentActivities() {
+    public function getFallbackRecentActivities() {
         // Retorna uma lista simples de atividades simuladas com mesmas chaves esperadas
         $now = new DateTime();
         $activities = [];

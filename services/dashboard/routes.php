@@ -14,9 +14,9 @@ class DashboardRouter {
         $this->routes = [
             // Rotas de view
             '/dashboard' => ['DashboardController', 'showDashboard'],
-            '/historico' => ['DashboardController', 'showHistory'],
-            '/stats' => ['DashboardController', 'showStats'],
-            '/analytics' => ['DashboardController', 'showAnalytics'],
+            '/historico' => ['HistoryController', 'showHistory'],
+            #'/stats' => ['DashboardController', 'showStats'],
+            #'/analytics' => ['DashboardController', 'showAnalytics'],
             
             // Rotas de API
             '/api/stats/general' => ['DashboardController', 'getGeneralStats'],
@@ -25,7 +25,9 @@ class DashboardRouter {
             '/api/stats/books-by-category' => ['DashboardController', 'getBooksByCategory'],
             '/api/stats/recent-activities' => ['DashboardController', 'getRecentActivities'],
             '/api/stats/user-profile' => ['DashboardController', 'getUserProfileStats'],
-            '/api/stats/history' => ['DashboardController', 'getHistory'],
+            '/api/stats/history' => ['HistoryController', 'getHistory'],
+            '/api/stats/fallback' => ['DashboardController', 'getFallbackStatsData'],
+
         ];
     }
     
