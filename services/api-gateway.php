@@ -40,7 +40,7 @@ class ApiGateway {
                 'prefix' => '/books', 
                 'port' => 8082,
                 'path' => __DIR__ . '/books',
-                'patterns' => ['/books/*', '/api/search*', '/api/request/*', '/api/return/*', '/api/create*', '/api/pending-requests*', '/']
+                'patterns' => ['/books', '/books/*', '/api/search*', '/api/request/*', '/api/return/*', '/api/create*', '/api/pending-requests*', '/']
             ],
             'notifications' => [
                 'prefix' => '/notifications',

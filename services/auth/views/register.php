@@ -75,7 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Verifica se já está logado
   if (window.AuthService?.isAuthenticated) {
-    redirecionarParaPorta(8080, '/auth/login');
+    const user = window.AuthService.getCurrentUser();
+    const redirectPath = user?.role === 'admin' ? '/dashboard' : '/books';
+    window.location.href = redirectPath;
     return;
   }
 
@@ -128,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const result = await window.AuthService.register(name, email, password);
       
       if (result.success) {
-        redirecionarParaPorta(8080, '/auth/login');
+        const redirectPath = result.user?.role === 'admin' ? '/dashboard' : '/books';
+        window.location.href = redirectPath;
       } else {
         showError(result.error || 'Erro ao criar conta. Tente novamente.');
       }

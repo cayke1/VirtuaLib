@@ -2,11 +2,6 @@
  * AuthService - Serviço centralizado para autenticação
  * Gerencia login, logout, verificação de usuário e interceptação de erros
  */
-    function redirecionarParaPorta(novaPorta, caminho = '/') {
-    const { protocol, hostname, search, hash } = window.location;
-    const url = `${protocol}//${hostname}:${novaPorta}${caminho}${search}${hash}`;
-    window.location.href = url;
-  }
 class AuthService {
     constructor() {
         this.currentUser = null;
@@ -101,7 +96,9 @@ class AuthService {
 
             if (response.ok && data.user) {
                 this.setUser(data.user);
-                redirecionarParaPorta(80, '/books');
+                // Redirecionar baseado no role do usuário
+                const redirectPath = data.user.role === 'admin' ? '/dashboard' : '/books';
+                window.location.href = redirectPath;
                 return { success: true, user: data.user, message: data.message };
             } else {
                 return { success: false, error: data.error || 'Erro no login' };
@@ -153,6 +150,9 @@ class AuthService {
             
             if (response.ok && data.user) {
                 this.setUser(data.user);
+                // Redirecionar baseado no role do usuário após cadastro
+                const redirectPath = data.user.role === 'admin' ? '/dashboard' : '/books';
+                window.location.href = redirectPath;
                 return { success: true, user: data.user, message: data.message };
             } else {
                 // Try fallback endpoint
@@ -169,6 +169,9 @@ class AuthService {
                 
                 if (response.ok && data.user) {
                     this.setUser(data.user);
+                    // Redirecionar baseado no role do usuário após cadastro (fallback)
+                    const redirectPath = data.user.role === 'admin' ? '/dashboard' : '/books';
+                    window.location.href = redirectPath;
                     return { success: true, user: data.user, message: data.message };
                 } else {
                     return { success: false, error: data.error || 'Erro ao registrar' };
@@ -293,7 +296,7 @@ class AuthService {
      */
     requireAuth() {
         if (!this.isAuthenticated) {
-            redirecionarParaPorta(80, '/auth/login');
+            window.location.href = '/auth/login';
             return false;
         }
         return true;
@@ -312,7 +315,7 @@ class AuthService {
     requireRole(role) {
         if (!this.requireAuth()) return false;
         if (!this.hasRole(role)) {
-            redirecionarParaPorta(80, '/auth/login');
+            window.location.href = '/auth/login';
             return false;
         }
         return true;
@@ -336,7 +339,7 @@ class AuthService {
             if (response.status === 401) {
                 this.clearUser();
                 if (window.location.pathname !== '/auth/login') {
-                    redirecionarParaPorta(80, '/auth/login');
+                    window.location.href = '/auth/login';
                 }
                 throw new Error('Não autenticado');
             }

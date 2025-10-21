@@ -1,12 +1,7 @@
 
-    function redirecionarParaPorta(novaPorta, caminho = '/') {
-    const { protocol, hostname, search, hash } = window.location;
-    const url = `${protocol}//${hostname}:${novaPorta}${caminho}${search}${hash}`;
-    window.location.href = url;
-  }
   document.getElementById('rota').addEventListener('click', function (e) {
     e.preventDefault();
-    redirecionarParaPorta(80, '/books');
+    window.location.href = '/';
   });
 
 document.addEventListener('DOMContentLoaded', function() {

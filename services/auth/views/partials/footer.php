@@ -10,7 +10,6 @@
           <h4>Navegação</h4>
           <ul>
             <li><a href="/">Início</a></li>
-            <li><a href="/books">Livros</a></li>
             <li><a href="/books/search">Buscar</a></li>
           </ul>
         </div>
