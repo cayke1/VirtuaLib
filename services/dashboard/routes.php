@@ -13,7 +13,7 @@ class DashboardRouter {
     private function defineRoutes() {
         $this->routes = [
             // Rotas de view
-            '/dashboard' => ['DashboardController', 'showDashboard'],
+            '/' => ['DashboardController', 'showDashboard'],
             '/historico' => ['HistoryController', 'showHistory'],
             #'/stats' => ['DashboardController', 'showStats'],
             #'/analytics' => ['DashboardController', 'showAnalytics'],

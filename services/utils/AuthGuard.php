@@ -13,7 +13,14 @@ trait AuthGuard
     private function requireAuth()
     {
         if (empty($_SESSION['user'])) {
-            $this->jsonError(401, 'Unauthorized');
+            // Se for uma requisição de API, retorna JSON
+            if ($this->isApiRequest()) {
+                $this->jsonError(401, 'Unauthorized');
+            } else {
+                // Se for uma view, redireciona para login
+                header('Location: /auth/login');
+                exit;
+            }
         }
     }
 
@@ -22,7 +29,19 @@ trait AuthGuard
         $this->requireAuth();
         $currentRole = $_SESSION['user']['role'] ?? 'user';
         if ($currentRole !== $role) {
-            $this->jsonError(403, 'Forbidden');
+            // Se for uma requisição de API, retorna JSON
+            if ($this->isApiRequest()) {
+                $this->jsonError(403, 'Forbidden');
+            } else {
+                // Se for uma view, redireciona para home
+                header('Location: /');
+                exit;
+            }
         }
+    }
+
+    private function isApiRequest()
+    {
+        return strpos($_SERVER['REQUEST_URI'], '/api/') !== false;
     }
 }
