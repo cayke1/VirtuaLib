@@ -90,11 +90,13 @@ class NotificationManager {
     async loadUnreadCount() {
         try {
             console.log('NotificationManager: Loading unread count...');
-            console.log('NotificationManager: Making request to:', '/notifications/api/notifications/unread-count');
+            const url = '/notifications/api/notifications/unread-count';
+            console.log('NotificationManager: Making request to:', url);
             console.log('NotificationManager: Current URL:', window.location.href);
             console.log('NotificationManager: Session cookie:', document.cookie);
+            console.log('NotificationManager: Full request URL will be:', window.location.origin + url);
             
-            const response = await fetch('/notifications/api/notifications/unread-count', {
+            const response = await fetch(url, {
                 credentials: 'same-origin' // Incluir cookies de sessão
             });
             console.log('NotificationManager: Response status:', response.status);

@@ -276,7 +276,7 @@ class DashboardController
      */
     private function callBooksServiceAPI($endpoint, $method = 'GET', $data = null)
     {
-        $booksServiceUrl = $_ENV['BOOKS_SERVICE_URL'] ?? 'http://localhost:8002';
+        $booksServiceUrl = $_ENV['BOOKS_SERVICE_URL'] ?? 'http://books-service';
         $url = rtrim($booksServiceUrl, '/') . $endpoint;
         
         $ch = curl_init();

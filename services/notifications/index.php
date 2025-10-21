@@ -9,6 +9,9 @@ require_once __DIR__ . "/../utils/AuthGuard.php";
 require_once __DIR__ . "/../utils/Database.php";
 require_once __DIR__ . '/../utils/EventDispatcher.php';
 
+// Inicializar o serviço de notificações para registrar os listeners
+require_once __DIR__ . '/services/NotificationService.php';
+
 // Configurar autoload
 spl_autoload_register(function ($class) {
     $paths = [
