@@ -32,7 +32,7 @@ class AuthService {
     
     async checkAuth() {
         try {
-            const response = await this.fetchWithTimeout('/auth/api/me', {
+            let response = await this.fetchWithTimeout('/auth/api/me', {
                 method: 'GET',
                 credentials: 'same-origin',
                 headers: { 'Accept': 'application/json' }
@@ -44,24 +44,21 @@ class AuthService {
                     this.setUser(data.user);
                     return true;
                 }
-            }
-            else {
+            } else {
+                // Try fallback endpoint
                 response = await this.fetchWithTimeout('/api/me', {
                     method: 'GET',
                     credentials: 'same-origin',
                     headers: { 'Accept': 'application/json' }
                 });
                 if (response.ok) {
-                const data = await response.json();
-                if (data?.user) {
-                    this.setUser(data.user);
-                    return true;
-                }else{
-                    this.clearUser();
-                    return false;
+                    const data = await response.json();
+                    if (data?.user) {
+                        this.setUser(data.user);
+                        return true;
+                    }
                 }
             }
-        }
             
             this.clearUser();
             return false;
@@ -77,7 +74,7 @@ class AuthService {
      */
     async login(email, password) {
         try {
-            const response = await this.fetchWithTimeout('/auth/api/login', {
+            let response = await this.fetchWithTimeout('/auth/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -87,17 +84,19 @@ class AuthService {
                 body: JSON.stringify({ email, password })
             });
 
-            const data = await response.json();
+            let data = await response.json();
             if (!response.ok) {
+                // Try fallback endpoint
                 response = await this.fetchWithTimeout('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ email, password })
-            });
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ email, password })
+                });
+                data = await response.json();
             }
 
             if (response.ok && data.user) {
@@ -140,7 +139,7 @@ class AuthService {
      */
     async register(name, email, password) {
         try {
-            const response = await this.fetchWithTimeout('/auth/api/register', {
+            let response = await this.fetchWithTimeout('/auth/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -150,30 +149,30 @@ class AuthService {
                 body: JSON.stringify({ name, email, password })
             });
 
-            const data = await response.json();
+            let data = await response.json();
             
             if (response.ok && data.user) {
                 this.setUser(data.user);
-                
                 return { success: true, user: data.user, message: data.message };
             } else {
-                const response = await this.fetchWithTimeout('/auth/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({ name, email, password })});
-                const data = await response.json();
+                // Try fallback endpoint
+                response = await this.fetchWithTimeout('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ name, email, password })
+                });
+                data = await response.json();
+                
                 if (response.ok && data.user) {
                     this.setUser(data.user);
-                    
                     return { success: true, user: data.user, message: data.message };
                 } else {
                     return { success: false, error: data.error || 'Erro ao registrar' };
                 }
-               
             }
         } catch (error) {
             return { success: false, error: 'Erro de conexão' };
@@ -322,7 +321,7 @@ class AuthService {
     /**
      * Fetch com timeout e tratamento de erros de autenticação
      */
-    async fetchWithTimeout(url, options = {}, timeout = 1000) {
+    async fetchWithTimeout(url, options = {}, timeout = 10000) {
         const controller = new AbortController();
         const id = setTimeout(() => controller.abort(), timeout);
         

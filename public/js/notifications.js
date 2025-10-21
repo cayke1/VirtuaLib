@@ -8,15 +8,22 @@ class NotificationManager {
     }
 
     init() {
+        console.log('NotificationManager: Initializing...');
+        console.log('NotificationManager: Session user:', window.AuthService?.currentUser);
         this.setupEventListeners();
         this.loadUnreadCount();
         this.startPolling();
+        console.log('NotificationManager: Initialized successfully');
     }
 
     setupEventListeners() {
+        console.log('NotificationManager: Setting up event listeners...');
         // Desktop
         const notificationBtn = document.getElementById('notification-btn');
         const markAllReadBtn = document.getElementById('mark-all-read-btn');
+        
+        console.log('NotificationManager: Desktop notification button found:', !!notificationBtn);
+        console.log('NotificationManager: Desktop mark all read button found:', !!markAllReadBtn);
         
         if (notificationBtn) {
             notificationBtn.addEventListener('click', (e) => {
@@ -35,6 +42,9 @@ class NotificationManager {
         // Mobile
         const notificationBtnMobile = document.getElementById('notification-btn-mobile');
         const markAllReadBtnMobile = document.getElementById('mark-all-read-btn-mobile');
+        
+        console.log('NotificationManager: Mobile notification button found:', !!notificationBtnMobile);
+        console.log('NotificationManager: Mobile mark all read button found:', !!markAllReadBtnMobile);
         
         if (notificationBtnMobile) {
             notificationBtnMobile.addEventListener('click', (e) => {
@@ -79,14 +89,28 @@ class NotificationManager {
 
     async loadUnreadCount() {
         try {
-            const response = await fetch('/api/notifications/unread-count');
+            console.log('NotificationManager: Loading unread count...');
+            console.log('NotificationManager: Making request to:', '/notifications/api/notifications/unread-count');
+            console.log('NotificationManager: Current URL:', window.location.href);
+            console.log('NotificationManager: Session cookie:', document.cookie);
+            
+            const response = await fetch('/notifications/api/notifications/unread-count', {
+                credentials: 'same-origin' // Incluir cookies de sessão
+            });
+            console.log('NotificationManager: Response status:', response.status);
+            console.log('NotificationManager: Response headers:', Object.fromEntries(response.headers.entries()));
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('NotificationManager: Unread count data:', data);
                 this.unreadCount = data.unread || 0;
                 this.updateBadges();
+            } else {
+                const errorText = await response.text();
+                console.error('NotificationManager: Failed to load unread count:', response.status, response.statusText, errorText);
             }
         } catch (error) {
-            console.error('Error loading unread count:', error);
+            console.error('NotificationManager: Error loading unread count:', error);
         }
     }
 
@@ -97,17 +121,27 @@ class NotificationManager {
         this.showLoading(true);
 
         try {
-            const response = await fetch('/api/notifications');
+            console.log('NotificationManager: Loading notifications...');
+            console.log('NotificationManager: Making request to:', '/notifications/api/notifications');
+            const response = await fetch('/notifications/api/notifications', {
+                credentials: 'same-origin' // Incluir cookies de sessão
+            });
+            console.log('NotificationManager: Notifications response status:', response.status);
+            console.log('NotificationManager: Response headers:', Object.fromEntries(response.headers.entries()));
+            
             if (response.ok) {
                 const data = await response.json();
+                console.log('NotificationManager: Notifications data:', data);
                 this.notifications = data.notifications || [];
                 this.renderNotifications();
                 this.updateUnreadCount();
             } else {
+                const errorText = await response.text();
+                console.error('NotificationManager: Failed to load notifications:', response.status, response.statusText, errorText);
                 this.showError();
             }
         } catch (error) {
-            console.error('Error loading notifications:', error);
+            console.error('NotificationManager: Error loading notifications:', error);
             this.showError();
         } finally {
             this.isLoading = false;
@@ -224,8 +258,9 @@ class NotificationManager {
 
     async markAsRead(notificationId) {
         try {
-            const response = await fetch(`/api/notifications/${notificationId}/read`, {
-                method: 'POST'
+            const response = await fetch(`/notifications/api/notifications/${notificationId}/read`, {
+                method: 'POST',
+                credentials: 'same-origin'
             });
             
             if (response.ok) {
@@ -243,8 +278,9 @@ class NotificationManager {
 
     async markAllAsRead() {
         try {
-            const response = await fetch('/api/notifications/mark-all-read', {
-                method: 'POST'
+            const response = await fetch('/notifications/api/notifications/mark-all-read', {
+                method: 'POST',
+                credentials: 'same-origin'
             });
             
             if (response.ok) {
@@ -266,15 +302,21 @@ class NotificationManager {
     }
 
     updateBadges() {
+        console.log('NotificationManager: Updating badges, unread count:', this.unreadCount);
         const desktopBadge = document.getElementById('notification-badge');
         const mobileBadge = document.getElementById('notification-badge-mobile');
+
+        console.log('NotificationManager: Desktop badge found:', !!desktopBadge);
+        console.log('NotificationManager: Mobile badge found:', !!mobileBadge);
 
         if (desktopBadge) {
             if (this.unreadCount > 0) {
                 desktopBadge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
                 desktopBadge.classList.remove('hidden');
+                console.log('NotificationManager: Desktop badge updated to:', desktopBadge.textContent);
             } else {
                 desktopBadge.classList.add('hidden');
+                console.log('NotificationManager: Desktop badge hidden');
             }
         }
 
@@ -282,8 +324,10 @@ class NotificationManager {
             if (this.unreadCount > 0) {
                 mobileBadge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
                 mobileBadge.classList.remove('hidden');
+                console.log('NotificationManager: Mobile badge updated to:', mobileBadge.textContent);
             } else {
                 mobileBadge.classList.add('hidden');
+                console.log('NotificationManager: Mobile badge hidden');
             }
         }
     }
@@ -423,9 +467,25 @@ class NotificationManager {
     }
 }
 
-// Initialize when DOM is loaded
+// Initialize when DOM is loaded and AuthService is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.NotificationManager = new NotificationManager();
+    // Wait for AuthService to be ready and initialized
+    const initNotifications = async () => {
+        if (window.AuthService) {
+            console.log('NotificationManager: AuthService is ready, waiting for initialization...');
+            
+            // Wait a bit for AuthService to complete its async init
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            console.log('NotificationManager: Initializing NotificationManager...');
+            window.NotificationManager = new NotificationManager();
+        } else {
+            console.log('NotificationManager: AuthService not ready, retrying in 100ms...');
+            setTimeout(initNotifications, 100);
+        }
+    };
+    
+    initNotifications();
 });
 
 // Export for use in other scripts

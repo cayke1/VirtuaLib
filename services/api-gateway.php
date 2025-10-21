@@ -115,8 +115,19 @@ class ApiGateway {
     }
     
     private function fallbackToOriginal() {
-        // Redirecionar para o sistema original
-        require_once __DIR__."/../index.php";
+        // Redirecionar para o sistema original (app)
+        if (file_exists(__DIR__ . "/../app/core/Core.php")) {
+            require_once __DIR__ . "/../app/core/Core.php";
+            require_once __DIR__ . "/../app/router/routes.php";
+            
+            // Combinar rotas de usuário e admin
+            $allRoutes = array_merge($userRoutes, $adminRoutes);
+            
+            $core = new Core($allRoutes);
+            $core->run();
+        } else {
+            $this->sendError("Application not available", 503);
+        }
     }
     
     private function sendError($message, $code = 500) {
