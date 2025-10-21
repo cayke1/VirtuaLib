@@ -1,3 +1,38 @@
+// Funções de API consolidadas
+async function fetchJson(url, opts = {}) {
+    const res = await fetch(url, opts);
+    if (!res.ok) throw new Error(`HTTP ${res.status} - ${res.statusText}`);
+    return res.json();
+}
+
+async function loadGeneralStats() {
+    return fetchJson('/api/stats/general');
+}
+
+async function loadBorrowsByMonth() {
+    return fetchJson('/api/stats/borrows-by-month');
+}
+
+async function loadTopBooks() {
+    return fetchJson('/api/stats/top-books');
+}
+
+async function loadBooksByCategory() {
+    return fetchJson('/api/stats/books-by-category');
+}
+
+async function loadRecentActivities() {
+    return fetchJson('/api/stats/recent-activities');
+}
+
+async function loadUserProfile() {
+    return fetchJson('/api/stats/user-profile');
+}
+
+async function loadFallbackStats() {
+    return fetchJson('/api/stats/fallback');
+}
+
 class DashboardStats {
     constructor() {
         this.init();
@@ -7,7 +42,6 @@ class DashboardStats {
         try {
             await this.loadAllStats();
             this.setupRefreshInterval();
-            this.setupRequestHandlers();
         } catch (error) {
             console.error('Erro ao inicializar dashboard:', error);
         }
@@ -27,23 +61,20 @@ class DashboardStats {
 
     async loadGeneralStats() {
         try {
-            const response = await fetch('/api/stats/general');
-            if (!response.ok) throw new Error('Erro ao carregar estatísticas gerais');
-            
-            const data = await response.json();
+            const data = await loadGeneralStats();
             this.updateGeneralStats(data.stats);
         } catch (error) {
             console.error('Erro ao carregar estatísticas gerais:', error);
             this.showError('Erro ao carregar estatísticas gerais');
+            // Tentar carregar dados de fallback
+            const fallback = await loadFallbackStats();
+            this.updateGeneralStats(fallback.stats);
         }
     }
 
     async loadBorrowsByMonth() {
         try {
-            const response = await fetch('/api/stats/borrows-by-month');
-            if (!response.ok) throw new Error('Erro ao carregar empréstimos por mês');
-            
-            const data = await response.json();
+            const data = await loadBorrowsByMonth();
             this.updateBorrowsByMonthChart(data.data);
         } catch (error) {
             console.error('Erro ao carregar empréstimos por mês:', error);
@@ -52,10 +83,7 @@ class DashboardStats {
 
     async loadTopBooks() {
         try {
-            const response = await fetch('/api/stats/top-books');
-            if (!response.ok) throw new Error('Erro ao carregar top livros');
-            
-            const data = await response.json();
+            const data = await loadTopBooks();
             this.updateTopBooks(data.books);
         } catch (error) {
             console.error('Erro ao carregar top livros:', error);
@@ -64,10 +92,7 @@ class DashboardStats {
 
     async loadBooksByCategory() {
         try {
-            const response = await fetch('/api/stats/books-by-category');
-            if (!response.ok) throw new Error('Erro ao carregar categorias');
-            
-            const data = await response.json();
+            const data = await loadBooksByCategory();
             this.updateBooksByCategoryChart(data.categories);
         } catch (error) {
             console.error('Erro ao carregar categorias:', error);
@@ -76,10 +101,7 @@ class DashboardStats {
 
     async loadRecentActivities() {
         try {
-            const response = await fetch('/api/stats/recent-activities');
-            if (!response.ok) throw new Error('Erro ao carregar atividades recentes');
-            
-            const data = await response.json();
+            const data = await loadRecentActivities();
             this.updateRecentActivities(data.activities);
         } catch (error) {
             console.error('Erro ao carregar atividades recentes:', error);
@@ -265,92 +287,7 @@ class DashboardStats {
         console.warn(message);
     }
 
-    // Métodos para gerenciar solicitações pendentes
-    setupRequestHandlers() {
-        // Tornar as funções globais para uso nos botões onclick
-        window.approveRequest = (requestId) => this.approveRequest(requestId);
-        window.rejectRequest = (requestId) => this.rejectRequest(requestId);
-    }
-
-    async approveRequest(requestId) {
-        if (!confirm('Tem certeza que deseja aprovar esta solicitação?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/approve/${requestId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                this.showSuccessMessage('Solicitação aprovada com sucesso!');
-                this.removeRequestCard(requestId);
-            } else {
-                this.showErrorMessage(result.message || 'Erro ao aprovar solicitação');
-            }
-        } catch (error) {
-            this.showErrorMessage('Erro ao conectar com o servidor');
-            console.error('Error:', error);
-        }
-    }
-
-    async rejectRequest(requestId) {
-        if (!confirm('Tem certeza que deseja rejeitar esta solicitação?')) {
-            return;
-        }
-
-        try {
-            const response = await fetch(`/api/reject/${requestId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                this.showSuccessMessage('Solicitação rejeitada com sucesso!');
-                this.removeRequestCard(requestId);
-            } else {
-                this.showErrorMessage(result.message || 'Erro ao rejeitar solicitação');
-            }
-        } catch (error) {
-            this.showErrorMessage('Erro ao conectar com o servidor');
-            console.error('Error:', error);
-        }
-    }
-
-    removeRequestCard(requestId) {
-        const requestCard = document.querySelector(`[data-request-id="${requestId}"]`);
-        if (requestCard) {
-            requestCard.remove();
-            this.updateRequestCount();
-        }
-    }
-
-    updateRequestCount() {
-        const requestCount = document.querySelector('.request-count');
-        if (requestCount) {
-            const remainingRequests = document.querySelectorAll('.request-card').length;
-            requestCount.textContent = `${remainingRequests} solicitação(ões)`;
-        }
-    }
-
-    showSuccessMessage(message) {
-        // Implementar notificação de sucesso
-        alert(message); // Por enquanto usando alert, pode ser melhorado com toast notifications
-    }
-
-    showErrorMessage(message) {
-        // Implementar notificação de erro
-        alert(message); // Por enquanto usando alert, pode ser melhorado com toast notifications
-    }
+    // Métodos de aprovação/rejeição removidos - não são responsabilidade do serviço de dashboard
 }
 
 document.addEventListener('DOMContentLoaded', () => {

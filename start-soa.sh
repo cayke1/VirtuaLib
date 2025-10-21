@@ -17,11 +17,11 @@ fi
 
 # Parar containers existentes
 echo "🛑 Parando containers existentes..."
-docker-compose -f docker-compose.yml down
+docker compose -f docker-compose.yml down
 
 # Construir e iniciar os serviços
 echo "🔨 Construindo e iniciando serviços SOA..."
-docker-compose -f docker-compose.yml up --build -d
+docker compose -f docker-compose.yml up --build -d
 
 # Aguardar os serviços iniciarem
 echo "⏳ Aguardando serviços iniciarem..."
@@ -29,7 +29,7 @@ sleep 10
 
 # Verificar status dos serviços
 echo "📊 Status dos serviços:"
-docker-compose -f docker-compose.yml ps
+docker compose -f docker-compose.yml ps
 
 echo ""
 echo "✅ Estrutura SOA iniciada com sucesso!"
