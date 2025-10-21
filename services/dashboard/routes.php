@@ -27,6 +27,7 @@ class DashboardRouter {
             '/api/stats/user-profile' => ['DashboardController', 'getUserProfileStats'],
             '/api/stats/history' => ['HistoryController', 'getHistory'],
             '/api/stats/fallback' => ['DashboardController', 'getFallbackStatsData'],
+            '/api/pending-requests' => ['DashboardController', 'getPendingRequests'],
             
             // Rotas para gerenciamento de empréstimos
             '/api/approve/{requestId}' => ['DashboardController', 'approveBorrow'],

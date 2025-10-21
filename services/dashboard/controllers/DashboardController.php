@@ -29,13 +29,8 @@ class DashboardController
     {
         $this->requireRole('admin');
         
-        $stats = $this->statsModel->getGeneralStats();
-        $pendingRequests = $this->statsModel->getPendingRequests(20);
-
         $data = [
             'title' => 'Dashboard Service - Virtual Library',
-            'stats' => $stats,
-            'pendingRequests' => $pendingRequests,
             'isAdmin' => true // Já verificamos que é admin
         ];
 
@@ -67,13 +62,13 @@ class DashboardController
             ],
             'usuarios_ativos' => [
                 'valor' => number_format($stats['total_users']),
-                'descricao' => 'Nos últimos 30 dias',
+                'descricao' => 'Cadastrados no sistema',
                 'icon' => '👥',
                 'color' => '#10b981'
             ],
-            'emprestimos_hoje' => [
+            'solicitacoes_pendentes' => [
                 'valor' => number_format($stats['pending_requests']),
-                'descricao' => 'Empréstimos realizados hoje',
+                'descricao' => 'Aguardando aprovação',
                 'icon' => '📅',
                 'color' => '#6366f1'
             ]
@@ -157,13 +152,13 @@ class DashboardController
             ],
             'usuarios_ativos' => [
                 'valor' => number_format($stats['total_users']),
-                'descricao' => 'Nos últimos 30 dias',
+                'descricao' => 'Cadastrados no sistema',
                 'icon' => '👥',
                 'color' => '#10b981'
             ],
-            'emprestimos_hoje' => [
+            'solicitacoes_pendentes' => [
                 'valor' => number_format($stats['pending_requests']),
-                'descricao' => 'Empréstimos realizados hoje',
+                'descricao' => 'Aguardando aprovação',
                 'icon' => '📅',
                 'color' => '#6366f1'
             ]
@@ -268,6 +263,29 @@ class DashboardController
         http_response_code($statusCode);
         header('Content-Type: application/json');
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Obter solicitações pendentes
+     */
+    public function getPendingRequests()
+    {
+        $this->requireRole('admin');
+
+        $limit = (int)($_GET['limit'] ?? 20);
+        $limit = max(1, min(100, $limit)); // Limitar entre 1 e 100
+
+        try {
+            $requests = $this->statsModel->getPendingRequests($limit);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['requests' => $requests], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Erro ao buscar solicitações pendentes: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     /**

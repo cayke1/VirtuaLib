@@ -6,35 +6,35 @@ async function fetchJson(url, opts = {}) {
 }
 
 async function loadGeneralStats() {
-    return fetchJson('/api/stats/general');
+    return fetchJson('/dashboard/api/stats/general');
 }
 
 async function loadBorrowsByMonth() {
-    return fetchJson('/api/stats/borrows-by-month');
+    return fetchJson('/dashboard/api/stats/borrows-by-month');
 }
 
 async function loadTopBooks() {
-    return fetchJson('/api/stats/top-books');
+    return fetchJson('/dashboard/api/stats/top-books');
 }
 
 async function loadBooksByCategory() {
-    return fetchJson('/api/stats/books-by-category');
+    return fetchJson('/dashboard/api/stats/books-by-category');
 }
 
 async function loadRecentActivities() {
-    return fetchJson('/api/stats/recent-activities');
+    return fetchJson('/dashboard/api/stats/recent-activities');
 }
 
 async function loadUserProfile() {
-    return fetchJson('/api/stats/user-profile');
+    return fetchJson('/dashboard/api/stats/user-profile');
 }
 
 async function loadFallbackStats() {
-    return fetchJson('/api/stats/fallback');
+    return fetchJson('/dashboard/api/stats/fallback');
 }
 
 async function loadPendingRequests() {
-    return fetchJson('/api/pending-requests?limit=20');
+    return fetchJson('/dashboard/api/pending-requests?limit=20');
 }
 
 class DashboardStats {
@@ -125,7 +125,7 @@ class DashboardStats {
     updateGeneralStats(stats) {
         const statCards = document.querySelectorAll('.stat-card');
         statCards.forEach((card, index) => {
-            const statKeys = ['total_livros', 'livros_emprestados', 'usuarios_ativos', 'emprestimos_hoje'];
+            const statKeys = ['total_livros', 'livros_emprestados', 'usuarios_ativos', 'solicitacoes_pendentes'];
             const statKey = statKeys[index];
             
             if (stats[statKey]) {
@@ -387,7 +387,7 @@ class DashboardStats {
 // Funções globais para aprovação/rejeição de empréstimos
 window.approveRequest = async function(requestId) {
     try {
-        const response = await fetch(`/api/approve/${requestId}`, {
+        const response = await fetch(`/dashboard/api/approve/${requestId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -420,7 +420,7 @@ window.rejectRequest = async function(requestId) {
     }
     
     try {
-        const response = await fetch(`/api/reject/${requestId}`, {
+        const response = await fetch(`/dashboard/api/reject/${requestId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
