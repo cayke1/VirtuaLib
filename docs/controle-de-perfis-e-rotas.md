@@ -5,12 +5,12 @@
 O sistema agora separa as rotas acessíveis para usuários comuns e administradores, garantindo que cada perfil só acesse as funcionalidades permitidas.
 
 ### 1. Separação das rotas
-- No arquivo `app/router/routes.php`, foram criados dois arrays:
+- No arquivo `services/*/routes.php`, foram criados dois arrays:
   - `$userRoutes`: contém apenas as rotas acessíveis para usuários comuns.
   - `$adminRoutes`: inclui todas as rotas de usuário e adiciona rotas exclusivas de administrador (ex: criação de livros).
 
 ### 2. Seleção dinâmica das rotas
-- No arquivo `index.php`, o sistema verifica o perfil do usuário logado (campo `role` na sessão):
+- No arquivo `services/*/index.php`, o sistema verifica o perfil do usuário logado (campo `role` na sessão):
   - Se for `admin`, utiliza `$adminRoutes`.
   - Caso contrário, utiliza `$userRoutes`.
 - O roteador (`Core`) recebe apenas as rotas permitidas para o perfil atual.

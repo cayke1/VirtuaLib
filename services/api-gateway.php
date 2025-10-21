@@ -65,8 +65,8 @@ class ApiGateway {
         $service = $this->determineService($requestUri);
         
         if (!$service) {
-            // Fallback para o sistema original
-            return $this->fallbackToOriginal();
+            // Serviço não encontrado
+            $this->sendError("Service not found", 404);
         }
         
         // Redirecionar para o serviço apropriado
@@ -129,22 +129,6 @@ class ApiGateway {
         
         // Para outras rotas (como /api/*), manter a URI original
         return $cleanUri;
-    }
-    
-    private function fallbackToOriginal() {
-        // Redirecionar para o sistema original (app)
-        if (file_exists(__DIR__ . "/../app/core/Core.php")) {
-            require_once __DIR__ . "/../app/core/Core.php";
-            require_once __DIR__ . "/../app/router/routes.php";
-            
-            // Combinar rotas de usuário e admin
-            $allRoutes = array_merge($userRoutes, $adminRoutes);
-            
-            $core = new Core($allRoutes);
-            $core->run();
-        } else {
-            $this->sendError("Application not available", 503);
-        }
     }
     
     private function sendError($message, $code = 500) {
