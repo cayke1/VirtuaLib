@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         processIsolation="false"
+         stopOnFailure="false">
+    <testsuites>
+        <testsuite name="Auth Service Tests">
+            <directory>services/auth/test</directory>
+        </testsuite>
+        <testsuite name="Books Service Tests">
+            <directory>services/books/test</directory>
+        </testsuite>
+        <testsuite name="Dashboard Service Tests">
+            <directory>services/dashboard/test</directory>
+        </testsuite>
+        <testsuite name="Notifications Service Tests">
+            <directory>services/notifications/test</directory>
+        </testsuite>
+    </testsuites>
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">services</directory>
+        </include>
+        <exclude>
+            <directory>services/*/test</directory>
+            <directory>services/*/views</directory>
+        </exclude>
+    </coverage>
+</phpunit>

@@ -1,3 +1,5 @@
 .env
 back.env
-/app/docs/localdocs
+index.php
+/vendor
+.phpunit.result.cache

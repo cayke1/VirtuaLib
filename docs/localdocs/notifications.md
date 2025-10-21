@@ -5,16 +5,16 @@
 Foram adicionados e atualizados os seguintes artefatos:
 
 - Novo model:
-  - `app/models/NotificationModel.php` — operações sobre a tabela `Notifications` (get, create, createBulk, count unread, mark as read, mark all read, delete).
+  - `services/notifications/models/NotificationModel.php` — operações sobre a tabela `Notifications` (get, create, createBulk, count unread, mark as read, mark all read, delete).
 
 - Novo controller:
-  - `app/controllers/NotificationsController.php` — endpoints JSON para listar notificações do usuário, criar, criar em massa, marcar como lida, marcar todas como lidas, contar não-lidas e apagar.
+  - `services/notifications/controllers/NotificationsController.php` — endpoints JSON para listar notificações do usuário, criar, criar em massa, marcar como lida, marcar todas como lidas, contar não-lidas e apagar.
 
 - Nova view partial (opcional no frontend):
-  - `app/views/components/notifications.php` — componente simples para renderizar uma lista de notificações (usado pelo navbar, se integrado).
+  - `services/notifications/views/components/notifications.php` — componente simples para renderizar uma lista de notificações (usado pelo navbar, se integrado).
 
 - Rotas atualizadas:
-  - `app/router/routes.php` — rotas adicionadas para expor os novos endpoints (lista abaixo).
+  - `services/notifications/routes.php` — rotas adicionadas para expor os novos endpoints (lista abaixo).
 
 - DDL (tabela): a tabela `Notifications` está contemplada no DDL projeto (arquivo `ddl.sql` / `docs/ddl.sql`), com colunas compatíveis com o model.
 
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS Notifications (
 
 ## Endpoints (rotas) adicionadas
 
-As rotas foram registradas em `app/router/routes.php`. A seguir estão os endpoints, método HTTP, rota e responsabilidades:
+As rotas foram registradas em `services/notifications/routes.php`. A seguir estão os endpoints, método HTTP, rota e responsabilidades:
 
 - GET /api/notifications
   - Lista as notificações do usuário logado (até 100, ordenadas por `created_at` desc).
@@ -118,9 +118,9 @@ No banco, a coluna `data` armazena JSON (nullable). O model o armazena como JSON
 
 ## Mapeamento de requisitos -> status
 
-- Model de notificações: Done (`app/models/NotificationModel.php`).
-- Controller com endpoints básicos: Done (`app/controllers/NotificationsController.php`).
-- Rotas: Done (`app/router/routes.php`).
+- Model de notificações: Done (`services/notifications/models/NotificationModel.php`).
+- Controller com endpoints básicos: Done (`services/notifications/controllers/NotificationsController.php`).
+- Rotas: Done (`services/notifications/routes.php`).
 - DDL/table: Present (arquivo `docs/sql/books-tables.sql`).
 
 ---
@@ -131,16 +131,16 @@ Nas últimas mudanças foi adicionada uma infraestrutura básica de eventos para
 
 Arquivos adicionados/alterados relacionados a eventos:
 
-- `app/core/EventDispatcher.php` — dispatcher simples com API estática:
+- `services/utils/EventDispatcher.php` — dispatcher simples com API estática:
   - `EventDispatcher::listen(string $event, callable $listener)` — registra listeners.
   - `EventDispatcher::dispatch(string $event, $payload = null)` — dispara o evento para todos os listeners registrados.
 
-- `app/services/NotificationService.php` — serviço que encapsula `NotificationModel` e registra listeners padrão:
+- `services/notifications/services/NotificationService.php` — serviço que encapsula `NotificationModel` e registra listeners padrão:
   - Registra listeners para os eventos `book.borrowed` e `book.returned`.
   - Os listeners criam notificações na tabela `Notifications` usando o `NotificationModel`.
   - Métodos públicos úteis: `notify($userId, $title, $message, $data)`, `notifyBorrowed($payload)`, `notifyReturned($payload)`.
 
-- `app/controllers/BookController.php` — agora dispara eventos quando operações são bem-sucedidas:
+- `services/books/controllers/BookController.php` — agora dispara eventos quando operações são bem-sucedidas:
   - Após emprestar um livro: `EventDispatcher::dispatch('book.borrowed', $payload)`
   - Após devolver um livro: `EventDispatcher::dispatch('book.returned', $payload)`
   - `payload` padrão enviado: `['user_id'=>..., 'book_id'=>..., 'book_title'=> ...]`.

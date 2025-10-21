@@ -26,6 +26,7 @@
 - [⚙️ Requisitos Não Funcionais](#-requisitos-não-funcionais-rnf)
 - [🎭 User Stories](#-user-stories)
 - [📝 Planejamento de Tasks](#-sprint-1--planejamento-de-tasks)
+- [🧪 Testes Unitários](#-testes-unitários)
 - [🔗 Links Úteis](#-links-úteis)
 
 ---
@@ -115,10 +116,54 @@ O sistema é projetado para oferecer uma **experiência intuitiva e responsiva**
 
 ---
 
+## 🧪 Testes Unitários
+
+O projeto VirtuaLib implementa **testes unitários** focados nas **regras de negócio** de cada service, utilizando PHPUnit com mocks para isolamento de dependências.
+
+### 📊 Status dos Testes
+
+- **✅ 9 testes** implementados
+- **✅ 35 assertions** executadas  
+- **✅ 100% de sucesso** nos testes
+- **✅ Cobertura** das regras de negócio principais
+
+### 🏗️ Services Testados
+
+| Service | Arquivo de Teste | Regras Testadas |
+|---------|------------------|-----------------|
+| **Auth** | `UserModelTest.php` | Autenticação, criação de usuário, fallback |
+| **Books** | `BorrowModelTest.php` | Empréstimos, validações, estrutura |
+| **Notifications** | `NotificationModelTest.php` | Sistema de notificações, fallback |
+
+### 🚀 Execução dos Testes
+
+```bash
+# Instalar dependências
+composer require --dev phpunit/phpunit ^12.4
+
+# Executar todos os testes
+php vendor/bin/phpunit --testdox
+
+# Executar testes por service
+php vendor/bin/phpunit services/auth/test/ --testdox
+php vendor/bin/phpunit services/books/test/ --testdox
+php vendor/bin/phpunit services/notifications/test/ --testdox
+```
+
+### 📚 Documentação Completa
+
+Para informações detalhadas sobre a implementação, estratégias de mock e convenções de teste, consulte:
+
+**[📖 Documentação Completa dos Testes](./docs/testing/README.md)**
+
+---
 
 ## 🔗 Links Úteis
 
 - [📌 Trello do Projeto](https://trello.com/invite/b/689d4d47bab2daad9f60e335/ATTIc8f30abdc1bea10d466d116378b9c226F9DC5DA6/virtualib)  
 - [🎨 Protótipo no Figma](https://www.figma.com/design/7xDDLk1pqLlJ8qGoq74Suh/Untitled?node-id=0-1&t=d5UdozK2nkhF82av-1)  
+- [PDF - SPRINT 1](./docs/sprints//Planejamento%20Tec%20Sprint%201%20-%20ES.pdf)
+- [PDF - SPRINT 2](./docs//sprints/Planejamento%20Tec%20Sprint%202%20-%20ES.pdf)
+- [PDF - SPRINT 3](./docs/sprints/Planejamento%20Tec%20Sprint%203%20-%20ES.pdf)
 
 ---
