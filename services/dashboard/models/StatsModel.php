@@ -42,26 +42,27 @@ class StatsModel {
                 $stats = [];
                 
                 // Total de livros
-                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM books");
+                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM Books");
                 $stats['total_books'] = $stmt->fetch()['total'];
                 
-                // Livros emprestados
-                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM books WHERE borrowed = 1");
+                // Livros emprestados (status = 'approved' e returned_at IS NULL)
+                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM Borrows WHERE status = 'approved' AND returned_at IS NULL");
                 $stats['borrowed_books'] = $stmt->fetch()['total'];
                 
                 // Livros disponíveis
                 $stats['available_books'] = $stats['total_books'] - $stats['borrowed_books'];
                 
                 // Total de usuários
-                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM users");
+                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM Users");
                 $stats['total_users'] = $stmt->fetch()['total'];
                 
-                // Empréstimos ativos
-                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM borrows WHERE returned_at IS NULL");
+                // Solicitações pendentes
+                $stmt = $this->pdo->query("SELECT COUNT(*) as total FROM Borrows WHERE status = 'pending'");
                 $stats['pending_requests'] = $stmt->fetch()['total'];
                 
                 return $stats;
             } catch (PDOException $e) {
+                error_log("Erro ao buscar estatísticas gerais: " . $e->getMessage());
                 return $this->getFallbackStatsData();
             }
         }
@@ -119,14 +120,27 @@ class StatsModel {
     public function getBorrowsByMonth() {
         if ($this->pdo) {
             try {
-                $stmt = $this->pdo->query("\n                    SELECT DATE_FORMAT(requested_at, '%Y-%m') AS month, COUNT(*) AS total_borrows\n                    FROM borrows\n                    WHERE requested_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)\n                    GROUP BY month\n                    ORDER BY month ASC\n                ");
+                $stmt = $this->pdo->query("
+                    SELECT DATE_FORMAT(requested_at, '%Y-%m') AS month, COUNT(*) AS total_borrows
+                    FROM Borrows
+                    WHERE requested_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                    GROUP BY month
+                    ORDER BY month ASC
+                ");
                 return $stmt->fetchAll();
             } catch (PDOException $e) {
-                // cair no fallback
+                error_log("Erro ao buscar empréstimos por mês: " . $e->getMessage());
+                return $this->getFallbackBorrowsByMonth();
             }
         }
 
-        // Fallback simples: últimos 6 meses com valores mock
+        return $this->getFallbackBorrowsByMonth();
+    }
+
+    /**
+     * Fallback para empréstimos por mês
+     */
+    private function getFallbackBorrowsByMonth() {
         $months = [];
         $now = new DateTimeImmutable();
         for ($i = 5; $i >= 0; $i--) {
@@ -142,14 +156,28 @@ class StatsModel {
     public function getTopBooks() {
         if ($this->pdo) {
             try {
-                $stmt = $this->pdo->query("\n                    SELECT b.id, b.title, b.author, COUNT(*) AS borrow_count\n                    FROM borrows br\n                    JOIN books b ON br.book_id = b.id\n                    GROUP BY br.book_id\n                    ORDER BY borrow_count DESC\n                    LIMIT 5\n                ");
+                $stmt = $this->pdo->query("
+                    SELECT b.id, b.title, b.author, COUNT(*) AS borrow_count
+                    FROM Borrows br
+                    JOIN Books b ON br.book_id = b.id
+                    GROUP BY br.book_id
+                    ORDER BY borrow_count DESC
+                    LIMIT 5
+                ");
                 return $stmt->fetchAll();
             } catch (PDOException $e) {
-                // fallback
+                error_log("Erro ao buscar top livros: " . $e->getMessage());
+                return $this->getFallbackTopBooks();
             }
         }
 
-        // Fallback
+        return $this->getFallbackTopBooks();
+    }
+
+    /**
+     * Fallback para top livros
+     */
+    private function getFallbackTopBooks() {
         return [
             ['id' => 1, 'title' => 'Dom Casmurro', 'author' => 'Machado de Assis', 'borrow_count' => 34],
             ['id' => 2, 'title' => '1984', 'author' => 'George Orwell', 'borrow_count' => 27],
@@ -158,12 +186,17 @@ class StatsModel {
     }
 
     /**
-     * Distribuição por categoria (delegado aqui para o dashboard)
+     * Distribuição por categoria
      */
     public function getBooksByCategory() {
         if ($this->pdo) {
             try {
-                $stmt = $this->pdo->query("\n                    SELECT genre as nome, COUNT(*) as total, ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM books)), 1) as percentual\n                    FROM books\n                    GROUP BY genre\n                    ORDER BY total DESC\n                ");
+                $stmt = $this->pdo->query("
+                    SELECT genre as nome, COUNT(*) as total, ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM Books)), 1) as percentual
+                    FROM Books
+                    GROUP BY genre
+                    ORDER BY total DESC
+                ");
                 $results = $stmt->fetchAll();
 
                 $colors = ['#059669', '#3b82f6', '#14b8a6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
@@ -177,11 +210,18 @@ class StatsModel {
                 }
                 return $categories;
             } catch (PDOException $e) {
-                // fallback
+                error_log("Erro ao buscar categorias: " . $e->getMessage());
+                return $this->getFallbackBooksByCategory();
             }
         }
 
-        // Fallback
+        return $this->getFallbackBooksByCategory();
+    }
+
+    /**
+     * Fallback para categorias
+     */
+    private function getFallbackBooksByCategory() {
         return [
             ['nome' => 'Ficção Científica', 'percentual' => 28.5, 'color' => '#059669'],
             ['nome' => 'Romance', 'percentual' => 22.1, 'color' => '#3b82f6'],
@@ -190,21 +230,36 @@ class StatsModel {
     }
 
     /**
-     * Solicitações pendentes (para seção de pending requests)
+     * Solicitações pendentes
      */
     public function getPendingRequests($limit = 20) {
         if ($this->pdo) {
             try {
-                $stmt = $this->pdo->prepare("\n                    SELECT br.id, u.name AS user_name, u.email AS user_email, b.title AS book_title, b.author AS book_author, br.requested_at\n                    FROM borrows br\n                    JOIN users u ON br.user_id = u.id\n                    JOIN books b ON br.book_id = b.id\n                    WHERE br.status = 'pending'\n                    ORDER BY br.requested_at DESC\n                    LIMIT :limit\n                ");
+                $stmt = $this->pdo->prepare("
+                    SELECT br.id, u.name AS user_name, u.email AS user_email, b.title AS book_title, b.author AS book_author, br.requested_at
+                    FROM Borrows br
+                    JOIN Users u ON br.user_id = u.id
+                    JOIN Books b ON br.book_id = b.id
+                    WHERE br.status = 'pending'
+                    ORDER BY br.requested_at DESC
+                    LIMIT :limit
+                ");
                 $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
                 $stmt->execute();
                 return $stmt->fetchAll();
             } catch (PDOException $e) {
-                // fallback
+                error_log("Erro ao buscar solicitações pendentes: " . $e->getMessage());
+                return $this->getFallbackPendingRequests($limit);
             }
         }
 
-        // Fallback
+        return $this->getFallbackPendingRequests($limit);
+    }
+
+    /**
+     * Dados de fallback para solicitações pendentes
+     */
+    private function getFallbackPendingRequests($limit) {
         $now = new DateTimeImmutable();
         $requests = [];
         for ($i = 1; $i <= min(5, $limit); $i++) {
@@ -244,19 +299,23 @@ class StatsModel {
         ];
     }
 
+    /**
+     * Atividades recentes
+     */
     public function getRecentActivities() {
         if ($this->pdo) {
             try {
                 $stmt = $this->pdo->query("
                     SELECT u.name AS user_name, b.title AS book_title, br.requested_at, br.due_date, br.status
-                    FROM borrows br
-                    JOIN users u ON br.user_id = u.id
-                    JOIN books b ON br.book_id = b.id
+                    FROM Borrows br
+                    JOIN Users u ON br.user_id = u.id
+                    JOIN Books b ON br.book_id = b.id
                     ORDER BY br.requested_at DESC
                     LIMIT 100
                 ");
                 return $stmt->fetchAll();
             } catch (PDOException $e) {
+                error_log("Erro ao buscar atividades recentes: " . $e->getMessage());
                 return $this->getFallbackRecentActivities();
             }
         }
@@ -264,30 +323,43 @@ class StatsModel {
         return $this->getFallbackRecentActivities();
     }
 
-    
+    /**
+     * Histórico
+     */
     public function getHistory($limit = 100) {
         if ($this->pdo) {
             try {
                 $stmt = $this->pdo->prepare("
                     SELECT u.name AS user_name, b.title AS book_title, br.requested_at, br.returned_at, br.status
-                    FROM borrows br
-                    JOIN users u ON br.user_id = u.id
-                    JOIN books b ON br.book_id = b.id
+                    FROM Borrows br
+                    JOIN Users u ON br.user_id = u.id
+                    JOIN Books b ON br.book_id = b.id
                     ORDER BY br.requested_at DESC
                     LIMIT :limit
                 ");
                 $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
                 $stmt->execute();
-                return $stmt->fetchAll();
+                $result = $stmt->fetchAll();
+                error_log("Histórico encontrado: " . count($result) . " registros");
+                return $result;
             } catch (PDOException $e) {
-                // fallback
+                error_log("Erro ao buscar histórico: " . $e->getMessage());
+                return $this->getFallbackHistory($limit);
             }
         }
-       // Fallback: 5 empréstimos simulados
+        
+        error_log("Usando fallback para histórico - sem conexão com BD");
+        return $this->getFallbackHistory($limit);
+    }
+
+    /**
+     * Fallback para histórico
+     */
+    private function getFallbackHistory($limit) {
         $now = new DateTimeImmutable();
         $history = [];
         $statusList = ['pending', 'approved', 'returned', 'late'];
-        for ($i = 1; $i <= 5; $i++) {
+        for ($i = 1; $i <= min(5, $limit); $i++) {
             $requested = $now->modify("-{$i} days")->format('Y-m-d H:i:s');
             $returned = ($i % 3 === 0) ? $now->modify("-".($i-1)." days")->format('Y-m-d H:i:s') : null;
             $history[] = [
@@ -302,3 +374,4 @@ class StatsModel {
     }
 
 }
+

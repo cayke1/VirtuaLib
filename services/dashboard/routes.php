@@ -13,7 +13,7 @@ class DashboardRouter {
     private function defineRoutes() {
         $this->routes = [
             // Rotas de view
-            '/dashboard' => ['DashboardController', 'showDashboard'],
+            '/' => ['DashboardController', 'showDashboard'],
             '/historico' => ['HistoryController', 'showHistory'],
             #'/stats' => ['DashboardController', 'showStats'],
             #'/analytics' => ['DashboardController', 'showAnalytics'],
@@ -27,6 +27,11 @@ class DashboardRouter {
             '/api/stats/user-profile' => ['DashboardController', 'getUserProfileStats'],
             '/api/stats/history' => ['HistoryController', 'getHistory'],
             '/api/stats/fallback' => ['DashboardController', 'getFallbackStatsData'],
+            '/api/pending-requests' => ['DashboardController', 'getPendingRequests'],
+            
+            // Rotas para gerenciamento de empréstimos
+            '/api/approve/{requestId}' => ['DashboardController', 'approveBorrow'],
+            '/api/reject/{requestId}' => ['DashboardController', 'rejectRequest'],
 
         ];
     }
@@ -51,8 +56,11 @@ class DashboardRouter {
     }
     
     private function matchRoute($route, $uri) {
-        // Implementação simples de matching
-        return $route === $uri;
+        // Converter rota com parâmetros para regex
+        $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $route);
+        $pattern = '#^' . $pattern . '$#';
+        
+        return preg_match($pattern, $uri);
     }
     
     private function executeHandler($handler, $uri) {
@@ -61,12 +69,33 @@ class DashboardRouter {
         if (class_exists($controller)) {
             $controllerInstance = new $controller();
             if (method_exists($controllerInstance, $method)) {
-                $controllerInstance->$method();
+                // Extrair parâmetros da URI se necessário
+                $params = $this->extractParams($handler, $uri);
+                $controllerInstance->$method(...$params);
                 return;
             }
         }
         
         $this->notFound();
+    }
+    
+    private function extractParams($handler, $uri) {
+        // Encontrar a rota correspondente para extrair parâmetros
+        foreach ($this->routes as $route => $routeHandler) {
+            if ($routeHandler === $handler) {
+                // Converter rota com parâmetros para regex
+                $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $route);
+                $pattern = '#^' . $pattern . '$#';
+                
+                if (preg_match($pattern, $uri, $matches)) {
+                    // Remover o primeiro match (string completa) e retornar apenas os parâmetros
+                    array_shift($matches);
+                    return $matches;
+                }
+            }
+        }
+        
+        return [];
     }
     
     private function notFound() {

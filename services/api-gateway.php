@@ -33,22 +33,26 @@ class ApiGateway {
             'auth' => [
                 'prefix' => '/auth',
                 'port' => 8081,
-                'path' => __DIR__ . '/auth'
+                'path' => __DIR__ . '/auth',
+                'patterns' => ['/auth', '/auth/*']
             ],
             'books' => [
                 'prefix' => '/books', 
                 'port' => 8082,
-                'path' => __DIR__ . '/books'
+                'path' => __DIR__ . '/books',
+                'patterns' => ['/books', '/books/*', '/api/search*', '/api/request/*', '/api/return/*', '/api/create*', '/api/pending-requests*', '/']
             ],
             'notifications' => [
                 'prefix' => '/notifications',
                 'port' => 8083, 
-                'path' => __DIR__ . '/notifications'
+                'path' => __DIR__ . '/notifications',
+                'patterns' => ['/notifications/*', '/api/notifications*']
             ],
             'dashboard' => [
                 'prefix' => '/dashboard',
                 'port' => 8084,
-                'path' => __DIR__ . '/dashboard'
+                'path' => __DIR__ . '/dashboard',
+                'patterns' => ['/dashboard', '/dashboard/*', '/api/approve/*', '/api/reject/*', '/api/stats/*']
             ]
         ];
     }
@@ -61,8 +65,8 @@ class ApiGateway {
         $service = $this->determineService($requestUri);
         
         if (!$service) {
-            // Fallback para o sistema original
-            return $this->fallbackToOriginal();
+            // Serviço não encontrado
+            $this->sendError("Service not found", 404);
         }
         
         // Redirecionar para o serviço apropriado
@@ -70,37 +74,37 @@ class ApiGateway {
     }
     
     private function determineService($uri) {
-        // Primeiro, verificar se a URI começa com algum prefixo de serviço
+        // Remover query string para comparação
+        $cleanUri = strtok($uri, '?');
+        
+        // Verificar cada serviço e seus padrões
         foreach ($this->services as $serviceName => $config) {
-            if (strpos($uri, $config['prefix']) === 0) {
-                return $serviceName;
+            foreach ($config['patterns'] as $pattern) {
+                if ($this->matchesPattern($pattern, $cleanUri)) {
+                    return $serviceName;
+                }
             }
         }
         
-        // Se for a raiz (/) ou não corresponder a nenhum serviço, redirecionar para books
-        if ($uri === '/' || strpos($uri, '/') === 0) {
-            return 'books';
-        }
-        
         return null;
+    }
+    
+    private function matchesPattern($pattern, $uri) {
+        // Converter padrão wildcard para regex
+        $regex = str_replace('*', '.*', $pattern);
+        $regex = preg_quote($regex, '/');
+        $regex = str_replace('\\.\\*', '.*', $regex);
+        $regex = '/^' . $regex . '$/';
+        
+        return preg_match($regex, $uri);
     }
     
     private function forwardToService($serviceName, $originalUri) {
         $service = $this->services[$serviceName];
         $servicePath = $service['path'];
         
-        // Modificar a URI para o contexto do serviço
-        $serviceUri = $originalUri;
-        
-        // Se a URI começa com o prefixo do serviço, removê-lo
-        if (strpos($originalUri, $service['prefix']) === 0) {
-            $serviceUri = substr($originalUri, strlen($service['prefix']));
-        }
-        
-        // Se a URI ficou vazia, definir como raiz
-        if (empty($serviceUri)) {
-            $serviceUri = '/';
-        }
+        // Determinar a URI do serviço baseada no padrão
+        $serviceUri = $this->transformUriForService($originalUri, $service);
         
         // Salvar URI original para contexto
         $_SERVER['ORIGINAL_REQUEST_URI'] = $originalUri;
@@ -114,9 +118,17 @@ class ApiGateway {
         }
     }
     
-    private function fallbackToOriginal() {
-        // Redirecionar para o sistema original
-        require_once __DIR__."/../index.php";
+    private function transformUriForService($uri, $service) {
+        $cleanUri = strtok($uri, '?');
+        
+        // Se a URI começa com o prefixo do serviço, removê-lo
+        if (strpos($cleanUri, $service['prefix']) === 0) {
+            $transformed = substr($cleanUri, strlen($service['prefix']));
+            return empty($transformed) ? '/' : $transformed;
+        }
+        
+        // Para outras rotas (como /api/*), manter a URI original
+        return $cleanUri;
     }
     
     private function sendError($message, $code = 500) {

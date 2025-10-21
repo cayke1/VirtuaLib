@@ -13,6 +13,7 @@ class AuthRouter {
     private function defineRoutes() {
         $this->routes = [
             // Rotas de view
+            '/' => ['AuthController', 'showLogin'], // Fallback para login
             '/login' => ['AuthController', 'showLogin'],
             '/register' => ['AuthController', 'showRegister'],
             '/profile' => ['AuthController', 'showProfile'],

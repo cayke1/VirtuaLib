@@ -3,8 +3,8 @@
  * Notifications Controller - Serviço de Notificações
  */
 
-// Include the View utility
-require_once __DIR__ . '/../../utils/View.php';
+require_once __DIR__ . '/../../utils/AuthGuard.php';
+require_once __DIR__ . '/../services/NotificationService.php';
 
 class NotificationsController {
     use AuthGuard;
@@ -13,8 +13,9 @@ class NotificationsController {
     
     public function __construct() {
         $this->notificationModel = new NotificationModel();
-        
-        View::setBasePath(__DIR__ . '/../views/');
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
     }
     
     private function json($data, $status = 200) {
@@ -22,39 +23,8 @@ class NotificationsController {
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
-    
 
-    public function listNotifications() {
-        $this->requireAuth();
-        $userId = (int)($_SESSION['user']['id'] ?? 0);
-        
-        $notifications = $this->notificationModel->getByUserId($userId);
-        
-        $data = [
-            'title' => 'Notificações - Virtual Library',
-            'notifications' => $notifications
-        ];
-        
-
-        View::display('notifications', $data);
-    }
-    
-    public function listUnreadNotifications() {
-        $this->requireAuth();
-        $userId = (int)($_SESSION['user']['id'] ?? 0);
-        
-        $notifications = $this->notificationModel->getByUserId($userId);
-        $unreadNotifications = array_filter($notifications, function($notification) {
-            return !$notification['is_read'];
-        });
-        
-        $data = [
-            'title' => 'Notificações Não Lidas - Virtual Library',
-            'notifications' => $unreadNotifications
-        ];
-        
-        View::display('notifications', $data);
-    }
+    // ========== API METHODS ==========
 
     public function listForUser() {
         $this->requireAuth();
@@ -64,7 +34,6 @@ class NotificationsController {
         $this->json(['notifications' => $notifications]);
     }
     
-
     public function unreadCount() {
         $this->requireAuth();
         $userId = (int)($_SESSION['user']['id'] ?? 0);
@@ -72,7 +41,6 @@ class NotificationsController {
         $this->json(['unread' => $count]);
     }
     
-
     public function markAllRead() {
         $this->requireAuth();
         $userId = (int)($_SESSION['user']['id'] ?? 0);
@@ -83,33 +51,32 @@ class NotificationsController {
         $this->json(['message' => 'All marked as read']);
     }
     
-
-    public function markAsRead($params = []) {
+    public function markAsRead($id) {
         $this->requireAuth();
         $userId = (int)($_SESSION['user']['id'] ?? 0);
-        $id = (int)($params['id'] ?? 0);
+        $notificationId = (int)$id;
         
-        if (!$id) {
+        if (!$notificationId) {
             return $this->json(['error' => 'Invalid notification ID'], 400);
         }
         
-        $ok = $this->notificationModel->markAsRead($id, $userId);
+        $ok = $this->notificationModel->markAsRead($notificationId, $userId);
         if (!$ok) {
             return $this->json(['error' => 'Unable to mark as read'], 400);
         }
         $this->json(['message' => 'Marked as read']);
     }
     
-    public function delete($params = []) {
+    public function delete($id) {
         $this->requireAuth();
         $userId = (int)($_SESSION['user']['id'] ?? 0);
-        $id = (int)($params['id'] ?? 0);
+        $notificationId = (int)$id;
         
-        if (!$id) {
+        if (!$notificationId) {
             return $this->json(['error' => 'Invalid notification ID'], 400);
         }
 
-        $ok = $this->notificationModel->delete($id, $userId);
+        $ok = $this->notificationModel->delete($notificationId, $userId);
         if (!$ok) {
             return $this->json(['error' => 'Unable to delete notification'], 400);
         }
@@ -117,14 +84,9 @@ class NotificationsController {
     }
 
     public function createNotification() {
-        $this->requireAuth();
+        $this->requireRole('admin');
         
-        $userRole = $_SESSION['user']['role'] ?? 'user';
-        if ($userRole !== 'admin') {
-            return $this->json(['error' => 'Unauthorized'], 403);
-        }
-        
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = $this->readJsonBody();
         
         if (!$input || !isset($input['user_id']) || !isset($input['title']) || !isset($input['message'])) {
             return $this->json(['error' => 'Missing required fields'], 400);
@@ -145,7 +107,7 @@ class NotificationsController {
     }
     
     public function processEvent() {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $input = $this->readJsonBody();
         
         if (!$input || !isset($input['type'])) {
             return $this->json(['error' => 'Missing event type'], 400);
@@ -160,4 +122,17 @@ class NotificationsController {
             $this->json(['error' => 'Failed to process event'], 500);
         }
     }
+
+    // ========== HELPER METHODS ==========
+
+    private function readJsonBody() {
+        $raw = file_get_contents('php://input');
+        if (!$raw) {
+            return null;
+        }
+        $data = json_decode($raw, true);
+        return is_array($data) ? $data : null;
+    }
+
+    // Os métodos requireAuth e requireRole são herdados do AuthGuard trait
 }

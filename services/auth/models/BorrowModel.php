@@ -6,7 +6,7 @@ class BorrowModel extends Database
 {
     private const DEFAULT_LOAN_DAYS = 14;
 
-    private PDO $pdo;
+    private ?PDO $pdo;
 
     public function __construct()
     {

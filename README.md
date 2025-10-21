@@ -26,6 +26,7 @@
 - [⚙️ Requisitos Não Funcionais](#-requisitos-não-funcionais-rnf)
 - [🎭 User Stories](#-user-stories)
 - [📝 Planejamento de Tasks](#-sprint-1--planejamento-de-tasks)
+- [🧪 Testes Unitários](#-testes-unitários)
 - [🔗 Links Úteis](#-links-úteis)
 
 ---
@@ -115,6 +116,47 @@ O sistema é projetado para oferecer uma **experiência intuitiva e responsiva**
 
 ---
 
+## 🧪 Testes Unitários
+
+O projeto VirtuaLib implementa **testes unitários** focados nas **regras de negócio** de cada service, utilizando PHPUnit com mocks para isolamento de dependências.
+
+### 📊 Status dos Testes
+
+- **✅ 9 testes** implementados
+- **✅ 35 assertions** executadas  
+- **✅ 100% de sucesso** nos testes
+- **✅ Cobertura** das regras de negócio principais
+
+### 🏗️ Services Testados
+
+| Service | Arquivo de Teste | Regras Testadas |
+|---------|------------------|-----------------|
+| **Auth** | `UserModelTest.php` | Autenticação, criação de usuário, fallback |
+| **Books** | `BorrowModelTest.php` | Empréstimos, validações, estrutura |
+| **Notifications** | `NotificationModelTest.php` | Sistema de notificações, fallback |
+
+### 🚀 Execução dos Testes
+
+```bash
+# Instalar dependências
+composer require --dev phpunit/phpunit ^12.4
+
+# Executar todos os testes
+php vendor/bin/phpunit --testdox
+
+# Executar testes por service
+php vendor/bin/phpunit services/auth/test/ --testdox
+php vendor/bin/phpunit services/books/test/ --testdox
+php vendor/bin/phpunit services/notifications/test/ --testdox
+```
+
+### 📚 Documentação Completa
+
+Para informações detalhadas sobre a implementação, estratégias de mock e convenções de teste, consulte:
+
+**[📖 Documentação Completa dos Testes](./docs/testing/README.md)**
+
+---
 
 ## 🔗 Links Úteis
 

@@ -6,31 +6,35 @@ async function fetchJson(url, opts = {}) {
 }
 
 async function loadGeneralStats() {
-    return fetchJson('/api/stats/general');
+    return fetchJson('/dashboard/api/stats/general');
 }
 
 async function loadBorrowsByMonth() {
-    return fetchJson('/api/stats/borrows-by-month');
+    return fetchJson('/dashboard/api/stats/borrows-by-month');
 }
 
 async function loadTopBooks() {
-    return fetchJson('/api/stats/top-books');
+    return fetchJson('/dashboard/api/stats/top-books');
 }
 
 async function loadBooksByCategory() {
-    return fetchJson('/api/stats/books-by-category');
+    return fetchJson('/dashboard/api/stats/books-by-category');
 }
 
 async function loadRecentActivities() {
-    return fetchJson('/api/stats/recent-activities');
+    return fetchJson('/dashboard/api/stats/recent-activities');
 }
 
 async function loadUserProfile() {
-    return fetchJson('/api/stats/user-profile');
+    return fetchJson('/dashboard/api/stats/user-profile');
 }
 
 async function loadFallbackStats() {
-    return fetchJson('/api/stats/fallback');
+    return fetchJson('/dashboard/api/stats/fallback');
+}
+
+async function loadPendingRequests() {
+    return fetchJson('/dashboard/api/pending-requests?limit=20');
 }
 
 class DashboardStats {
@@ -53,7 +57,8 @@ class DashboardStats {
             this.loadBorrowsByMonth(),
             this.loadTopBooks(),
             this.loadBooksByCategory(),
-            this.loadRecentActivities()
+            this.loadRecentActivities(),
+            this.loadPendingRequests()
         ];
 
         await Promise.allSettled(promises);
@@ -108,10 +113,19 @@ class DashboardStats {
         }
     }
 
+    async loadPendingRequests() {
+        try {
+            const data = await loadPendingRequests();
+            this.updatePendingRequests(data.requests);
+        } catch (error) {
+            console.error('Erro ao carregar solicitações pendentes:', error);
+        }
+    }
+
     updateGeneralStats(stats) {
         const statCards = document.querySelectorAll('.stat-card');
         statCards.forEach((card, index) => {
-            const statKeys = ['total_livros', 'livros_emprestados', 'usuarios_ativos', 'emprestimos_hoje'];
+            const statKeys = ['total_livros', 'livros_emprestados', 'usuarios_ativos', 'solicitacoes_pendentes'];
             const statKey = statKeys[index];
             
             if (stats[statKey]) {
@@ -275,6 +289,86 @@ class DashboardStats {
         });
     }
 
+    updatePendingRequests(requests) {
+        const section = document.querySelector('#pending-requests-section');
+        const grid = document.querySelector('#requests-grid');
+        const count = document.querySelector('#request-count');
+        
+        if (!section || !grid || !count) return;
+
+        if (!requests || requests.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        // Mostrar seção
+        section.style.display = 'block';
+        
+        // Atualizar contador
+        count.textContent = `${requests.length} solicitação(ões)`;
+        
+        // Limpar grid
+        grid.innerHTML = '';
+        
+        // Criar cards das solicitações
+        requests.forEach(request => {
+            const requestCard = document.createElement('div');
+            requestCard.className = 'request-card';
+            requestCard.setAttribute('data-request-id', request.id);
+            
+            const timeAgo = this.formatRequestDate(request.requested_at);
+            
+            requestCard.innerHTML = `
+                <div class="request-info">
+                    <div class="request-user">
+                        <span class="user-name">${request.user_name}</span>
+                        <span class="user-email">${request.user_email}</span>
+                    </div>
+                    <div class="request-book">
+                        <h4>${request.book_title}</h4>
+                        <p>${request.book_author}</p>
+                    </div>
+                    <div class="request-time">
+                        <span class="time-badge">${timeAgo}</span>
+                    </div>
+                </div>
+                <div class="request-actions">
+                    <button class="approve-btn" onclick="approveRequest(${request.id})">
+                        ✅ Aprovar
+                    </button>
+                    <button class="reject-btn" onclick="rejectRequest(${request.id})">
+                        ❌ Rejeitar
+                    </button>
+                </div>
+            `;
+            
+            grid.appendChild(requestCard);
+        });
+    }
+
+    formatRequestDate(dateString) {
+        if (!dateString) return '—';
+        
+        try {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            
+            if (diffDays > 0) {
+                return `${diffDays} dia${diffDays > 1 ? 's' : ''} atrás`;
+            } else if (diffHours > 0) {
+                return `${diffHours} hora${diffHours > 1 ? 's' : ''} atrás`;
+            } else {
+                return `${diffMinutes} minuto${diffMinutes > 1 ? 's' : ''} atrás`;
+            }
+        } catch (error) {
+            return '—';
+        }
+    }
+
     setupRefreshInterval() {
         // Atualizar dados a cada 5 minutos
         setInterval(() => {
@@ -289,6 +383,142 @@ class DashboardStats {
 
     // Métodos de aprovação/rejeição removidos - não são responsabilidade do serviço de dashboard
 }
+
+// Funções globais para aprovação/rejeição de empréstimos
+window.approveRequest = async function(requestId) {
+    try {
+        const response = await fetch(`/dashboard/api/approve/${requestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Solicitação aprovada com sucesso!', 'success');
+            // Remover o card da solicitação
+            const requestCard = document.querySelector(`[data-request-id="${requestId}"]`);
+            if (requestCard) {
+                requestCard.remove();
+            }
+            // Atualizar contador
+            updateRequestCount();
+        } else {
+            showToast(result.message || 'Erro ao aprovar solicitação', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao aprovar solicitação:', error);
+        showToast('Erro ao aprovar solicitação', 'error');
+    }
+};
+
+window.rejectRequest = async function(requestId) {
+    if (!confirm('Tem certeza que deseja rejeitar esta solicitação?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/dashboard/api/reject/${requestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast('Solicitação rejeitada com sucesso!', 'success');
+            // Remover o card da solicitação
+            const requestCard = document.querySelector(`[data-request-id="${requestId}"]`);
+            if (requestCard) {
+                requestCard.remove();
+            }
+            // Atualizar contador
+            updateRequestCount();
+        } else {
+            showToast(result.message || 'Erro ao rejeitar solicitação', 'error');
+        }
+    } catch (error) {
+        console.error('Erro ao rejeitar solicitação:', error);
+        showToast('Erro ao rejeitar solicitação', 'error');
+    }
+};
+
+window.updateRequestCount = function() {
+    const requestCount = document.querySelector('#request-count');
+    const requestCards = document.querySelectorAll('.request-card');
+    
+    if (requestCount) {
+        const count = requestCards.length;
+        requestCount.textContent = `${count} solicitação(ões)`;
+        
+        // Se não há mais solicitações, esconder a seção
+        if (count === 0) {
+            const section = document.querySelector('#pending-requests-section');
+            if (section) {
+                section.style.display = 'none';
+            }
+        }
+    }
+}
+
+window.showToast = function(message, type = 'info') {
+    // Implementação simples de toast
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    
+    // Adicionar estilos básicos
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 4px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    // Cores baseadas no tipo
+    const colors = {
+        success: '#10b981',
+        error: '#ef4444',
+        info: '#3b82f6'
+    };
+    
+    toast.style.backgroundColor = colors[type] || colors.info;
+    
+    document.body.appendChild(toast);
+    
+    // Remover após 3 segundos
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Adicionar estilos CSS para animações
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('/dashboard')) {

@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="/public/js/auth.js"></script>
+    <script src="/public/js/notifications.js"></script>
     <title><?php echo $title; ?> - VirtuaLib</title>
     <link rel="stylesheet" href="/public/css/base.css">
     <link rel="stylesheet" href="/public/css/navbar.css">
@@ -23,6 +24,6 @@
 
     <script src="/public/js/navbar.js"></script>
     <script src="/public/js/bookmark.js"></script>
-    <script src="/public/js/notifications.js"></script>
+
     <script src="/public/js/toast.js"></script>
     <script src="/public/js/borrow.js"></script>

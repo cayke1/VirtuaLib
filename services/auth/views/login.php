@@ -67,7 +67,9 @@
 
       // Verifica se já está logado
       if (window.AuthService?.isAuthenticated) {
-        redirecionarParaPorta(80, '/books');
+        const user = window.AuthService.getCurrentUser();
+        const redirectPath = user?.role === 'admin' ? '/dashboard' : '/books';
+        window.location.href = redirectPath;
         return;
       }
 
@@ -103,7 +105,8 @@
           const result = await window.AuthService.login(email, password);
           
           if (result.success) {
-            redirecionarParaPorta(80, '/books');
+            const redirectPath = result.user?.role === 'admin' ? '/dashboard' : '/books';
+            window.location.href = redirectPath;
           } else {
             showError(result.error || 'Erro ao fazer login. Tente novamente.');
           }

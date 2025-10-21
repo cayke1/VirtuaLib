@@ -160,16 +160,16 @@ curl http://localhost:8080/health
 
 ## 🔄 Migração do Sistema Original
 
-O sistema original continua funcionando normalmente. A estrutura SOA foi criada como uma extensão:
+A estrutura SOA foi criada como uma evolução completa do sistema:
 
-1. **Sistema Original**: Continua em `/index.php` (estrutura monolítica)
-2. **Sistema SOA**: Novos serviços em `/services/`
-3. **API Gateway**: Roteia entre sistemas conforme necessário
+1. **Sistema SOA**: Serviços em `/services/` com arquitetura moderna
+2. **API Gateway**: Roteia entre serviços conforme necessário
+3. **Sistema Monolítico**: Removido - toda funcionalidade migrada para SOA
 
 ### Roteamento
 - **Rotas por Prefixo**: Cada serviço tem seu prefixo específico (`/auth`, `/books`, `/notifications`, `/dashboard`)
 - **Rota Raiz**: A rota `/` redireciona automaticamente para o serviço de livros (`/books`)
-- **Fallback**: Rotas não reconhecidas redirecionam para o sistema original
+- **404 Error**: Rotas não reconhecidas retornam erro 404
 - **API Gateway**: Centraliza o roteamento e remove prefixos antes de enviar para os serviços
 
 ## 🛠️ Desenvolvimento
@@ -225,4 +225,4 @@ curl http://localhost:8084/api/stats/general
 - Cada serviço é independente e pode ser desenvolvido/deployado separadamente
 - O banco de dados MySQL é compartilhado entre todos os serviços
 - As sessões são compartilhadas via API Gateway
-- A estrutura mantém compatibilidade com o sistema original
+- A estrutura SOA substitui completamente o sistema monolítico anterior

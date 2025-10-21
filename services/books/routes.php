@@ -27,6 +27,7 @@ class BooksRouter
             '/api/return/{id}' => ['BookController', 'returnBook'],
             '/api/approve/{requestId}' => ['BookController', 'approveBorrow'],
             '/api/reject/{requestId}' => ['BookController', 'rejectRequest'],
+            '/api/pending-requests' => ['BookController', 'getPendingRequests'],
             '/api/create' => ['BookController', 'createBook'],
         ];
     }

@@ -21,7 +21,6 @@ RUN a2enmod rewrite headers proxy proxy_http \
 COPY apache-soa.conf /etc/apache2/sites-available/000-default.conf
 
 # Copiar arquivos da aplicação (exceto arquivos desnecessários)
-COPY app/ /var/www/html/app/
 COPY services/ /var/www/html/services/
 COPY public/ /var/www/html/public/
 COPY apache-soa.conf /var/www/html/

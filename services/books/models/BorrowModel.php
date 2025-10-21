@@ -203,6 +203,9 @@ class BorrowModel extends Database
             return [
                 'success' => true,
                 'message' => 'Solicitação aprovada com sucesso.',
+                'user_id' => $request['user_id'],
+                'book_id' => $request['book_id'],
+                'book_title' => $bookTitle,
                 'approval' => [
                     'approved_at' => $approvedAt->format(DATE_ATOM),
                     'due_date' => $dueDate->format('Y-m-d')
@@ -445,7 +448,10 @@ class BorrowModel extends Database
 
             return [
                 'success' => true,
-                'message' => 'Solicitação rejeitada com sucesso.'
+                'message' => 'Solicitação rejeitada com sucesso.',
+                'user_id' => $request['user_id'],
+                'book_id' => $request['book_id'],
+                'book_title' => $bookTitle
             ];
         } catch (Throwable $exception) {
             if ($this->pdo->inTransaction()) {

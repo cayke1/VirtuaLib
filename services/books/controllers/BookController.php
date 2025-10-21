@@ -149,7 +149,14 @@ class BookController {
     {
 
         error_log("Aprovando solicitação de empréstimo ID: $requestId");
-        $this->requireAuth(['admin']);
+        
+        // Verificar se é uma chamada entre serviços (com token) ou chamada direta (com sessão)
+        $isServiceCall = $this->isServiceCall();
+        
+        if (!$isServiceCall) {
+            $this->requireAuth(['admin']);
+        }
+        
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             http_response_code(405);
             header('Content-Type: application/json');
@@ -157,7 +164,15 @@ class BookController {
             return;
         }
 
+        // Tentar obter adminUserId da sessão ou dos dados POST (para chamadas entre serviços)
         $adminUserId = $_SESSION['user']['id'] ?? null;
+        
+        // Se não há sessão, tentar obter dos dados POST (chamada entre serviços)
+        if (!$adminUserId) {
+            $postData = $this->readJsonBody();
+            $adminUserId = $postData['admin_user_id'] ?? null;
+        }
+        
         if (!$adminUserId) {
             http_response_code(401);
             header('Content-Type: application/json');
@@ -166,6 +181,11 @@ class BookController {
         }
 
         $result = $this->borrowModel->approveBorrow((int)$requestId, (int)$adminUserId);
+
+        // Se aprovado com sucesso, notificar o usuário
+        if ($result['success']) {
+            $this->notifyUser($result['user_id'], $result['book_title'], 'approved');
+        }
 
         $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
         if (isset($result['status'])) {
@@ -267,9 +287,22 @@ class BookController {
             return;
         }
 
-        $this->requireRole('admin');
+        // Verificar se é uma chamada entre serviços (com token) ou chamada direta (com sessão)
+        $isServiceCall = $this->isServiceCall();
+        
+        if (!$isServiceCall) {
+            $this->requireRole('admin');
+        }
 
+        // Tentar obter adminUserId da sessão ou dos dados POST (para chamadas entre serviços)
         $adminUserId = $_SESSION['user']['id'] ?? null;
+        
+        // Se não há sessão, tentar obter dos dados POST (chamada entre serviços)
+        if (!$adminUserId) {
+            $postData = $this->readJsonBody();
+            $adminUserId = $postData['admin_user_id'] ?? null;
+        }
+        
         if (!$adminUserId) {
             http_response_code(401);
             header('Content-Type: application/json');
@@ -279,6 +312,11 @@ class BookController {
 
         $result = $this->borrowModel->rejectRequest((int)$requestId, (int)$adminUserId);
 
+        // Se rejeitado com sucesso, notificar o usuário
+        if ($result['success']) {
+            $this->notifyUser($result['user_id'], $result['book_title'], 'rejected');
+        }
+
         $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
         if (isset($result['status'])) {
             unset($result['status']);
@@ -287,6 +325,32 @@ class BookController {
         http_response_code($statusCode);
         header('Content-Type: application/json');
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Obter solicitações pendentes via API
+     */
+    public function getPendingRequests()
+    {
+        $this->requireRole('admin');
+
+        $limit = (int)($_GET['limit'] ?? 20);
+        $limit = max(1, min(100, $limit)); // Limitar entre 1 e 100
+
+        try {
+            $requests = $this->borrowModel->getPendingRequests();
+            
+            // Limitar resultados
+            $requests = array_slice($requests, 0, $limit);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['requests' => $requests], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Erro ao buscar solicitações pendentes: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     private function requireAuth()
@@ -307,6 +371,57 @@ class BookController {
             header('Content-Type: application/json');
             echo json_encode(['error' => 'Acesso negado']);
             exit;
+        }
+    }
+
+    /**
+     * Verificar se é uma chamada entre serviços (com token de autenticação)
+     */
+    private function isServiceCall()
+    {
+        $serviceToken = $_SERVER['HTTP_X_SERVICE_AUTH'] ?? '';
+        $expectedToken = $_ENV['SERVICE_AUTH_TOKEN'] ?? 'default-token';
+        
+        return !empty($serviceToken) && $serviceToken === $expectedToken;
+    }
+
+    /**
+     * Notificar usuário via serviço de notificações
+     */
+    private function notifyUser($userId, $bookTitle, $type)
+    {
+        $notificationsServiceUrl = $_ENV['NOTIFICATIONS_SERVICE_URL'] ?? 'http://notifications-service';
+        $url = rtrim($notificationsServiceUrl, '/') . '/api/notifications/event';
+        
+        $eventData = [
+            'type' => 'book.' . $type,
+            'user_id' => $userId,
+            'book_title' => $bookTitle,
+            'book_id' => null // Será preenchido pelo serviço se necessário
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($eventData));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Service-Auth: ' . ($_ENV['SERVICE_AUTH_TOKEN'] ?? 'default-token')
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            error_log("Erro ao notificar usuário via serviço de notificações: " . $error);
+        } elseif ($httpCode !== 200) {
+            error_log("Falha ao notificar usuário. HTTP Code: $httpCode, Response: $response");
+        } else {
+            error_log("Notificação enviada com sucesso para usuário $userId, tipo: $type");
         }
     }
 }

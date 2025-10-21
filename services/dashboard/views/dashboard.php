@@ -14,6 +14,7 @@
     // Dados das solicitações pendentes (passados pelo controller)
     $pendingRequests = $pendingRequests ?? [];
     $isAdmin = $isAdmin ?? false;
+    $user = $user ?? null; // Dados do usuário logado
 
     function formatRequestDate(?string $value): string
     {
@@ -48,7 +49,7 @@
             <header class="header">
                 <h1>Dashboard</h1>
                 <div class="user-info">
-                    <span>👤 Admin: João Silva</span>
+                    <span>👤 Admin: <?php echo htmlspecialchars($user['name'] ?? 'Usuário'); ?></span>
                 </div>
             </header>
 
@@ -57,8 +58,8 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Total de Livros</p>
-                            <h2 class="stat-value"><?php echo $stats['total_books'] ?></h2>
-                            <!-- <p class="stat-desc">Carregando...</p> -->
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #3b82f620; color: #3b82f6">
                             📖
@@ -68,8 +69,8 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Livros Emprestados</p>
-                            <h2 class="stat-value"><?php echo $stats['borrowed_books'] ?></h2>
-                            <!-- <p class="stat-desc">Carregando...</p> -->
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #f59e0b20; color: #f59e0b">
                             📚
@@ -79,8 +80,8 @@
                     <div class="stat-card">
                         <div class="stat-info">
                             <p class="stat-label">Usuários Ativos</p>
-                            <h2 class="stat-value"><?php echo $stats['total_users'] ?></h2>
-                            <!-- <p class="stat-desc">Carregando...</p> -->
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #10b98120; color: #10b981">
                             👥
@@ -89,9 +90,9 @@
 
                     <div class="stat-card">
                         <div class="stat-info">
-                            <p class="stat-label">Empréstimos Hoje</p>
-                            <h2 class="stat-value"><?php echo $stats['pending_requests'] ?></h2>
-                            <!-- <p class="stat-desc">Carregando...</p> -->
+                            <p class="stat-label">Solicitações Pendentes</p>
+                            <h2 class="stat-value">—</h2>
+                            <p class="stat-desc">Carregando...</p>
                         </div>
                         <div class="stat-icon" style="background: #6366f120; color: #6366f1">
                             📅
@@ -99,7 +100,17 @@
                     </div>
                 </div>
 
-                <!-- Seção de Solicitações Pendentes removida - não é responsabilidade do serviço de dashboard -->
+                <!-- Seção de Solicitações Pendentes -->
+                <div class="pending-requests-section" id="pending-requests-section" style="display: none;">
+                    <div class="section-header">
+                        <h2>⏳ Solicitações Pendentes</h2>
+                        <span class="request-count" id="request-count">0 solicitação(ões)</span>
+                    </div>
+                    
+                    <div class="requests-grid" id="requests-grid">
+                        <div class="loading-message">Carregando solicitações...</div>
+                    </div>
+                </div>
 
                 <!-- Gráficos e Dados -->
                 <div class="charts-grid">
