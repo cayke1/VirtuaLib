@@ -29,9 +29,14 @@ class DashboardController
     {
         $this->requireRole('admin');
         
+        // Obter dados do usuário da sessão
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $user = $_SESSION['user'] ?? null;
+        
         $data = [
             'title' => 'Dashboard Service - Virtual Library',
-            'isAdmin' => true // Já verificamos que é admin
+            'isAdmin' => true, // Já verificamos que é admin
+            'user' => $user // Passar dados do usuário para a view
         ];
 
         // Render the view

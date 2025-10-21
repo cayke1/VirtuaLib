@@ -14,6 +14,7 @@
     // Dados das solicitações pendentes (passados pelo controller)
     $pendingRequests = $pendingRequests ?? [];
     $isAdmin = $isAdmin ?? false;
+    $user = $user ?? null; // Dados do usuário logado
 
     function formatRequestDate(?string $value): string
     {
@@ -48,7 +49,7 @@
             <header class="header">
                 <h1>Dashboard</h1>
                 <div class="user-info">
-                    <span>👤 Admin: João Silva</span>
+                    <span>👤 Admin: <?php echo htmlspecialchars($user['name'] ?? 'Usuário'); ?></span>
                 </div>
             </header>
 
