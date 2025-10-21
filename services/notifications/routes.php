@@ -35,7 +35,6 @@ class NotificationsRouter {
                 return;
             }
         }
-        
         $this->notFound();
     }
     

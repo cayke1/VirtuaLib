@@ -3,259 +3,125 @@ class NotificationManager {
         this.isLoading = false;
         this.notifications = [];
         this.unreadCount = 0;
-        
+
         this.init();
     }
 
+    /* ========================
+     * 🧩 Inicialização
+     * ======================== */
     init() {
-        console.log('NotificationManager: Initializing...');
-        console.log('NotificationManager: Session user:', window.AuthService?.currentUser);
+        console.log('🔔 NotificationManager: Inicializando...');
+        console.log('Usuário logado:', window.AuthService?.currentUser);
+
         this.setupEventListeners();
         this.loadUnreadCount();
         this.startPolling();
-        console.log('NotificationManager: Initialized successfully');
+
+        console.log('✅ NotificationManager: Inicializado com sucesso');
     }
 
     setupEventListeners() {
-        console.log('NotificationManager: Setting up event listeners...');
+        console.log('🧠 Configurando listeners...');
+
         // Desktop
         const notificationBtn = document.getElementById('notification-btn');
         const markAllReadBtn = document.getElementById('mark-all-read-btn');
-        
-        console.log('NotificationManager: Desktop notification button found:', !!notificationBtn);
-        console.log('NotificationManager: Desktop mark all read button found:', !!markAllReadBtn);
-        
-        if (notificationBtn) {
+
+        if (notificationBtn)
             notificationBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggleDropdown('desktop');
             });
-        }
 
-        if (markAllReadBtn) {
+        if (markAllReadBtn)
             markAllReadBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.markAllAsRead();
             });
-        }
 
         // Mobile
         const notificationBtnMobile = document.getElementById('notification-btn-mobile');
         const markAllReadBtnMobile = document.getElementById('mark-all-read-btn-mobile');
-        
-        console.log('NotificationManager: Mobile notification button found:', !!notificationBtnMobile);
-        console.log('NotificationManager: Mobile mark all read button found:', !!markAllReadBtnMobile);
-        
-        if (notificationBtnMobile) {
+
+        if (notificationBtnMobile)
             notificationBtnMobile.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggleDropdown('mobile');
             });
-        }
 
-        if (markAllReadBtnMobile) {
+        if (markAllReadBtnMobile)
             markAllReadBtnMobile.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.markAllAsRead();
             });
-        }
 
-        // Close dropdowns when clicking outside
+        // Fechar dropdowns clicando fora
         document.addEventListener('click', (e) => {
             const desktopDropdown = document.getElementById('notification-dropdown');
             const mobileDropdown = document.getElementById('notification-dropdown-mobile');
-            
-            if (desktopDropdown && !desktopDropdown.contains(e.target) && 
+
+            if (desktopDropdown && !desktopDropdown.contains(e.target) &&
                 notificationBtn && !notificationBtn.contains(e.target)) {
                 this.closeDropdown('desktop');
             }
 
-            if (mobileDropdown && !mobileDropdown.contains(e.target) && 
+            if (mobileDropdown && !mobileDropdown.contains(e.target) &&
                 notificationBtnMobile && !notificationBtnMobile.contains(e.target)) {
                 this.closeDropdown('mobile');
             }
         });
 
-        // Mobile back button
+        // Botão voltar no mobile
         const mobileHeader = document.querySelector('.notification-header-mobile');
         if (mobileHeader) {
             mobileHeader.addEventListener('click', (e) => {
-                if (e.target.tagName === 'DIV' || e.target.tagName === 'H3') {
+                if (['DIV', 'H3'].includes(e.target.tagName)) {
                     this.closeDropdown('mobile');
                 }
             });
         }
     }
 
+    /* ========================
+     * 📡 Requisições
+     * ======================== */
     async loadUnreadCount() {
         try {
-            console.log('NotificationManager: Loading unread count...');
             const url = '/notifications/api/notifications/unread-count';
-            console.log('NotificationManager: Making request to:', url);
-            console.log('NotificationManager: Current URL:', window.location.href);
-            console.log('NotificationManager: Session cookie:', document.cookie);
-            console.log('NotificationManager: Full request URL will be:', window.location.origin + url);
-            
-            const response = await fetch(url, {
-                credentials: 'same-origin' // Incluir cookies de sessão
-            });
-            console.log('NotificationManager: Response status:', response.status);
-            console.log('NotificationManager: Response headers:', Object.fromEntries(response.headers.entries()));
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('NotificationManager: Unread count data:', data);
-                this.unreadCount = data.unread || 0;
-                this.updateBadges();
-            } else {
-                const errorText = await response.text();
-                console.error('NotificationManager: Failed to load unread count:', response.status, response.statusText, errorText);
-            }
+            const response = await fetch(url, { credentials: 'same-origin' });
+
+            if (!response.ok) throw new Error(await response.text());
+
+            const data = await response.json();
+            this.unreadCount = data.unread || 0;
+            this.updateBadges();
         } catch (error) {
-            console.error('NotificationManager: Error loading unread count:', error);
+            console.error('Erro ao carregar contagem de não lidas:', error);
         }
     }
 
     async loadNotifications() {
         if (this.isLoading) return;
-        
         this.isLoading = true;
         this.showLoading(true);
 
         try {
-            console.log('NotificationManager: Loading notifications...');
-            console.log('NotificationManager: Making request to:', '/notifications/api/notifications');
-            const response = await fetch('/notifications/api/notifications', {
-                credentials: 'same-origin' // Incluir cookies de sessão
-            });
-            console.log('NotificationManager: Notifications response status:', response.status);
-            console.log('NotificationManager: Response headers:', Object.fromEntries(response.headers.entries()));
-            
-            if (response.ok) {
-                const data = await response.json();
-                console.log('NotificationManager: Notifications data:', data);
-                this.notifications = data.notifications || [];
-                this.renderNotifications();
-                this.updateUnreadCount();
-            } else {
-                const errorText = await response.text();
-                console.error('NotificationManager: Failed to load notifications:', response.status, response.statusText, errorText);
-                this.showError();
-            }
+            const response = await fetch('/notifications/api/notifications', { credentials: 'same-origin' });
+
+            if (!response.ok) throw new Error(await response.text());
+
+            const data = await response.json();
+            this.notifications = data.notifications || [];
+            this.renderNotifications();
+            this.updateUnreadCount();
         } catch (error) {
-            console.error('NotificationManager: Error loading notifications:', error);
+            console.error('Erro ao carregar notificações:', error);
             this.showError();
         } finally {
             this.isLoading = false;
             this.showLoading(false);
         }
-    }
-
-    renderNotifications() {
-        const desktopList = document.getElementById('notification-list');
-        const mobileList = document.getElementById('notification-list-mobile');
-        const desktopEmpty = document.getElementById('notification-empty');
-        const mobileEmpty = document.getElementById('notification-empty-mobile');
-
-        if (this.notifications.length === 0) {
-            this.showEmpty(true);
-            return;
-        }
-
-        this.showEmpty(false);
-
-        // Desktop
-        if (desktopList) {
-            desktopList.innerHTML = this.notifications.map(notification => 
-                this.createNotificationHTML(notification, 'desktop')
-            ).join('');
-        }
-
-        // Mobile
-        if (mobileList) {
-            mobileList.innerHTML = this.notifications.map(notification => 
-                this.createNotificationHTML(notification, 'mobile')
-            ).join('');
-        }
-
-        // Add click listeners to notification items
-        this.setupNotificationClickListeners();
-    }
-
-    createNotificationHTML(notification, type) {
-        const isUnread = !notification.is_read;
-        const timeAgo = this.formatTimeAgo(notification.created_at);
-        const itemClass = type === 'mobile' ? 'notification-item-mobile' : 'notification-item';
-        const titleClass = type === 'mobile' ? 'notification-title-mobile' : 'notification-title';
-        const messageClass = type === 'mobile' ? 'notification-message-mobile' : 'notification-message';
-        const timeClass = type === 'mobile' ? 'notification-time-mobile' : 'notification-time';
-        const iconClass = type === 'mobile' ? 'notification-icon-mobile' : 'notification-icon';
-        const contentClass = type === 'mobile' ? 'notification-content-mobile' : 'notification-content';
-
-        // Parse notification data to get type
-        let notificationType = 'default';
-        let icon = 'fas fa-bell';
-        
-        try {
-            const data = notification.data ? JSON.parse(notification.data) : {};
-            notificationType = data.type || 'default';
-        } catch (e) {
-            // If parsing fails, use default
-        }
-
-        // Set icon based on type
-        switch (notificationType) {
-            case 'requested':
-                icon = 'fas fa-clock';
-                break;
-            case 'approved':
-                icon = 'fas fa-check';
-                break;
-            case 'rejected':
-                icon = 'fas fa-times';
-                break;
-            case 'borrowed':
-                icon = 'fas fa-book';
-                break;
-            case 'returned':
-                icon = 'fas fa-undo';
-                break;
-            default:
-                icon = 'fas fa-bell';
-        }
-
-        return `
-            <div class="${itemClass} ${isUnread ? 'unread' : ''}" data-id="${notification.id}">
-                <div class="${iconClass} ${notificationType}">
-                    <i class="${icon}"></i>
-                </div>
-                <div class="${contentClass}">
-                    <div class="${titleClass}">${this.escapeHtml(notification.title)}</div>
-                    <div class="${messageClass}">${this.escapeHtml(notification.message)}</div>
-                    <div class="${timeClass}">${timeAgo}</div>
-                </div>
-            </div>
-        `;
-    }
-
-    setupNotificationClickListeners() {
-        // Desktop
-        document.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const notificationId = item.dataset.id;
-                this.markAsRead(notificationId);
-                item.classList.remove('unread');
-            });
-        });
-
-        // Mobile
-        document.querySelectorAll('.notification-item-mobile').forEach(item => {
-            item.addEventListener('click', () => {
-                const notificationId = item.dataset.id;
-                this.markAsRead(notificationId);
-                item.classList.remove('unread');
-            });
-        });
     }
 
     async markAsRead(notificationId) {
@@ -264,17 +130,14 @@ class NotificationManager {
                 method: 'POST',
                 credentials: 'same-origin'
             });
-            
-            if (response.ok) {
-                // Update local state
-                const notification = this.notifications.find(n => n.id == notificationId);
-                if (notification) {
-                    notification.is_read = 1;
-                }
-                this.updateUnreadCount();
-            }
+            if (!response.ok) return;
+
+            const notification = this.notifications.find(n => n.id == notificationId);
+            if (notification) notification.is_read = 1;
+
+            this.updateUnreadCount();
         } catch (error) {
-            console.error('Error marking notification as read:', error);
+            console.error('Erro ao marcar como lida:', error);
         }
     }
 
@@ -284,163 +147,174 @@ class NotificationManager {
                 method: 'POST',
                 credentials: 'same-origin'
             });
-            
-            if (response.ok) {
-                // Update local state
-                this.notifications.forEach(notification => {
-                    notification.is_read = 1;
-                });
-                this.updateUnreadCount();
-                this.renderNotifications();
-            }
+
+            if (!response.ok) return;
+
+            this.notifications.forEach(n => (n.is_read = 1));
+            this.updateUnreadCount();
+            this.renderNotifications();
         } catch (error) {
-            console.error('Error marking all notifications as read:', error);
+            console.error('Erro ao marcar todas como lidas:', error);
         }
     }
 
+    /* ========================
+     * 🖼️ Renderização
+     * ======================== */
+    renderNotifications() {
+        const hasNotifications = this.notifications.length > 0;
+        this.showEmpty(!hasNotifications);
+
+        if (!hasNotifications) return;
+
+        const desktopList = document.getElementById('notification-list');
+        const mobileList = document.getElementById('notification-list-mobile');
+
+        const render = (type) =>
+            this.notifications.map(n => this.createNotificationHTML(n, type)).join('');
+
+        if (desktopList) desktopList.innerHTML = render('desktop');
+        if (mobileList) mobileList.innerHTML = render('mobile');
+
+        this.setupNotificationClickListeners();
+    }
+
+    createNotificationHTML(notification, type) {
+        const isUnread = !notification.is_read;
+        const timeAgo = this.formatTimeAgo(notification.created_at);
+        const prefix = type === 'mobile' ? '-mobile' : '';
+        const notificationType = this.parseNotificationType(notification.data);
+
+        const icons = {
+            requested: 'fas fa-clock',
+            approved: 'fas fa-check',
+            rejected: 'fas fa-times',
+            borrowed: 'fas fa-book',
+            returned: 'fas fa-undo',
+            default: 'fas fa-bell'
+        };
+
+        return `
+            <div class="notification-item${prefix} ${isUnread ? 'unread' : ''}" data-id="${notification.id}">
+                <div class="notification-icon${prefix} ${notificationType}">
+                    <i class="${icons[notificationType] || icons.default}"></i>
+                </div>
+                <div class="notification-content${prefix}">
+                    <div class="notification-title${prefix}">${this.escapeHtml(notification.title)}</div>
+                    <div class="notification-message${prefix}">${this.escapeHtml(notification.message)}</div>
+                    <div class="notification-time${prefix}">${timeAgo}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    setupNotificationClickListeners() {
+        document.querySelectorAll('.notification-item, .notification-item-mobile').forEach(item => {
+            item.addEventListener('click', () => {
+                this.markAsRead(item.dataset.id);
+                item.classList.remove('unread');
+            });
+        });
+    }
+
+    /* ========================
+     * 🧮 Atualizações de estado
+     * ======================== */
     updateUnreadCount() {
         this.unreadCount = this.notifications.filter(n => !n.is_read).length;
         this.updateBadges();
     }
 
     updateBadges() {
-        console.log('NotificationManager: Updating badges, unread count:', this.unreadCount);
+        const count = this.unreadCount;
+        const text = count > 99 ? '99+' : count;
         const desktopBadge = document.getElementById('notification-badge');
         const mobileBadge = document.getElementById('notification-badge-mobile');
 
-        console.log('NotificationManager: Desktop badge found:', !!desktopBadge);
-        console.log('NotificationManager: Mobile badge found:', !!mobileBadge);
-
-        if (desktopBadge) {
-            if (this.unreadCount > 0) {
-                desktopBadge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
-                desktopBadge.classList.remove('hidden');
-                console.log('NotificationManager: Desktop badge updated to:', desktopBadge.textContent);
+        [desktopBadge, mobileBadge].forEach(badge => {
+            if (!badge) return;
+            if (count > 0) {
+                badge.textContent = text;
+                badge.classList.remove('hidden');
             } else {
-                desktopBadge.classList.add('hidden');
-                console.log('NotificationManager: Desktop badge hidden');
+                badge.classList.add('hidden');
             }
-        }
-
-        if (mobileBadge) {
-            if (this.unreadCount > 0) {
-                mobileBadge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
-                mobileBadge.classList.remove('hidden');
-                console.log('NotificationManager: Mobile badge updated to:', mobileBadge.textContent);
-            } else {
-                mobileBadge.classList.add('hidden');
-                console.log('NotificationManager: Mobile badge hidden');
-            }
-        }
+        });
     }
 
+    /* ========================
+     * 🪄 Utilitários visuais
+     * ======================== */
     toggleDropdown(type) {
         const dropdown = document.getElementById(`notification-dropdown${type === 'mobile' ? '-mobile' : ''}`);
-        
-        if (dropdown) {
-            if (dropdown.classList.contains('show')) {
-                this.closeDropdown(type);
-            } else {
-                this.openDropdown(type);
-            }
-        }
-    }
+        if (!dropdown) return;
 
-    openDropdown(type) {
-        const dropdown = document.getElementById(`notification-dropdown${type === 'mobile' ? '-mobile' : ''}`);
-        
-        if (dropdown) {
-            dropdown.classList.add('show');
-            this.loadNotifications();
-        }
+        dropdown.classList.toggle('show');
+        if (dropdown.classList.contains('show')) this.loadNotifications();
     }
 
     closeDropdown(type) {
         const dropdown = document.getElementById(`notification-dropdown${type === 'mobile' ? '-mobile' : ''}`);
-        
-        if (dropdown) {
-            dropdown.classList.remove('show');
-        }
+        if (dropdown) dropdown.classList.remove('show');
     }
 
     showLoading(show) {
-        const desktopLoading = document.querySelector('.notification-loading');
-        const mobileLoading = document.querySelector('.notification-loading-mobile');
-
-        if (desktopLoading) {
-            desktopLoading.style.display = show ? 'block' : 'none';
-        }
-
-        if (mobileLoading) {
-            mobileLoading.style.display = show ? 'block' : 'none';
-        }
+        const selectors = ['.notification-loading', '.notification-loading-mobile'];
+        selectors.forEach(sel => {
+            const el = document.querySelector(sel);
+            if (el) el.style.display = show ? 'block' : 'none';
+        });
     }
 
     showEmpty(show) {
-        const desktopEmpty = document.getElementById('notification-empty');
-        const mobileEmpty = document.getElementById('notification-empty-mobile');
-        const desktopList = document.getElementById('notification-list');
-        const mobileList = document.getElementById('notification-list-mobile');
+        const pairs = [
+            ['notification-empty', 'notification-list'],
+            ['notification-empty-mobile', 'notification-list-mobile']
+        ];
 
-        if (desktopEmpty) {
-            desktopEmpty.style.display = show ? 'block' : 'none';
-        }
-
-        if (mobileEmpty) {
-            mobileEmpty.style.display = show ? 'block' : 'none';
-        }
-
-        if (desktopList) {
-            desktopList.style.display = show ? 'none' : 'block';
-        }
-
-        if (mobileList) {
-            mobileList.style.display = show ? 'none' : 'block';
-        }
+        pairs.forEach(([emptyId, listId]) => {
+            const empty = document.getElementById(emptyId);
+            const list = document.getElementById(listId);
+            if (empty) empty.style.display = show ? 'block' : 'none';
+            if (list) list.style.display = show ? 'none' : 'block';
+        });
     }
 
     showError() {
+        const template = `
+            <div class="notification-loading">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Erro ao carregar notificações</span>
+            </div>
+        `;
         const desktopList = document.getElementById('notification-list');
         const mobileList = document.getElementById('notification-list-mobile');
 
-        if (desktopList) {
-            desktopList.innerHTML = `
-                <div class="notification-loading">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Erro ao carregar notificações</span>
-                </div>
-            `;
-        }
+        if (desktopList) desktopList.innerHTML = template;
+        if (mobileList) mobileList.innerHTML = template;
+    }
 
-        if (mobileList) {
-            mobileList.innerHTML = `
-                <div class="notification-loading-mobile">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>Erro ao carregar notificações</span>
-                </div>
-            `;
+    /* ========================
+     * 🧰 Funções auxiliares
+     * ======================== */
+    parseNotificationType(data) {
+        try {
+            return JSON.parse(data)?.type || 'default';
+        } catch {
+            return 'default';
         }
     }
 
     formatTimeAgo(dateString) {
         const now = new Date();
         const date = new Date(dateString);
-        const diffInSeconds = Math.floor((now - date) / 1000);
+        const diff = Math.floor((now - date) / 1000);
 
-        if (diffInSeconds < 60) {
-            return 'Agora mesmo';
-        } else if (diffInSeconds < 3600) {
-            const minutes = Math.floor(diffInSeconds / 60);
-            return `Há ${minutes} minuto${minutes > 1 ? 's' : ''}`;
-        } else if (diffInSeconds < 86400) {
-            const hours = Math.floor(diffInSeconds / 3600);
-            return `Há ${hours} hora${hours > 1 ? 's' : ''}`;
-        } else if (diffInSeconds < 2592000) {
-            const days = Math.floor(diffInSeconds / 86400);
-            return `Há ${days} dia${days > 1 ? 's' : ''}`;
-        } else {
-            return date.toLocaleDateString('pt-BR');
-        }
+        if (diff < 60) return 'Agora mesmo';
+        if (diff < 3600) return `Há ${Math.floor(diff / 60)} minuto${diff > 120 ? 's' : ''}`;
+        if (diff < 86400) return `Há ${Math.floor(diff / 3600)} hora${diff > 7200 ? 's' : ''}`;
+        if (diff < 2592000) return `Há ${Math.floor(diff / 86400)} dia${diff > 172800 ? 's' : ''}`;
+        return date.toLocaleDateString('pt-BR');
     }
 
     escapeHtml(text) {
@@ -450,45 +324,34 @@ class NotificationManager {
     }
 
     startPolling() {
-        // Poll for new notifications every 30 seconds
-        setInterval(() => {
-            this.loadUnreadCount();
-        }, 30000);
+        setInterval(() => this.loadUnreadCount(), 30000);
     }
 
-    // Public method to refresh notifications (can be called from other scripts)
     refresh() {
         this.loadUnreadCount();
-        const desktopDropdown = document.getElementById('notification-dropdown');
-        const mobileDropdown = document.getElementById('notification-dropdown-mobile');
-        
-        if ((desktopDropdown && desktopDropdown.classList.contains('show')) ||
-            (mobileDropdown && mobileDropdown.classList.contains('show'))) {
-            this.loadNotifications();
-        }
+        const openDropdowns = ['notification-dropdown', 'notification-dropdown-mobile']
+            .map(id => document.getElementById(id))
+            .filter(el => el?.classList.contains('show'));
+
+        if (openDropdowns.length > 0) this.loadNotifications();
     }
 }
 
-// Initialize when DOM is loaded and AuthService is ready
+/* ========================
+ * 🚀 Inicialização global
+ * ======================== */
 document.addEventListener('DOMContentLoaded', () => {
-    // Wait for AuthService to be ready and initialized
     const initNotifications = async () => {
         if (window.AuthService) {
-            console.log('NotificationManager: AuthService is ready, waiting for initialization...');
-            
-            // Wait a bit for AuthService to complete its async init
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            console.log('NotificationManager: Initializing NotificationManager...');
+            await new Promise(r => setTimeout(r, 500));
             window.NotificationManager = new NotificationManager();
         } else {
-            console.log('NotificationManager: AuthService not ready, retrying in 100ms...');
             setTimeout(initNotifications, 100);
         }
     };
-    
+
     initNotifications();
 });
 
-// Export for use in other scripts
+// Exporta globalmente
 window.NotificationManager = window.NotificationManager || NotificationManager;
