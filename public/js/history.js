@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tableBody.innerHTML = `<tr><td colspan="5" class="no-data">Carregando histórico...</td></tr>`;
 
     try {
-        const res = await fetch('/api/stats/history');
+        const res = await fetch('/dashboard/api/stats/history');
         if (!res.ok) throw new Error('Erro ao buscar histórico');
         const data = await res.json();
         const history = data.history || [];

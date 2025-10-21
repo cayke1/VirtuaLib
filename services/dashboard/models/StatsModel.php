@@ -339,13 +339,16 @@ class StatsModel {
                 ");
                 $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
                 $stmt->execute();
-                return $stmt->fetchAll();
+                $result = $stmt->fetchAll();
+                error_log("Histórico encontrado: " . count($result) . " registros");
+                return $result;
             } catch (PDOException $e) {
                 error_log("Erro ao buscar histórico: " . $e->getMessage());
                 return $this->getFallbackHistory($limit);
             }
         }
         
+        error_log("Usando fallback para histórico - sem conexão com BD");
         return $this->getFallbackHistory($limit);
     }
 

@@ -173,28 +173,6 @@ class DashboardController
     }
 
 
-    public function showHistory()
-    {
-        $this->requireRole('admin');
-
-        $history = $this->statsModel->getHistory(100);
-
-        $data = [
-            'title' => 'Histórico - Virtual Library',
-            'history' => $history
-        ];
-        View::display('history', $data);
-    }
-
-    // função endpoint api
-    public function getHistory()
-    {
-        $this->requireRole('admin');
-
-        header('Content-Type: application/json; charset=utf-8');
-        $history = $this->statsModel->getHistory(100);
-        echo json_encode(['history' => $history], JSON_UNESCAPED_UNICODE);
-    }
 
     /**
      * Aprovar uma solicitação de empréstimo via API do serviço de books

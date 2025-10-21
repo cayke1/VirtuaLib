@@ -1,10 +1,11 @@
 <?php
 
-#include __DIR__ . '/../../utils/AuthGuard.php';
+require_once __DIR__ . '/../../utils/AuthGuard.php';
 require_once __DIR__ . '/../../utils/View.php';
 
 class HistoryController {
     private $statsModel;
+    use AuthGuard;
 
     public function __construct() {
         $this->statsModel = new StatsModel();
@@ -12,13 +13,18 @@ class HistoryController {
     }
 
     public function showHistory() {
-        #        $this->requireAuth();
+        $this->requireRole('admin');
+        
+        // Obter dados do usuário da sessão
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $user = $_SESSION['user'] ?? null;
                 
         $history = $this->statsModel->getHistory(100);
                 
         $data = [
             'title' => 'Histórico - Virtual Library',
-            'history' => $history
+            'history' => $history,
+            'currentUser' => $user
         ];
         View::display('history', $data);
 
@@ -26,7 +32,7 @@ class HistoryController {
         
     // API endpoint
     public function getHistory() {
-        #        $this->requireAuth();
+        $this->requireRole('admin');
                 
         header('Content-Type: application/json; charset=utf-8');
         $history = $this->statsModel->getHistory(100);

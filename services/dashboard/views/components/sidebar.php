@@ -5,10 +5,7 @@
             VirtuaLib
         </div>
         <nav>
-            <a href="/dashboard" class="nav-item">📊 Dashboard</a>
-            <a href="/livros" class="nav-item">📖 Livros</a>
-            <a href="/usuarios" class="nav-item">👥 Usuários</a>
-            <a href="/historico" class="nav-item ">🕐 Histórico</a>
-            <a href="/configuracoes" class="nav-item">⚙️ Configurações</a>
+            <a href="/dashboard/" class="nav-item">📊 Dashboard</a>
+            <a href="/dashboard/historico" class="nav-item ">🕐 Histórico</a>
         </nav>
 </aside>
