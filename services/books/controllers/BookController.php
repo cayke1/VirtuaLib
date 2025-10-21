@@ -289,6 +289,32 @@ class BookController {
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * Obter solicitações pendentes via API
+     */
+    public function getPendingRequests()
+    {
+        $this->requireRole('admin');
+
+        $limit = (int)($_GET['limit'] ?? 20);
+        $limit = max(1, min(100, $limit)); // Limitar entre 1 e 100
+
+        try {
+            $requests = $this->borrowModel->getPendingRequests();
+            
+            // Limitar resultados
+            $requests = array_slice($requests, 0, $limit);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['requests' => $requests], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Erro ao buscar solicitações pendentes: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
     private function requireAuth()
     {
         if (empty($_SESSION['user'])) {

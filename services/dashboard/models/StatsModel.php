@@ -190,21 +190,49 @@ class StatsModel {
     }
 
     /**
-     * Solicitações pendentes (para seção de pending requests)
+     * Solicitações pendentes (via API do serviço de books)
      */
     public function getPendingRequests($limit = 20) {
-        if ($this->pdo) {
-            try {
-                $stmt = $this->pdo->prepare("\n                    SELECT br.id, u.name AS user_name, u.email AS user_email, b.title AS book_title, b.author AS book_author, br.requested_at\n                    FROM borrows br\n                    JOIN users u ON br.user_id = u.id\n                    JOIN books b ON br.book_id = b.id\n                    WHERE br.status = 'pending'\n                    ORDER BY br.requested_at DESC\n                    LIMIT :limit\n                ");
-                $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
-                $stmt->execute();
-                return $stmt->fetchAll();
-            } catch (PDOException $e) {
-                // fallback
-            }
-        }
+        try {
+            $booksServiceUrl = $_ENV['BOOKS_SERVICE_URL'] ?? 'http://localhost:8002';
+            $url = rtrim($booksServiceUrl, '/') . "/api/pending-requests?limit=" . (int)$limit;
+            
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'X-Service-Auth: ' . ($_ENV['SERVICE_AUTH_TOKEN'] ?? 'default-token')
+            ]);
 
-        // Fallback
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            if ($error || $httpCode !== 200) {
+                error_log("Erro ao buscar solicitações pendentes via API: " . $error);
+                return $this->getFallbackPendingRequests($limit);
+            }
+
+            $decodedResponse = json_decode($response, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                error_log("Erro ao decodificar resposta da API de solicitações: " . json_last_error_msg());
+                return $this->getFallbackPendingRequests($limit);
+            }
+
+            return $decodedResponse['requests'] ?? $this->getFallbackPendingRequests($limit);
+        } catch (Exception $e) {
+            error_log("Exceção ao buscar solicitações pendentes: " . $e->getMessage());
+            return $this->getFallbackPendingRequests($limit);
+        }
+    }
+
+    /**
+     * Dados de fallback para solicitações pendentes
+     */
+    private function getFallbackPendingRequests($limit) {
         $now = new DateTimeImmutable();
         $requests = [];
         for ($i = 1; $i <= min(5, $limit); $i++) {

@@ -99,7 +99,17 @@
                     </div>
                 </div>
 
-                <!-- Seção de Solicitações Pendentes removida - não é responsabilidade do serviço de dashboard -->
+                <!-- Seção de Solicitações Pendentes -->
+                <div class="pending-requests-section" id="pending-requests-section" style="display: none;">
+                    <div class="section-header">
+                        <h2>⏳ Solicitações Pendentes</h2>
+                        <span class="request-count" id="request-count">0 solicitação(ões)</span>
+                    </div>
+                    
+                    <div class="requests-grid" id="requests-grid">
+                        <div class="loading-message">Carregando solicitações...</div>
+                    </div>
+                </div>
 
                 <!-- Gráficos e Dados -->
                 <div class="charts-grid">

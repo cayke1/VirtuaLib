@@ -195,4 +195,133 @@ class DashboardController
         $history = $this->statsModel->getHistory(100);
         echo json_encode(['history' => $history], JSON_UNESCAPED_UNICODE);
     }
+
+    /**
+     * Aprovar uma solicitação de empréstimo via API do serviço de books
+     */
+    public function approveBorrow($requestId)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+            return;
+        }
+
+        $adminUserId = $_SESSION['user']['id'] ?? null;
+        if (!$adminUserId) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Administrador não autenticado.']);
+            return;
+        }
+
+        // Chamar API do serviço de books
+        $result = $this->callBooksServiceAPI("/api/approve/{$requestId}", 'POST', [
+            'admin_user_id' => $adminUserId
+        ]);
+
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
+        if (isset($result['status'])) {
+            unset($result['status']);
+        }
+
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Rejeitar uma solicitação de empréstimo via API do serviço de books
+     */
+    public function rejectRequest($requestId)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+            return;
+        }
+
+        $adminUserId = $_SESSION['user']['id'] ?? null;
+        if (!$adminUserId) {
+            http_response_code(401);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Administrador não autenticado.']);
+            return;
+        }
+
+        // Chamar API do serviço de books
+        $result = $this->callBooksServiceAPI("/api/reject/{$requestId}", 'POST', [
+            'admin_user_id' => $adminUserId
+        ]);
+
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 400);
+        if (isset($result['status'])) {
+            unset($result['status']);
+        }
+
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Chamar API do serviço de books
+     */
+    private function callBooksServiceAPI($endpoint, $method = 'GET', $data = null)
+    {
+        $booksServiceUrl = $_ENV['BOOKS_SERVICE_URL'] ?? 'http://localhost:8002';
+        $url = rtrim($booksServiceUrl, '/') . $endpoint;
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Service-Auth: ' . ($_ENV['SERVICE_AUTH_TOKEN'] ?? 'default-token')
+        ]);
+
+        if ($method === 'POST') {
+            curl_setopt($ch, CURLOPT_POST, true);
+            if ($data) {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            }
+        }
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            error_log("Erro ao chamar API do serviço de books: " . $error);
+            return [
+                'success' => false,
+                'status' => 500,
+                'message' => 'Erro de comunicação com o serviço de livros'
+            ];
+        }
+
+        $decodedResponse = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            error_log("Erro ao decodificar resposta da API: " . json_last_error_msg());
+            return [
+                'success' => false,
+                'status' => 500,
+                'message' => 'Resposta inválida do serviço de livros'
+            ];
+        }
+
+        return $decodedResponse ?: [
+            'success' => false,
+            'status' => $httpCode,
+            'message' => 'Resposta vazia do serviço de livros'
+        ];
+    }
 }
