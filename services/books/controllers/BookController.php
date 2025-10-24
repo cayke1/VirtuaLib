@@ -5,14 +5,17 @@
 
 // Include the View utility
 require_once __DIR__ . '/../../utils/View.php';
+require_once __DIR__ . '/../../utils/ImageUploader.php';
 
 class BookController {
     private $bookModel;
     private $borrowModel;
+    private $imageUploader;
     
     public function __construct() {
         $this->bookModel = new BookModel();
         $this->borrowModel = new BorrowModel();
+        $this->imageUploader = new ImageUploader();
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -287,6 +290,13 @@ class BookController {
             return;
         }
         
+        // Verificar se é multipart/form-data (upload de arquivo)
+        if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $this->createBookWithImage();
+            return;
+        }
+        
+        // Processar dados JSON (sem imagem)
         $payload = $this->readJsonBody();
         if (!$this->validateCreatePayload($payload)) {
             http_response_code(400);
@@ -315,6 +325,67 @@ class BookController {
     }
 
     /**
+     * Criar livro com upload de imagem
+     */
+    private function createBookWithImage()
+    {
+        try {
+            // Validar dados do formulário
+            $title = $_POST['title'] ?? '';
+            $author = $_POST['author'] ?? '';
+            $genre = $_POST['genre'] ?? '';
+            $year = $_POST['year'] ?? '';
+            $description = $_POST['description'] ?? '';
+            $available = isset($_POST['available']) ? (bool)$_POST['available'] : true;
+
+            if (empty($title) || empty($author) || empty($genre) || empty($year) || empty($description)) {
+                http_response_code(400);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Campos obrigatórios ausentes'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // Upload da imagem
+            $uploadResult = $this->imageUploader->uploadImage($_FILES['cover_image']);
+            if (!$uploadResult['success']) {
+                http_response_code(400);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => $uploadResult['message']], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // Criar livro com dados e caminho da imagem
+            $bookData = [
+                'title' => $title,
+                'author' => $author,
+                'genre' => $genre,
+                'year' => (int)$year,
+                'description' => $description,
+                'cover_image' => $uploadResult['path'],
+                'available' => $available
+            ];
+
+            $id = $this->bookModel->createBook($bookData);
+            if (!$id) {
+                // Se falhou ao criar livro, deletar imagem enviada
+                $this->imageUploader->deleteImage($uploadResult['path']);
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao criar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['id' => $id, 'message' => 'Livro criado com sucesso', 'cover_image' => $uploadResult['path']], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in createBookWithImage: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
      * Atualizar um livro existente
      */
     public function updateBook($id)
@@ -328,6 +399,13 @@ class BookController {
             return;
         }
         
+        // Verificar se é multipart/form-data (upload de arquivo)
+        if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+            $this->updateBookWithImage($id);
+            return;
+        }
+        
+        // Processar dados JSON (sem imagem)
         $payload = $this->readJsonBody();
         if (!$this->validateUpdatePayload($payload)) {
             http_response_code(400);
@@ -356,6 +434,81 @@ class BookController {
     }
 
     /**
+     * Atualizar livro com upload de imagem
+     */
+    private function updateBookWithImage($id)
+    {
+        try {
+            // Obter dados atuais do livro para deletar imagem antiga se necessário
+            $currentBook = $this->bookModel->getBookById($id);
+            if (!$currentBook) {
+                http_response_code(404);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Livro não encontrado'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // Preparar dados para atualização
+            $updateData = [];
+            
+            if (!empty($_POST['title'])) {
+                $updateData['title'] = $_POST['title'];
+            }
+            if (!empty($_POST['author'])) {
+                $updateData['author'] = $_POST['author'];
+            }
+            if (!empty($_POST['genre'])) {
+                $updateData['genre'] = $_POST['genre'];
+            }
+            if (!empty($_POST['year'])) {
+                $updateData['year'] = (int)$_POST['year'];
+            }
+            if (!empty($_POST['description'])) {
+                $updateData['description'] = $_POST['description'];
+            }
+            if (isset($_POST['available'])) {
+                $updateData['available'] = (bool)$_POST['available'];
+            }
+
+            // Upload da nova imagem
+            $uploadResult = $this->imageUploader->uploadImage($_FILES['cover_image'], $id);
+            if (!$uploadResult['success']) {
+                http_response_code(400);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => $uploadResult['message']], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // Adicionar nova imagem aos dados de atualização
+            $updateData['cover_image'] = $uploadResult['path'];
+
+            // Atualizar livro
+            $success = $this->bookModel->updateBook($id, $updateData);
+            if (!$success) {
+                // Se falhou ao atualizar, deletar nova imagem
+                $this->imageUploader->deleteImage($uploadResult['path']);
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao atualizar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // Deletar imagem antiga se existir
+            if (!empty($currentBook['cover_image'])) {
+                $this->imageUploader->deleteImage($currentBook['cover_image']);
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Livro atualizado com sucesso', 'cover_image' => $uploadResult['path']], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in updateBookWithImage: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
      * Deletar um livro
      */
     public function deleteBook($id)
@@ -370,12 +523,20 @@ class BookController {
         }
 
         try {
+            // Obter dados do livro antes de deletar para remover a imagem
+            $book = $this->bookModel->getBookById($id);
+            
             $success = $this->bookModel->deleteBook($id);
             if (!$success) {
                 http_response_code(500);
                 header('Content-Type: application/json');
                 echo json_encode(['error' => 'Falha ao deletar livro'], JSON_UNESCAPED_UNICODE);
                 return;
+            }
+
+            // Deletar imagem se existir
+            if ($book && !empty($book['cover_image'])) {
+                $this->imageUploader->deleteImage($book['cover_image']);
             }
 
             header('Content-Type: application/json; charset=utf-8');
@@ -422,7 +583,7 @@ class BookController {
         }
         
         // Pelo menos um campo deve estar presente
-        $allowedFields = ['title', 'author', 'genre', 'year', 'description', 'available'];
+        $allowedFields = ['title', 'author', 'genre', 'year', 'description', 'cover_image', 'available'];
         $hasValidField = false;
         
         foreach ($allowedFields as $field) {

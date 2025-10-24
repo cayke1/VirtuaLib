@@ -3,3 +3,4 @@ back.env
 index.php
 /vendor
 .phpunit.result.cache
+public/uploads/*[.jpg|.jpeg|.png|.gif|.webp]
