@@ -2,6 +2,29 @@
 let books = [];
 let editingBookId = null;
 
+// Função para obter URL correta da imagem (suporta tanto URLs locais quanto do R2)
+function getImageUrl(imagePath) {
+    if (!imagePath) return null;
+    
+    // Se já é uma URL completa (http/https), retornar como está
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+    }
+    
+    // Se começa com /public/, remover o prefixo /public
+    if (imagePath.startsWith('/public/')) {
+        imagePath = imagePath.substring(7); // Remove '/public'
+    }
+    
+    // Se começa com /uploads/, adicionar /public
+    if (imagePath.startsWith('/uploads/')) {
+        return '/public' + imagePath;
+    }
+    
+    // Se não tem prefixo, assumir que é um caminho local
+    return '/public/uploads/covers/' + imagePath.replace(/^\//, '');
+}
+
 // Carregar livros ao inicializar
 document.addEventListener('DOMContentLoaded', function() {
     loadBooks();
@@ -45,7 +68,7 @@ function renderBooksTable() {
         <tr>
             <td class="book-cover-cell">
                 ${book.cover_image ? 
-                    `<img src="/public/${book.cover_image}" alt="Capa de ${escapeHtml(book.title)}" class="table-cover-image">` : 
+                    `<img src="${getImageUrl(book.cover_image)}" alt="Capa de ${escapeHtml(book.title)}" class="table-cover-image" onerror="this.src='/public/css/placeholder-book.svg'">` : 
                     '<div class="table-cover-placeholder">📖</div>'
                 }
             </td>

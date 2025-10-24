@@ -3,6 +3,9 @@
 </head>
 
 <?php
+// Incluir utilitário de imagem
+require_once __DIR__ . '/../../../utils/ImageUrlHelper.php';
+
 // Lógica para determinar o estado do botão
 $isAvailable = isset($book['available']) && (int)$book['available'] === 1;
 $borrowedByCurrentUser = !empty($book['borrowed_by_current_user']);
@@ -30,7 +33,11 @@ if ($borrowedByCurrentUser) {
     <div class="book-card">
         <div class="book-cover-container">
             <?php if (!empty($book['cover_image'])): ?>
-                <img src="<?php echo htmlspecialchars($book['cover_image']); ?>" alt="Capa de <?php echo htmlspecialchars($book['title']); ?>" class="book-cover-image">
+                <?php echo ImageUrlHelper::getImageTag(
+                  $book['cover_image'], 
+                  'Capa de ' . $book['title'], 
+                  'book-cover-image'
+                ); ?>
             <?php else: ?>
                 <div class="book-cover-placeholder">
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

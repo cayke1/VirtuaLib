@@ -92,12 +92,6 @@
                         <button type="button" id="remove-image" class="btn-remove-image">Remover imagem</button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="available" name="available" checked>
-                        <label class="form-label" for="available">Disponível para empréstimo</label>
-                    </div>
-                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
                     <button type="submit" class="btn-primary" id="submit-btn">Salvar</button>

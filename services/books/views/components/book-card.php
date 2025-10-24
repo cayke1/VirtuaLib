@@ -6,8 +6,9 @@
  * @param array $book - Array com dados do livro
  */
 
-// Incluir utilitários de texto
+// Incluir utilitários de texto e imagem
 require_once __DIR__ . '/../../../utils/TextUtils.php';
+require_once __DIR__ . '/../../../utils/ImageUrlHelper.php';
 ?>
 <style>
     a {
@@ -42,11 +43,11 @@ if ($borrowedByCurrentUser) {
   <a href="/details/<?php echo $book['id']; ?>" class="book-link">
     <div class="book-cover-container">
       <?php if (!empty($book['cover_image'])): ?>
-        <img 
-          src="/public/<?php echo htmlspecialchars($book['cover_image']); ?>" 
-          alt="Capa de <?php echo htmlspecialchars($book['title']); ?>" 
-          class="book-cover-image"
-        >
+        <?php echo ImageUrlHelper::getImageTag(
+          $book['cover_image'], 
+          'Capa de ' . $book['title'], 
+          'book-cover-image'
+        ); ?>
       <?php else: ?>
         <div class="book-cover-placeholder">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
