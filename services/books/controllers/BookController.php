@@ -228,27 +228,164 @@ class BookController {
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
+    /**
+     * API para listar todos os livros
+     */
+    public function getBooksApi()
+    {
+        $this->requireRole('admin');
+        
+        try {
+            $books = $this->bookModel->getBooks();
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['books' => $books], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in getBooksApi: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
+     * API para obter um livro específico
+     */
+    public function getBookByIdApi($id)
+    {
+        $this->requireRole('admin');
+        
+        try {
+            $book = $this->bookModel->getBookById($id);
+            if (!$book) {
+                http_response_code(404);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Livro não encontrado'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['book' => $book], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in getBookByIdApi: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
+     * Criar um novo livro
+     */
     public function createBook()
     {
         $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
         $payload = $this->readJsonBody();
         if (!$this->validateCreatePayload($payload)) {
             http_response_code(400);
             header('Content-Type: application/json');
-            echo json_encode(['error' => 'Campos obrigatórios ausentes']);
+            echo json_encode(['error' => 'Campos obrigatórios ausentes'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        $id = $this->bookModel->createBook($payload);
-        if (!$id) {
+        try {
+            $id = $this->bookModel->createBook($payload);
+            if (!$id) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao criar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['id' => $id, 'message' => 'Livro criado com sucesso'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in createBook: " . $e->getMessage());
             http_response_code(500);
             header('Content-Type: application/json');
-            echo json_encode(['error' => 'Falha ao criar livro']);
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
+     * Atualizar um livro existente
+     */
+    public function updateBook($id)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        $payload = $this->readJsonBody();
+        if (!$this->validateUpdatePayload($payload)) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Dados inválidos'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        header('Content-Type: application/json');
-        echo json_encode(['id' => $id, 'message' => 'Livro criado com sucesso']);
+        try {
+            $success = $this->bookModel->updateBook($id, $payload);
+            if (!$success) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao atualizar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Livro atualizado com sucesso'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in updateBook: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    /**
+     * Deletar um livro
+     */
+    public function deleteBook($id)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $success = $this->bookModel->deleteBook($id);
+            if (!$success) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao deletar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Livro deletado com sucesso'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in deleteBook: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     private function readJsonBody()
@@ -275,6 +412,35 @@ class BookController {
         if (!is_numeric($data['year'])) {
             return false;
         }
+        return true;
+    }
+
+    private function validateUpdatePayload($data)
+    {
+        if (!is_array($data)) {
+            return false;
+        }
+        
+        // Pelo menos um campo deve estar presente
+        $allowedFields = ['title', 'author', 'genre', 'year', 'description', 'available'];
+        $hasValidField = false;
+        
+        foreach ($allowedFields as $field) {
+            if (isset($data[$field])) {
+                $hasValidField = true;
+                break;
+            }
+        }
+        
+        if (!$hasValidField) {
+            return false;
+        }
+        
+        // Se year estiver presente, deve ser numérico
+        if (isset($data['year']) && !is_numeric($data['year'])) {
+            return false;
+        }
+        
         return true;
     }
 

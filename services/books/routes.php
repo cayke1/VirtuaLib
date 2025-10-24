@@ -28,7 +28,13 @@ class BooksRouter
             '/api/approve/{requestId}' => ['BookController', 'approveBorrow'],
             '/api/reject/{requestId}' => ['BookController', 'rejectRequest'],
             '/api/pending-requests' => ['BookController', 'getPendingRequests'],
-            '/api/create' => ['BookController', 'createBook'],
+            
+            // Rotas CRUD de Books (ordem específica primeiro)
+            '/api/books/{id}/update' => ['BookController', 'updateBook'],
+            '/api/books/{id}/delete' => ['BookController', 'deleteBook'],
+            '/api/books/create' => ['BookController', 'createBook'],
+            '/api/books/{id}' => ['BookController', 'getBookByIdApi'],
+            '/api/books' => ['BookController', 'getBooksApi'],
         ];
     }
 
