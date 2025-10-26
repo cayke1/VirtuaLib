@@ -2,6 +2,29 @@
 let books = [];
 let editingBookId = null;
 
+// Função para obter URL correta da imagem (suporta tanto URLs locais quanto do R2)
+function getImageUrl(imagePath) {
+    if (!imagePath) return null;
+    
+    // Se já é uma URL completa (http/https), retornar como está
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+    }
+    
+    // Se começa com /public/, remover o prefixo /public
+    if (imagePath.startsWith('/public/')) {
+        imagePath = imagePath.substring(7); // Remove '/public'
+    }
+    
+    // Se começa com /uploads/, adicionar /public
+    if (imagePath.startsWith('/uploads/')) {
+        return '/public' + imagePath;
+    }
+    
+    // Se não tem prefixo, assumir que é um caminho local
+    return '/public/uploads/covers/' + imagePath.replace(/^\//, '');
+}
+
 // Carregar livros ao inicializar
 document.addEventListener('DOMContentLoaded', function() {
     loadBooks();
@@ -32,7 +55,7 @@ function renderBooksTable() {
     if (books.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="7" class="empty-state">
+                <td colspan="8" class="empty-state">
                     <div class="empty-state-icon">📚</div>
                     <div>Nenhum livro encontrado</div>
                 </td>
@@ -43,6 +66,12 @@ function renderBooksTable() {
 
     tbody.innerHTML = books.map(book => `
         <tr>
+            <td class="book-cover-cell">
+                ${book.cover_image ? 
+                    `<img src="${getImageUrl(book.cover_image)}" alt="Capa de ${escapeHtml(book.title)}" class="table-cover-image" onerror="this.src='/public/css/placeholder-book.svg'">` : 
+                    '<div class="table-cover-placeholder">📖</div>'
+                }
+            </td>
             <td>${book.id}</td>
             <td>
                 <div class="book-title">${escapeHtml(book.title)}</div>
@@ -90,7 +119,7 @@ function openCreateModal() {
     editingBookId = null;
     document.getElementById('modal-title').textContent = 'Adicionar Livro';
     document.getElementById('submit-btn').textContent = 'Salvar';
-    document.getElementById('book-form').reset();
+    clearForm();
     document.getElementById('available').checked = true;
     document.getElementById('book-modal').style.display = 'block';
 }
@@ -113,6 +142,17 @@ async function editBook(id) {
             document.getElementById('year').value = book.year;
             document.getElementById('description').value = book.description;
             document.getElementById('available').checked = book.available == 1;
+            
+            // Mostrar imagem atual se existir
+            const preview = document.getElementById('image-preview');
+            const previewImg = document.getElementById('preview-img');
+            
+            if (book.cover_image) {
+                previewImg.src = book.cover_image;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
             
             document.getElementById('book-modal').style.display = 'block';
         } else {
@@ -210,6 +250,13 @@ async function performDelete(id) {
 function closeModal() {
     document.getElementById('book-modal').style.display = 'none';
     editingBookId = null;
+    clearForm();
+}
+
+function clearForm() {
+    document.getElementById('book-form').reset();
+    document.getElementById('image-preview').style.display = 'none';
+    document.getElementById('preview-img').src = '';
 }
 
 // Submeter formulário
@@ -217,17 +264,14 @@ document.getElementById('book-form').addEventListener('submit', async function(e
     e.preventDefault();
     
     const formData = new FormData(this);
-    const bookData = {
-        title: formData.get('title'),
-        author: formData.get('author'),
-        genre: formData.get('genre'),
-        year: parseInt(formData.get('year')),
-        description: formData.get('description'),
-        available: formData.get('available') ? 1 : 0
-    };
-
+    const coverImage = formData.get('cover_image');
+    
+    // Verificar se há imagem para upload
+    const hasImage = coverImage && coverImage.size > 0;
+    
     try {
-        let url, method;
+        let url, method, body;
+        
         if (editingBookId) {
             url = `/books/api/books/${editingBookId}/update`;
             method = 'POST';
@@ -236,12 +280,28 @@ document.getElementById('book-form').addEventListener('submit', async function(e
             method = 'POST';
         }
 
+        if (hasImage) {
+            // Upload com imagem - usar FormData
+            body = formData;
+        } else {
+            // Sem imagem - usar JSON
+            const bookData = {
+                title: formData.get('title'),
+                author: formData.get('author'),
+                genre: formData.get('genre'),
+                year: parseInt(formData.get('year')),
+                description: formData.get('description'),
+                available: formData.get('available') ? 1 : 0
+            };
+            body = JSON.stringify(bookData);
+        }
+
         const response = await fetch(url, {
             method: method,
-            headers: {
+            headers: hasImage ? {} : {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(bookData)
+            body: body
         });
 
         const data = await response.json();
@@ -265,6 +325,31 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Preview de imagem
+document.getElementById('cover_image').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        preview.style.display = 'none';
+    }
+});
+
+// Remover imagem
+document.getElementById('remove-image').addEventListener('click', function() {
+    document.getElementById('cover_image').value = '';
+    document.getElementById('image-preview').style.display = 'none';
+    document.getElementById('preview-img').src = '';
+});
 
 // Fechar modal ao clicar fora
 window.onclick = function(event) {

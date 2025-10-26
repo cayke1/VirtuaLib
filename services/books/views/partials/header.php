@@ -10,8 +10,8 @@
     <link rel="stylesheet" href="/public/css/base.css">
     <link rel="stylesheet" href="/public/css/navbar.css">
     <link rel="stylesheet" href="/public/css/layout.css">
-    <link rel="stylesheet" href="/public/css/stats.css">
     <link rel="stylesheet" href="/public/css/book-card.css">
+    <link rel="stylesheet" href="/public/css/stats.css">
     <link rel="stylesheet" href="/public/css/profile.css">
     <link rel="stylesheet" href="/public/css/notifications.css">
     <link rel="stylesheet" href="/public/css/toast.css">

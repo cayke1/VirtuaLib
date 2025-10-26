@@ -35,6 +35,7 @@
                 <table class="table" id="books-table">
                     <thead>
                         <tr>
+                            <th>Capa</th>
                             <th>ID</th>
                             <th>Título</th>
                             <th>Autor</th>
@@ -46,7 +47,7 @@
                     </thead>
                     <tbody id="books-tbody">
                         <tr>
-                            <td colspan="7" class="loading">Carregando livros...</td>
+                            <td colspan="8" class="loading">Carregando livros...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -61,7 +62,7 @@
                 <h2 class="modal-title" id="modal-title">Adicionar Livro</h2>
                 <button class="close" onclick="closeModal()">&times;</button>
             </div>
-            <form id="book-form">
+            <form id="book-form" enctype="multipart/form-data">
                 <div class="form-group">
                     <label class="form-label" for="title">Título *</label>
                     <input type="text" id="title" name="title" class="form-input" required>
@@ -83,9 +84,12 @@
                     <textarea id="description" name="description" class="form-textarea" required></textarea>
                 </div>
                 <div class="form-group">
-                    <div class="form-checkbox">
-                        <input type="checkbox" id="available" name="available" checked>
-                        <label class="form-label" for="available">Disponível para empréstimo</label>
+                    <label class="form-label" for="cover_image">Capa do Livro</label>
+                    <input type="file" id="cover_image" name="cover_image" class="form-input" accept="image/*">
+                    <small class="form-help">Formatos aceitos: JPG, PNG, GIF, WebP. Máximo 5MB.</small>
+                    <div id="image-preview" class="image-preview" style="display: none;">
+                        <img id="preview-img" alt="Preview da capa">
+                        <button type="button" id="remove-image" class="btn-remove-image">Remover imagem</button>
                     </div>
                 </div>
                 <div class="modal-footer">

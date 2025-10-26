@@ -1,211 +1,203 @@
-.books-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
-}
-
 .book-card {
-    background-color: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-    border: 1px solid #f1f5f9;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
     display: flex;
     flex-direction: column;
+    transition: all 0.3s ease;
+    border: 1px solid #f1f5f9;
     height: 100%;
-}
+  }
+  
+  .book-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+  
+  /* === TOPO COM IMAGEM === */
+  .book-cover-container {
+    width: 100%;
+    height: 240px;
+    overflow: hidden;
+    position: relative;
+  }
 
-.book-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-}
+  .book-card img {
+    width: auto;
+    height: auto;
+    object-fit: cover;
+    min-width: 50%;
+    min-height: 240px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+  }
+  
 
-.book-card-header {
+  
+  .book-cover-container:hover .book-cover-image {
+    transform: scale(1.05);
+  }
+  
+  /* Fade escuro suave pra destacar o texto abaixo */
+  .book-cover-container::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 80px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.25), transparent);
+    pointer-events: none;
+  }
+  
+  /* === INFORMAÇÕES === */
+  .book-info {
+    flex: 1;
+    padding: 1.25rem 1.5rem;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.book-status {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  
+  .book-status {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-}
-
-.status-dot {
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
+  }
+  
+  .status-dot {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-}
-
-.status-dot.available {
+  }
+  
+  .status-dot.available {
     background-color: #10b981;
-}
-
-.status-dot.borrowed {
+  }
+  .status-dot.borrowed {
     background-color: #ef4444;
-}
-
-.status-text {
-    font-size: 0.85rem;
-    font-weight: 500;
+  }
+  
+  .status-text {
+    font-size: 0.8rem;
     color: #64748b;
-}
-
-.book-menu {
-    color: #94a3b8;
-    cursor: pointer;
-    padding: 0.25rem;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-.book-menu:hover {
-    color: #64748b;
-    background-color: #f1f5f9;
-}
-
-.book-content {
-    flex: 1;
-    margin-bottom: 1.5rem;
-}
-
-.book-title {
+  }
+  
+  .book-title {
     font-size: 1.25rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #1e293b;
-    margin-bottom: 0.5rem;
-    line-height: 1.4;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-}
-
-.book-author {
-    font-size: 1rem;
-    color: #64748b;
+    line-height: 1.3;
+    margin: 0.3rem 0 0.2rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .book-author {
+    font-size: 0.95rem;
+    color: #475569;
     margin-bottom: 0.25rem;
-    font-weight: 500;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-.book-genre-year {
-    font-size: 0.9rem;
+  }
+  
+  .book-genre-year {
+    font-size: 0.85rem;
     color: #94a3b8;
     margin-bottom: 0.75rem;
-}
-
-.book-description {
+  }
+  
+  .book-description {
     font-size: 0.9rem;
     color: #64748b;
-    line-height: 1.5;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
-}
-
-.book-actions {
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  /* === RODAPÉ FIXO DENTRO DO CARD === */
+  .book-actions {
+    border-top: 1px solid #f1f5f9;
+    background: #f9fafb;
+    padding: 1rem 1.5rem;
     display: flex;
-    align-items: center; /* centraliza verticalmente */
-    justify-content: space-between; /* separa os elementos */
-    margin-top: auto;
+    justify-content: space-between;
+    align-items: center;
     gap: 1rem;
-
-}
-
-.action-button {
-    padding: 0.75rem 1.5rem;
+  }
+  
+  .action-button {
+    flex: 1;
+    padding: 0.7rem 1.4rem;
     border: none;
-    border-radius: 24px;
+    border-radius: 20px;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-
-}
-
-.action-button.borrow {
-    background-color: #3b82f6;
-    color: #ffffff;
-      
-}
-
-.action-button.borrow:hover {
-    background-color: #2563eb;
-}
-
-.action-button.return {
-    background-color: #1e293b;
-    color: #ffffff;
-      
-}
-
-.action-button.return:hover {
-    background-color: #2e4472;
-}
-
-.action-button.pending {
-    background-color: #f59e0b;
-    color: #ffffff;
+  }
+  
+  .action-button.borrow {
+    background: #2563eb;
+    color: #fff;
+  }
+  .action-button.borrow:hover {
+    background: #1d4ed8;
+  }
+  
+  .action-button.return {
+    background: #1e293b;
+    color: #fff;
+  }
+  .action-button.return:hover {
+    background: #334155;
+  }
+  
+  .action-button.pending {
+    background: #f59e0b;
+    color: #fff;
     cursor: not-allowed;
-}
-
-.action-button.pending:hover {
-    background-color: #f59e0b;
-}
-
-.action-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.action-button:disabled:hover {
-    transform: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-}
-
-.bookmark-icon {
-    color: #94a3b8;
-    cursor: pointer;
-    transition: all 0.2s ease;
+  }
+  
+  /* === ÍCONE FAVORITO === */
+  .bookmark-icon {
     padding: 8px;
     border-radius: 50%;
+    background: #fff;
+    color: #94a3b8;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
-}
-
-.bookmark-icon:hover {
-    color: #3b82f6;
-    background-color: #f0f9ff;
-}
-
-.bookmark-icon.favorited {
-    color: #3b82f6;
-    background-color: #dbeafe;
-}
-
-.bookmark-icon.favorited svg path {
-    fill: #3b82f6;
-}
-
-@media (max-width: 768px) {
-    .books-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+  }
+  
+  .bookmark-icon:hover {
+    color: #2563eb;
+    background: #eff6ff;
+  }
+  
+  /* === GRID === */
+  .books-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  /* === MOBILE === */
+  @media (max-width: 768px) {
+    .book-cover-container {
+      height: 200px;
     }
-    
-    .book-card {
-        padding: 1rem;
+    .book-info {
+      padding: 1rem;
     }
-}
+    .book-actions {
+      padding: 0.8rem 1rem;
+    }
+  }
+  
