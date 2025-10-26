@@ -76,6 +76,64 @@ class BookModel extends Database
         }
     }
 
+    public function updateBook($id, array $data)
+    {
+        $fields = [];
+        $params = [':id' => $id];
+        
+        if (isset($data['title'])) {
+            $fields[] = 'title = :title';
+            $params[':title'] = $data['title'];
+        }
+        if (isset($data['author'])) {
+            $fields[] = 'author = :author';
+            $params[':author'] = $data['author'];
+        }
+        if (isset($data['genre'])) {
+            $fields[] = 'genre = :genre';
+            $params[':genre'] = $data['genre'];
+        }
+        if (isset($data['year'])) {
+            $fields[] = 'year = :year';
+            $params[':year'] = (int)$data['year'];
+        }
+        if (isset($data['description'])) {
+            $fields[] = 'description = :description';
+            $params[':description'] = $data['description'];
+        }
+        if (isset($data['available'])) {
+            $fields[] = 'available = :available';
+            $params[':available'] = (int)(bool)$data['available'];
+        }
+        
+        if (empty($fields)) {
+            return false;
+        }
+        
+        $sql = "UPDATE Books SET " . implode(', ', $fields) . " WHERE id = :id";
+        
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Database error in updateBook: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function deleteBook($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM Books WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Database error in deleteBook: " . $e->getMessage());
+            return false;
+        }
+    }
+
     public function getTotalBooks()
     {
         try {

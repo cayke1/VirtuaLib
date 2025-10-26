@@ -32,6 +32,14 @@ class DashboardRouter {
             // Rotas para gerenciamento de empréstimos
             '/api/approve/{requestId}' => ['DashboardController', 'approveBorrow'],
             '/api/reject/{requestId}' => ['DashboardController', 'rejectRequest'],
+            
+            // Rotas para gerenciamento de livros
+            '/livros' => ['DashboardController', 'showBooksManagement'],
+            '/api/books' => ['DashboardController', 'getBooks'],
+            '/api/books/create' => ['DashboardController', 'createBook'],
+            '/api/books/{id}' => ['DashboardController', 'getBook'],
+            '/api/books/{id}/update' => ['DashboardController', 'updateBook'],
+            '/api/books/{id}/delete' => ['DashboardController', 'deleteBook'],
 
         ];
     }

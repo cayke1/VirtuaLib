@@ -272,6 +272,162 @@ class DashboardController
     }
 
     /**
+     * Mostrar página de gerenciamento de livros
+     */
+    public function showBooksManagement()
+    {
+        $this->requireRole('admin');
+        
+        // Obter dados do usuário da sessão
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $user = $_SESSION['user'] ?? null;
+        
+        $data = [
+            'title' => 'Gerenciamento de Livros - Virtual Library',
+            'isAdmin' => true,
+            'user' => $user
+        ];
+
+        // Render the view
+        View::display('books-management', $data);
+    }
+
+    /**
+     * Obter todos os livros via API
+     */
+    public function getBooks()
+    {
+        $this->requireRole('admin');
+        
+        $result = $this->callBooksServiceAPI('/api/books', 'GET');
+        
+        if (!$result['success']) {
+            http_response_code($result['status'] ?? 500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $result['message'] ?? 'Erro ao buscar livros'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Obter um livro específico via API
+     */
+    public function getBook($id)
+    {
+        $this->requireRole('admin');
+        
+        $result = $this->callBooksServiceAPI("/api/books/{$id}", 'GET');
+        
+        if (!$result['success']) {
+            http_response_code($result['status'] ?? 500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => $result['message'] ?? 'Erro ao buscar livro'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Criar um novo livro via API
+     */
+    public function createBook()
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        $data = $this->readJsonBody();
+        if (!$data) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Dados inválidos'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        $result = $this->callBooksServiceAPI('/api/books/create', 'POST', $data);
+        
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 500);
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Atualizar um livro via API
+     */
+    public function updateBook($id)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        $data = $this->readJsonBody();
+        if (!$data) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Dados inválidos'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        $result = $this->callBooksServiceAPI("/api/books/{$id}/update", 'POST', $data);
+        
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 500);
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Deletar um livro via API
+     */
+    public function deleteBook($id)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        $result = $this->callBooksServiceAPI("/api/books/{$id}/delete", 'POST');
+        
+        $statusCode = $result['success'] ? 200 : ($result['status'] ?? 500);
+        http_response_code($statusCode);
+        header('Content-Type: application/json');
+        echo json_encode($result, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Ler dados JSON do corpo da requisição
+     */
+    private function readJsonBody()
+    {
+        $raw = file_get_contents('php://input');
+        if (!$raw) {
+            return null;
+        }
+        $data = json_decode($raw, true);
+        return is_array($data) ? $data : null;
+    }
+
+    /**
      * Chamar API do serviço de books
      */
     private function callBooksServiceAPI($endpoint, $method = 'GET', $data = null)

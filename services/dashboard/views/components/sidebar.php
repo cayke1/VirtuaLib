@@ -6,6 +6,7 @@
         </div>
         <nav>
             <a href="/dashboard/" class="nav-item">📊 Dashboard</a>
-            <a href="/dashboard/historico" class="nav-item ">🕐 Histórico</a>
+            <a href="/dashboard/historico" class="nav-item">🕐 Histórico</a>
+            <a href="/dashboard/livros" class="nav-item">📚 Gerenciar Livros</a>
         </nav>
 </aside>
