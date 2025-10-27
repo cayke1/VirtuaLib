@@ -327,22 +327,7 @@ class StatsModel {
         if ($this->pdo) {
             try {
                 $stmt = $this->pdo->prepare("
-                    SELECT 
-                        u.name AS user_name, 
-                        b.title AS book_title, 
-                        br.requested_at, 
-                        br.approved_at,
-                        br.due_date,
-                        br.returned_at, 
-                        br.status,
-                        CASE 
-                            WHEN br.status = 'approved' AND br.due_date < CURDATE() THEN 'late'
-                            ELSE br.status
-                        END AS calculated_status,
-                        CASE 
-                            WHEN br.status = 'approved' AND br.due_date < CURDATE() THEN DATEDIFF(CURDATE(), br.due_date)
-                            ELSE 0
-                        END AS days_overdue
+                    SELECT u.name AS user_name, b.title AS book_title, br.requested_at, br.returned_at, br.status
                     FROM Borrows br
                     JOIN Users u ON br.user_id = u.id
                     JOIN Books b ON br.book_id = b.id
@@ -370,29 +355,13 @@ class StatsModel {
         $statusList = ['pending', 'approved', 'returned', 'late'];
         for ($i = 1; $i <= min(5, $limit); $i++) {
             $requested = $now->modify("-{$i} days")->format('Y-m-d H:i:s');
-            $approved = ($i % 4 !== 0) ? $now->modify("-".($i-1)." days")->format('Y-m-d H:i:s') : null;
-            $dueDate = $approved ? $now->modify("-".($i-1)." days +14 days")->format('Y-m-d') : null;
             $returned = ($i % 3 === 0) ? $now->modify("-".($i-1)." days")->format('Y-m-d H:i:s') : null;
-            
-            $status = $statusList[$i % count($statusList)];
-            $daysOverdue = 0;
-            
-            // Simular empréstimos atrasados
-            if ($status === 'approved' && $dueDate && $now->format('Y-m-d') > $dueDate) {
-                $status = 'late';
-                $daysOverdue = $now->diff(new DateTimeImmutable($dueDate))->days;
-            }
-            
             $history[] = [
                 'user_name' => "Usuário {$i}",
                 'book_title' => "Livro Exemplo {$i}",
                 'requested_at' => $requested,
-                'approved_at' => $approved,
-                'due_date' => $dueDate,
                 'returned_at' => $returned,
-                'status' => $status,
-                'calculated_status' => $status,
-                'days_overdue' => $daysOverdue
+                'status' => $statusList[$i % count($statusList)]
             ];
         }
         return $history;

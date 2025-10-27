@@ -25,7 +25,6 @@ class AuthRouter {
             '/api/me' => ['AuthController', 'me'],
             '/api/update-profile' => ['AuthController', 'updateProfile'],
             '/api/user-stats' => ['AuthController', 'getUserProfileStats'],
-            '/api/overdue-borrows' => ['AuthController', 'getOverdueBorrows'],
         ];
     }
     

@@ -155,24 +155,6 @@ class AuthController {
         $data = json_decode($raw, true);
         return is_array($data) ? $data : null;
     }
-    public function getOverdueBorrows()
-    {
-        $this->requireAuth();
-        
-        try {
-            $borrowModel = new BorrowModel();
-            $userId = $_SESSION['user']['id'];
-            $overdueBorrows = $borrowModel->getOverdueBorrowsByUser($userId);
-            
-            $this->json([
-                'success' => true,
-                'overdue_borrows' => $overdueBorrows
-            ]);
-        } catch (Exception $e) {
-            error_log("Error in getOverdueBorrows: " . $e->getMessage());
-            $this->json(['error' => 'Erro ao carregar empréstimos atrasados'], 500);
-        }
-    }
 
     private function requireAuth()
     {
