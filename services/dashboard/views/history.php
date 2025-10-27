@@ -100,8 +100,11 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
                             <th>Nome do Usuário</th>
                             <th>Livro Emprestado</th>
                             <th>Data de Solicitação</th>
+                            <th>Data de Aprovação</th>
+                            <th>Data de Vencimento</th>
                             <th>Data de Devolução</th>
                             <th>Status</th>
+                            <th>Dias em Atraso</th>
                         </tr>
                     </thead>
                     <tbody>

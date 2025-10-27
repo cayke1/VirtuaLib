@@ -58,6 +58,15 @@
                         <p class="stat-label">Dias como Membro</p>
                     </div>
                 </div>
+                <div class="stat-card" id="overdue-card" style="display: none;">
+                    <div class="stat-icon overdue-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 class="stat-number" id="overdue-count">0</h3>
+                        <p class="stat-label">Empréstimos Atrasados</p>
+                    </div>
+                </div>
             </div>
 
             <div class="profile-sections">
@@ -86,6 +95,19 @@
                                 <label class="info-label">Membro desde</label>
                                 <p class="info-value" id="info-created"></p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section" id="overdue-section" style="display: none;">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Empréstimos Atrasados
+                        </h2>
+                    </div>
+                    <div class="section-content">
+                        <div id="overdue-list">
                         </div>
                     </div>
                 </div>

@@ -651,4 +651,177 @@ class BorrowModel extends Database
             return 0;
         }
     }
+
+    public function updateOverdueStatus(): array
+    {
+        try {
+            $this->pdo->beginTransaction();
+
+            $overdueStmt = $this->pdo->prepare(
+                "SELECT id, user_id, book_id, due_date, approved_at
+                 FROM Borrows 
+                 WHERE status = 'approved' 
+                 AND due_date < CURDATE()"
+            );
+            $overdueStmt->execute();
+            $overdueBorrows = $overdueStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $updatedCount = 0;
+            $notifications = [];
+
+            foreach ($overdueBorrows as $borrow) {
+                $updateStmt = $this->pdo->prepare(
+                    "UPDATE Borrows SET status = 'late' WHERE id = :id"
+                );
+                $updateStmt->execute([':id' => $borrow['id']]);
+                $updatedCount++;
+
+                $bookTitle = $this->getBookTitle($borrow['book_id']);
+                $daysOverdue = $this->calculateDaysOverdue($borrow['due_date']);
+                
+                $notifications[] = [
+                    'user_id' => $borrow['user_id'],
+                    'title' => 'Empréstimo Atrasado',
+                    'message' => "O livro '{$bookTitle}' está atrasado há {$daysOverdue} dia(s). Por favor, devolva o mais rápido possível.",
+                    'data' => [
+                        'book_id' => $borrow['book_id'],
+                        'book_title' => $bookTitle,
+                        'due_date' => $borrow['due_date'],
+                        'days_overdue' => $daysOverdue,
+                        'type' => 'overdue'
+                    ]
+                ];
+            }
+
+            $this->pdo->commit();
+
+            if (!empty($notifications)) {
+                $this->createOverdueNotifications($notifications);
+            }
+
+            return [
+                'success' => true,
+                'updated_count' => $updatedCount,
+                'message' => "Atualizados {$updatedCount} empréstimos para status 'atrasado'"
+            ];
+
+        } catch (Throwable $exception) {
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
+            error_log('Database error in BorrowModel::updateOverdueStatus: ' . $exception->getMessage());
+            return [
+                'success' => false,
+                'status' => 500,
+                'message' => 'Erro ao atualizar status de empréstimos atrasados'
+            ];
+        }
+    }
+
+    public function calculateDaysOverdue(string $dueDate): int
+    {
+        try {
+            $due = new DateTimeImmutable($dueDate);
+            $today = new DateTimeImmutable('now');
+            $diff = $today->diff($due);
+            
+            if ($today > $due) {
+                return $diff->days;
+            }
+            return 0;
+        } catch (Exception $e) {
+            error_log('Error calculating days overdue: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function getOverdueBorrowsByUser(int $userId): array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT 
+                    Borrows.id,
+                    Borrows.due_date,
+                    Borrows.approved_at,
+                    Books.title AS book_title,
+                    Books.author AS book_author,
+                    DATEDIFF(CURDATE(), Borrows.due_date) AS days_overdue
+                 FROM Borrows
+                 INNER JOIN Books ON Books.id = Borrows.book_id
+                 WHERE Borrows.user_id = :user_id 
+                 AND Borrows.status = 'late'
+                 ORDER BY Borrows.due_date ASC"
+            );
+            $stmt->execute([':user_id' => $userId]);
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getOverdueBorrowsByUser: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    public function getAllOverdueBorrows(): array
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT 
+                    Borrows.id,
+                    Borrows.user_id,
+                    Borrows.due_date,
+                    Borrows.approved_at,
+                    Users.name AS user_name,
+                    Users.email AS user_email,
+                    Books.title AS book_title,
+                    Books.author AS book_author,
+                    DATEDIFF(CURDATE(), Borrows.due_date) AS days_overdue
+                 FROM Borrows
+                 INNER JOIN Users ON Users.id = Borrows.user_id
+                 INNER JOIN Books ON Books.id = Borrows.book_id
+                 WHERE Borrows.status = 'late'
+                 ORDER BY Borrows.due_date ASC"
+            );
+            $stmt->execute();
+            
+            return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        } catch (Throwable $exception) {
+            error_log('Database error in BorrowModel::getAllOverdueBorrows: ' . $exception->getMessage());
+            return [];
+        }
+    }
+
+    private function createOverdueNotifications(array $notifications): void
+    {
+        try {
+            require_once __DIR__ . '/../../notifications/models/NotificationModel.php';
+            $notificationModel = new NotificationModel();
+            $notificationModel->createBulk($notifications);
+        } catch (Throwable $exception) {
+            error_log('Error creating overdue notifications: ' . $exception->getMessage());
+        }
+    }
+
+    public function isBorrowOverdue(int $borrowId): bool
+    {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT due_date FROM Borrows 
+                 WHERE id = :id AND status = 'approved'"
+            );
+            $stmt->execute([':id' => $borrowId]);
+            $borrow = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$borrow) {
+                return false;
+            }
+            
+            $dueDate = new DateTimeImmutable($borrow['due_date']);
+            $today = new DateTimeImmutable('now');
+            
+            return $today > $dueDate;
+        } catch (Exception $e) {
+            error_log('Error checking if borrow is overdue: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

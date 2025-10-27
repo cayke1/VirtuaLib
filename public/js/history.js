@@ -4,19 +4,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tableBody = document.querySelector('tbody');
     if (!tableBody) return;
 
-    // Mensagem de carregamento
-    tableBody.innerHTML = `<tr><td colspan="5" class="no-data">Carregando histórico...</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" class="no-data">Carregando histórico...</td></tr>`;
 
-    try {
-        const res = await fetch('/dashboard/api/stats/history');
-        if (!res.ok) throw new Error('Erro ao buscar histórico');
-        const data = await res.json();
-        const history = data.history || [];
+        try {
+            const res = await fetch('/dashboard/api/stats/history');
+            if (!res.ok) throw new Error('Erro ao buscar histórico');
+            const data = await res.json();
+            const history = data.history || [];
 
-        if (history.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="5" class="no-data">Nenhum empréstimo encontrado</td></tr>`;
-            return;
-        }
+            if (history.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="no-data">Nenhum empréstimo encontrado</td></tr>`;
+                return;
+            }
 
         // Status aliases e configs (espelhando o PHP)
         const statusAliases = {
@@ -34,23 +33,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         tableBody.innerHTML = '';
         history.forEach(loan => {
-            const rawStatus = loan.status || 'Emprestado';
+            const rawStatus = loan.calculated_status || loan.status || 'Emprestado';
             const normalizedKey = String(rawStatus).toLowerCase();
             const normalizedStatus = statusAliases[normalizedKey] || rawStatus;
             const status = statusConfig[normalizedStatus] || statusConfig['Aprovado'];
+            
+            const daysOverdue = loan.days_overdue || 0;
+            const overdueText = daysOverdue > 0 ? `${daysOverdue} dia(s)` : '—';
 
             tableBody.innerHTML += `
                 <tr>
                     <td>${loan.user_name || ''}</td>
                     <td>${loan.book_title || ''}</td>
                     <td>${formatHistoryDate(loan.requested_at)}</td>
+                    <td>${formatHistoryDate(loan.approved_at)}</td>
+                    <td>${formatHistoryDate(loan.due_date)}</td>
                     <td>${formatHistoryDate(loan.returned_at)}</td>
                     <td><span class="status ${status.class}">${status.icon} ${status.text}</span></td>
+                    <td>${overdueText}</td>
                 </tr>
             `;
         });
     } catch (e) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="no-data">Erro ao carregar histórico</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" class="no-data">Erro ao carregar histórico</td></tr>`;
     }
 });
 

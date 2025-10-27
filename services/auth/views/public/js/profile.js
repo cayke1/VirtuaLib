@@ -25,6 +25,13 @@ export class ProfileManager {
       borrowed: document.getElementById("books-borrowed"),
       history: document.getElementById("books-history"),
       memberSince: document.getElementById("member-since"),
+      overdueCount: document.getElementById("overdue-count"),
+    };
+
+    this.overdueElements = {
+      card: document.getElementById("overdue-card"),
+      section: document.getElementById("overdue-section"),
+      list: document.getElementById("overdue-list"),
     };
 
     this.initialize();
@@ -32,6 +39,7 @@ export class ProfileManager {
 
   initialize() {
     this.loadStats();
+    this.loadOverdueBorrows();
   }
 
   // ==============================
@@ -82,6 +90,68 @@ export class ProfileManager {
     const date = new Date(dateStr);
     const options = { year: "numeric", month: "long", day: "numeric" };
     return date.toLocaleDateString("pt-BR", options);
+  }
+
+  async loadOverdueBorrows() {
+    try {
+      const response = await fetch('/auth/api/overdue-borrows');
+      
+      if (!response.ok) {
+        throw new Error('Erro ao carregar empréstimos atrasados');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.overdue_borrows) {
+        const overdueBorrows = data.overdue_borrows;
+        
+        if (overdueBorrows.length > 0) {
+          this.overdueElements.card.style.display = 'block';
+          this.overdueElements.section.style.display = 'block';
+          
+          this.stats.overdueCount.textContent = overdueBorrows.length;
+          
+          this.renderOverdueList(overdueBorrows);
+        } else {
+          this.overdueElements.card.style.display = 'none';
+          this.overdueElements.section.style.display = 'none';
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao carregar empréstimos atrasados:', error);
+      this.overdueElements.card.style.display = 'none';
+      this.overdueElements.section.style.display = 'none';
+    }
+  }
+
+  renderOverdueList(overdueBorrows) {
+    const listContainer = this.overdueElements.list;
+    
+    if (overdueBorrows.length === 0) {
+      listContainer.innerHTML = '<p class="no-overdue">Nenhum empréstimo atrasado.</p>';
+      return;
+    }
+    
+    const listHTML = overdueBorrows.map(borrow => `
+      <div class="overdue-item">
+        <div class="overdue-book-info">
+          <h4 class="book-title">${borrow.book_title}</h4>
+          <p class="book-author">${borrow.book_author}</p>
+        </div>
+        <div class="overdue-details">
+          <div class="overdue-date">
+            <span class="label">Data de vencimento:</span>
+            <span class="value">${this.formatDate(borrow.due_date)}</span>
+          </div>
+          <div class="overdue-days">
+            <span class="label">Dias em atraso:</span>
+            <span class="value overdue-count">${borrow.days_overdue} dia(s)</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    
+    listContainer.innerHTML = listHTML;
   }
 
   // ==============================
