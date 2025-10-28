@@ -13,7 +13,6 @@ class OverdueController {
     }
 
     public function updateOverdueStatus() {
-        $this->requireRole('admin');
         
         header('Content-Type: application/json; charset=utf-8');
         
@@ -31,7 +30,6 @@ class OverdueController {
     }
 
     public function getOverdueByUser($userId) {
-        $this->requireRole('admin');
         
         header('Content-Type: application/json; charset=utf-8');
         
@@ -52,7 +50,6 @@ class OverdueController {
     }
 
     public function getAllOverdue() {
-        $this->requireRole('admin');
         
         header('Content-Type: application/json; charset=utf-8');
         
