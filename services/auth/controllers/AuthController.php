@@ -155,6 +155,7 @@ class AuthController {
         $data = json_decode($raw, true);
         return is_array($data) ? $data : null;
     }
+
     private function requireAuth()
     {
         if (empty($_SESSION['user'])) {

@@ -323,9 +323,6 @@ class StatsModel {
         return $this->getFallbackRecentActivities();
     }
 
-    /**
-     * Histórico
-     */
     public function getHistory($limit = 100) {
         if ($this->pdo) {
             try {
@@ -352,9 +349,6 @@ class StatsModel {
         return $this->getFallbackHistory($limit);
     }
 
-    /**
-     * Fallback para histórico
-     */
     private function getFallbackHistory($limit) {
         $now = new DateTimeImmutable();
         $history = [];

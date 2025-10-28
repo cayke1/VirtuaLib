@@ -167,10 +167,6 @@ tr:hover {
     color: #065f46;
 }
 
-.status-atrasado {
-    background: #fee2e2;
-    color: #991b1b;
-}
 
 .status::before {
     content: "";

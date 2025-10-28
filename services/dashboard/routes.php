@@ -41,6 +41,10 @@ class DashboardRouter {
             '/api/books/{id}/update' => ['DashboardController', 'updateBook'],
             '/api/books/{id}/delete' => ['DashboardController', 'deleteBook'],
 
+            '/api/overdue/update' => ['OverdueController', 'updateOverdueStatus'],
+            '/api/overdue/user/{userId}' => ['OverdueController', 'getOverdueByUser'],
+            '/api/overdue/all' => ['OverdueController', 'getAllOverdue'],
+
         ];
     }
     

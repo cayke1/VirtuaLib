@@ -84,6 +84,7 @@ export class ProfileManager {
     return date.toLocaleDateString("pt-BR", options);
   }
 
+
   // ==============================
   //   MODAIS
   // ==============================
