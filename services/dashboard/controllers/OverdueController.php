@@ -50,7 +50,7 @@ class OverdueController {
     }
 
     public function getAllOverdue() {
-        
+        $this->requireRole('admin');
         header('Content-Type: application/json; charset=utf-8');
         
         try {
