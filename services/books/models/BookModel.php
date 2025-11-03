@@ -81,7 +81,7 @@ class BookModel extends Database
     {
         $fields = [];
         $params = [':id' => $id];
-        
+
         if (isset($data['title'])) {
             $fields[] = 'title = :title';
             $params[':title'] = $data['title'];
@@ -106,26 +106,60 @@ class BookModel extends Database
             $fields[] = 'cover_image = :cover_image';
             $params[':cover_image'] = $data['cover_image'];
         }
+        // Adiciona suporte para pdf_src (e opcionalmente key/storage)
+        if (isset($data['pdf_src'])) {
+            $fields[] = 'pdf_src = :pdf_src';
+            $params[':pdf_src'] = $data['pdf_src'];
+        }
+        if (isset($data['pdf_key'])) {
+            $fields[] = 'pdf_key = :pdf_key';
+            $params[':pdf_key'] = $data['pdf_key'];
+        }
+        if (isset($data['pdf_storage'])) {
+            $fields[] = 'pdf_storage = :pdf_storage';
+            $params[':pdf_storage'] = $data['pdf_storage'];
+        }
+
         if (isset($data['available'])) {
             $fields[] = 'available = :available';
             $params[':available'] = (int)(bool)$data['available'];
         }
-        
+
+        // Se não há campos para atualizar: não é erro — apenas não há alterações
         if (empty($fields)) {
-            return false;
+            return true; // no-op, consideramos sucesso
         }
-        
+
         $sql = "UPDATE Books SET " . implode(', ', $fields) . " WHERE id = :id";
-        
+
         try {
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($params);
-            return $stmt->rowCount() > 0;
+
+            // bindValue com tipos onde faz sentido
+            foreach ($params as $key => $val) {
+                if ($key === ':id' || $key === ':year' || $key === ':available') {
+                    $paramType = PDO::PARAM_INT;
+                } else {
+                    $paramType = PDO::PARAM_STR;
+                }
+                $stmt->bindValue($key, $val, $paramType);
+            }
+
+            $executed = $stmt->execute();
+
+            if ($executed) {
+                // Observação: rowCount() pode ser 0 se nenhum valor foi alterado,
+                // então retornamos true quando a execução foi bem-sucedida.
+                return true;
+            }
+
+            return false;
         } catch (PDOException $e) {
             error_log("Database error in updateBook: " . $e->getMessage());
             return false;
         }
     }
+
 
     public function deleteBook($id)
     {
