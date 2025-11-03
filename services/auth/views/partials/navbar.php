@@ -1,11 +1,3 @@
-<style>
-    <?php 
-        include __DIR__ . '../../public/css/notifications.css';
-        include __DIR__ . '../../public/css/navbar.css';
-     ?>
-
-</style>
-
 <body>    
     <nav class="navbar">
     <div class="nav-container">
@@ -141,14 +133,6 @@
         </div>
     </div>
 </nav>
-<script>
-
-    <?php 
-        include __DIR__ . '../../public/js/auth.js';
-        include __DIR__ . '../../public/js/navbar.js'; 
-        include __DIR__ . '../../public/js/notifications.js';
-    ?>
-</script>
 <style>
     .nav-link {
         color: #1e293b;

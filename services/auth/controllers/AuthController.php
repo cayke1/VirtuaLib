@@ -141,9 +141,9 @@ class AuthController {
     {
         $this->requireAuth();
         $user = $_SESSION['user'];
-        view::display('/partials/header', ['title' => 'Perfil']);
+        view::display('partials/header', ['title' => 'Perfil']);
         View::display('profile', ['user' => $user]);
-        view::display('/partials/footer');
+        view::display('partials/footer');
     }
 
     private function readJsonBody()

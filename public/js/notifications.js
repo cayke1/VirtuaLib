@@ -107,14 +107,82 @@ class NotificationManager {
         this.showLoading(true);
 
         try {
-            const response = await fetch('/notifications/api/notifications', { credentials: 'same-origin' });
+            // Get user ID from auth service
+            const userId = window.AuthService?.currentUser?.id;
+            if (!userId) {
+                throw new Error('User not authenticated');
+            }
 
-            if (!response.ok) throw new Error(await response.text());
+            // Load regular notifications
+            const notificationsResponse = await fetch('/notifications/api/notifications', { 
+                credentials: 'same-origin' 
+            });
 
-            const data = await response.json();
-            this.notifications = data.notifications || [];
+            if (!notificationsResponse.ok) {
+                throw new Error('Failed to load notifications');
+            }
+
+            const notificationsData = await notificationsResponse.json();
+            this.notifications = notificationsData.notifications || [];
+
+            // Load overdue notifications
+            const overdueResponse = await fetch(`/dashboard/api/overdue/user/${userId}`, {
+                credentials: 'same-origin'
+            });
+
+            if (overdueResponse.ok) {
+                const overdueData = await overdueResponse.json();
+                const overdueBorrows = overdueData.overdue_borrows || [];
+
+                // Convert overdue borrows to notifications format
+                const overdueNotifications = overdueBorrows.map(borrow => ({
+                    id: `overdue-${borrow.id}`,
+                    title: 'Livro Atrasado',
+                    message: `O livro "${borrow.book_title}" está atrasado. Data de devolução: ${new Date(borrow.due_date).toLocaleDateString('pt-BR')}`,
+                    created_at: borrow.due_date,
+                    is_read: 0,
+                    data: JSON.stringify({
+                        type: 'overdue',
+                        book_id: borrow.book_id,
+                        borrow_id: borrow.id,
+                        due_date: borrow.due_date
+                    })
+                }));
+
+                // Merge notifications, avoiding duplicates
+                const existingOverdueIds = new Set(
+                    this.notifications
+                        .filter(n => this.parseNotificationType(n.data) === 'overdue')
+                        .map(n => {
+                            try {
+                                const data = JSON.parse(n.data);
+                                return data.borrow_id;
+                            } catch {
+                                return null;
+                            }
+                        })
+                );
+
+                const newOverdueNotifications = overdueNotifications.filter(n => {
+                    try {
+                        const data = JSON.parse(n.data);
+                        return !existingOverdueIds.has(data.borrow_id);
+                    } catch {
+                        return true;
+                    }
+                });
+
+                this.notifications = [...this.notifications, ...newOverdueNotifications];
+
+                // Sort by date, newest first
+                this.notifications.sort((a, b) => 
+                    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                );
+            }
+
             this.renderNotifications();
             this.updateUnreadCount();
+
         } catch (error) {
             console.error('Erro ao carregar notificações:', error);
             this.showError();
@@ -158,6 +226,28 @@ class NotificationManager {
         }
     }
 
+    // Add new method for deletion
+    async deleteNotification(notificationId) {
+        try {
+            const response = await fetch(`/notifications/api/notifications/${notificationId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) return false;
+
+            // Remove from local array
+            this.notifications = this.notifications.filter(n => n.id != notificationId);
+            this.renderNotifications();
+            this.updateUnreadCount();
+            
+            return true;
+        } catch (error) {
+            console.error('Erro ao excluir notificação:', error);
+            return false;
+        }
+    }
+
     /* ========================
      * 🖼️ Renderização
      * ======================== */
@@ -179,6 +269,7 @@ class NotificationManager {
         this.setupNotificationClickListeners();
     }
 
+    // Update createNotificationHTML method
     createNotificationHTML(notification, type) {
         const isUnread = !notification.is_read;
         const timeAgo = this.formatTimeAgo(notification.created_at);
@@ -191,18 +282,22 @@ class NotificationManager {
             rejected: 'fas fa-times',
             borrowed: 'fas fa-book',
             returned: 'fas fa-undo',
+            overdue: 'fas fa-exclamation-circle',
             default: 'fas fa-bell'
         };
 
         return `
             <div class="notification-item${prefix} ${isUnread ? 'unread' : ''}" data-id="${notification.id}">
-                <div class="notification-icon${prefix} ${notificationType}">
-                    <i class="${icons[notificationType] || icons.default}"></i>
-                </div>
-                <div class="notification-content${prefix}">
-                    <div class="notification-title${prefix}">${this.escapeHtml(notification.title)}</div>
-                    <div class="notification-message${prefix}">${this.escapeHtml(notification.message)}</div>
-                    <div class="notification-time${prefix}">${timeAgo}</div>
+                <div class="notification-delete-container" data-id="${notification.id}"></div>
+                <div class="notification-main-content">
+                    <div class="notification-icon${prefix} ${notificationType}">
+                        <i class="${icons[notificationType] || icons.default}"></i>
+                    </div>
+                    <div class="notification-content${prefix}">
+                        <div class="notification-title${prefix}">${this.escapeHtml(notification.title)}</div>
+                        <div class="notification-message${prefix}">${this.escapeHtml(notification.message)}</div>
+                        <div class="notification-time${prefix}">${timeAgo}</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -210,10 +305,27 @@ class NotificationManager {
 
     setupNotificationClickListeners() {
         document.querySelectorAll('.notification-item, .notification-item-mobile').forEach(item => {
-            item.addEventListener('click', () => {
-                this.markAsRead(item.dataset.id);
-                item.classList.remove('unread');
-            });
+            const deleteArea = item.querySelector('.notification-delete-container');
+            const mainContent = item.querySelector('.notification-main-content');
+
+            // Delete handler
+            if (deleteArea) {
+                deleteArea.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const notificationId = deleteArea.dataset.id;
+                    if (await this.deleteNotification(notificationId)) {
+                        item.remove();
+                    }
+                });
+            }
+
+            // Mark as read handler
+            if (mainContent) {
+                mainContent.addEventListener('click', () => {
+                    this.markAsRead(item.dataset.id);
+                    item.classList.remove('unread');
+                });
+            }
         });
     }
 
