@@ -56,7 +56,7 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/books/history" class="nav-link">
+            <a href="/dashboard/historico" class="nav-link">
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>
