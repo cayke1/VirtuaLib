@@ -1,33 +1,29 @@
 <?php
-/**
- * Book Controller - Serviço de Livros e Empréstimos
- */
 
-// Include the View utility
 require_once __DIR__ . '/../../utils/View.php';
 require_once __DIR__ . '/../../utils/ImageUploader.php';
 require_once __DIR__ . '/../../utils/PdfUploader.php';
 
-class BookController {
+class BookController
+{
     private $bookModel;
     private $borrowModel;
     private $imageUploader;
     private $pdfUploader;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->bookModel = new BookModel();
         $this->borrowModel = new BorrowModel();
         $this->imageUploader = new ImageUploader();
+        
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        
-        // Set the base path for views
+
         View::setBasePath(__DIR__ . '/../views/');
     }
-    /**
-     * Lista todos os livros disponíveis com informações de empréstimo.
-     */
+
     public function listBooks()
     {
         $books = $this->bookModel->getBooks();
@@ -94,7 +90,6 @@ class BookController {
             exit;
         }
 
-        // Adicionar informações de empréstimo como no listBooks
         $currentUserId = $_SESSION['user']['id'] ?? null;
         $book['available'] = (int)($book['available'] ?? 0);
         $book['borrowed_by_current_user'] = false;
@@ -122,7 +117,6 @@ class BookController {
             return;
         }
 
-        // Debug: verificar sessão
         error_log('RequestBook - Session data: ' . print_r($_SESSION, true));
         error_log('RequestBook - Book ID: ' . $id);
 
@@ -155,7 +149,6 @@ class BookController {
 
         error_log("Aprovando solicitação de empréstimo ID: $requestId");
         
-        // Verificar se é uma chamada entre serviços (com token) ou chamada direta (com sessão)
         $isServiceCall = $this->isServiceCall();
         
         if (!$isServiceCall) {
@@ -169,10 +162,8 @@ class BookController {
             return;
         }
 
-        // Tentar obter adminUserId da sessão ou dos dados POST (para chamadas entre serviços)
         $adminUserId = $_SESSION['user']['id'] ?? null;
         
-        // Se não há sessão, tentar obter dos dados POST (chamada entre serviços)
         if (!$adminUserId) {
             $postData = $this->readJsonBody();
             $adminUserId = $postData['admin_user_id'] ?? null;
@@ -187,7 +178,6 @@ class BookController {
 
         $result = $this->borrowModel->approveBorrow((int)$requestId, (int)$adminUserId);
 
-        // Se aprovado com sucesso, notificar o usuário
         if ($result['success']) {
             $this->notifyUser($result['user_id'], $result['book_title'], 'approved');
         }
@@ -233,9 +223,6 @@ class BookController {
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
-    /**
-     * API para listar todos os livros
-     */
     public function getBooksApi()
     {
         $this->requireRole('admin');
@@ -252,9 +239,6 @@ class BookController {
         }
     }
 
-    /**
-     * API para obter um livro específico
-     */
     public function getBookByIdApi($id)
     {
         $this->requireRole('admin');
@@ -278,9 +262,6 @@ class BookController {
         }
     }
 
-    /**
-     * Criar um novo livro
-     */
     public function createBook()
     {
         $this->requireRole('admin');
@@ -292,7 +273,6 @@ class BookController {
             return;
         }
 
-        // ✅ Verificar se tem arquivos
         $hasImageUpload = isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE;
         $hasPdfUpload = isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE;
 
@@ -301,7 +281,6 @@ class BookController {
             return;
         }
 
-        // Criar sem arquivos (JSON)
         $payload = $this->readJsonBody();
         if (!$this->validateCreatePayload($payload)) {
             http_response_code(400);
@@ -333,7 +312,6 @@ class BookController {
     private function createBookWithFiles()
     {
         try {
-            // Validar dados básicos
             $requiredFields = ['title', 'author', 'genre', 'year'];
             foreach ($requiredFields as $field) {
                 if (empty($_POST[$field])) {
@@ -353,7 +331,6 @@ class BookController {
                 'available' => isset($_POST['available']) ? (int)$_POST['available'] : 1
             ];
 
-            // Criar livro primeiro para ter o ID
             $bookId = $this->bookModel->createBook($bookData);
             if (!$bookId) {
                 http_response_code(500);
@@ -365,7 +342,6 @@ class BookController {
             $updateData = [];
             $responseData = ['message' => 'Livro criado com sucesso', 'id' => $bookId];
 
-            // Upload de imagem (opcional)
             if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $uploadResult = $this->imageUploader->uploadImage($_FILES['cover_image'], $bookId);
                 if ($uploadResult['success']) {
@@ -374,7 +350,6 @@ class BookController {
                 }
             }
 
-            // Upload de PDF (opcional)
             if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
                 if (!isset($this->pdfUploader)) {
                     require_once __DIR__ . '/../../utils/PdfUploader.php';
@@ -388,7 +363,6 @@ class BookController {
                 }
             }
 
-            // Atualizar com os caminhos dos arquivos
             if (!empty($updateData)) {
                 $this->bookModel->updateBook($bookId, $updateData);
             }
@@ -405,9 +379,6 @@ class BookController {
         }
     }
 
-    /**
-     * Atualizar um livro existente
-     */
     public function updateBook($id)
     {
         $this->requireRole('admin');
@@ -419,7 +390,6 @@ class BookController {
             return;
         }
         
-        // ✅ Verificar se tem QUALQUER arquivo (imagem OU PDF)
         $hasImageUpload = isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE;
         $hasPdfUpload = isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE;
         
@@ -428,7 +398,6 @@ class BookController {
             return;
         }
         
-        // Processar dados JSON (sem arquivos)
         $payload = $this->readJsonBody();
         if (!$this->validateUpdatePayload($payload)) {
             http_response_code(400);
@@ -456,13 +425,9 @@ class BookController {
         }
     }
 
-/**
- * ✅ Atualizar livro com upload de imagem E/OU PDF (ambos opcionais)
- */
     private function updateBookWithFiles($id)
     {
         try {
-            // Obter dados atuais do livro
             $currentBook = $this->bookModel->getBookById($id);
             if (!$currentBook) {
                 http_response_code(404);
@@ -471,7 +436,6 @@ class BookController {
                 return;
             }
 
-            // Preparar dados para atualização
             $updateData = [];
             
             if (!empty($_POST['title'])) {
@@ -495,7 +459,6 @@ class BookController {
 
             $responseData = ['message' => 'Livro atualizado com sucesso'];
 
-            // ✅ Upload da imagem (se enviada)
             if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $uploadResult = $this->imageUploader->uploadImage($_FILES['cover_image'], $id);
                 if (!$uploadResult['success']) {
@@ -509,7 +472,6 @@ class BookController {
                 $oldImage = $currentBook['cover_image'] ?? null;
             }
 
-            // ✅ Upload do PDF (se enviado)
             if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
                 if (!isset($this->pdfUploader)) {
                     require_once __DIR__ . '/../../utils/PdfUploader.php';
@@ -532,10 +494,8 @@ class BookController {
                 $oldPdf = $currentBook['pdf_src'] ?? null;
             }
 
-            // Atualizar livro
             $success = $this->bookModel->updateBook($id, $updateData);
             if (!$success) {
-                // Rollback: deletar novos arquivos se falhou
                 if (isset($uploadResult) && $uploadResult['success']) {
                     $this->imageUploader->deleteImage($uploadResult['path']);
                 }
@@ -549,7 +509,6 @@ class BookController {
                 return;
             }
 
-            // Deletar arquivos antigos se existirem e foram substituídos
             if (isset($oldImage) && !empty($oldImage)) {
                 $this->imageUploader->deleteImage($oldImage);
             }
@@ -568,9 +527,6 @@ class BookController {
         }
     }
 
-    /**
-     * Deletar um livro
-     */
     public function deleteBook($id)
     {
         $this->requireRole('admin');
@@ -583,7 +539,6 @@ class BookController {
         }
 
         try {
-            // Obter dados do livro antes de deletar para remover a imagem
             $book = $this->bookModel->getBookById($id);
             
             $success = $this->bookModel->deleteBook($id);
@@ -642,7 +597,6 @@ class BookController {
             return false;
         }
         
-        // Pelo menos um campo deve estar presente
         $allowedFields = ['title', 'author', 'genre', 'year', 'description', 'cover_image', 'available'];
         $hasValidField = false;
         
@@ -657,7 +611,6 @@ class BookController {
             return false;
         }
         
-        // Se year estiver presente, deve ser numérico
         if (isset($data['year']) && !is_numeric($data['year'])) {
             return false;
         }
@@ -674,17 +627,14 @@ class BookController {
             return;
         }
 
-        // Verificar se é uma chamada entre serviços (com token) ou chamada direta (com sessão)
         $isServiceCall = $this->isServiceCall();
         
         if (!$isServiceCall) {
             $this->requireRole('admin');
         }
 
-        // Tentar obter adminUserId da sessão ou dos dados POST (para chamadas entre serviços)
         $adminUserId = $_SESSION['user']['id'] ?? null;
         
-        // Se não há sessão, tentar obter dos dados POST (chamada entre serviços)
         if (!$adminUserId) {
             $postData = $this->readJsonBody();
             $adminUserId = $postData['admin_user_id'] ?? null;
@@ -699,7 +649,6 @@ class BookController {
 
         $result = $this->borrowModel->rejectRequest((int)$requestId, (int)$adminUserId);
 
-        // Se rejeitado com sucesso, notificar o usuário
         if ($result['success']) {
             $this->notifyUser($result['user_id'], $result['book_title'], 'rejected');
         }
@@ -714,20 +663,16 @@ class BookController {
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
-    /**
-     * Obter solicitações pendentes via API
-     */
     public function getPendingRequests()
     {
         $this->requireRole('admin');
 
         $limit = (int)($_GET['limit'] ?? 20);
-        $limit = max(1, min(100, $limit)); // Limitar entre 1 e 100
+        $limit = max(1, min(100, $limit));
 
         try {
             $requests = $this->borrowModel->getPendingRequests();
             
-            // Limitar resultados
             $requests = array_slice($requests, 0, $limit);
 
             header('Content-Type: application/json; charset=utf-8');
@@ -761,9 +706,6 @@ class BookController {
         }
     }
 
-    /**
-     * Verificar se é uma chamada entre serviços (com token de autenticação)
-     */
     private function isServiceCall()
     {
         $serviceToken = $_SERVER['HTTP_X_SERVICE_AUTH'] ?? '';
@@ -772,9 +714,6 @@ class BookController {
         return !empty($serviceToken) && $serviceToken === $expectedToken;
     }
 
-    /**
-     * Notificar usuário via serviço de notificações
-     */
     private function notifyUser($userId, $bookTitle, $type)
     {
         $notificationsServiceUrl = $_ENV['NOTIFICATIONS_SERVICE_URL'] ?? 'http://notifications-service';
@@ -784,7 +723,7 @@ class BookController {
             'type' => 'book.' . $type,
             'user_id' => $userId,
             'book_title' => $bookTitle,
-            'book_id' => null // Será preenchido pelo serviço se necessário
+            'book_id' => null
         ];
 
         $ch = curl_init();
