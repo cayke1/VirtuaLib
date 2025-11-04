@@ -130,37 +130,58 @@ async function editBook(id) {
         const response = await fetch(`/books/api/books/${id}`);
         const data = await response.json();
         
-        if (data.book) {
-            const book = data.book;
-            editingBookId = id;
-            document.getElementById('modal-title').textContent = 'Editar Livro';
-            document.getElementById('submit-btn').textContent = 'Atualizar';
-            
-            document.getElementById('title').value = book.title;
-            document.getElementById('author').value = book.author;
-            document.getElementById('genre').value = book.genre;
-            document.getElementById('year').value = book.year;
-            document.getElementById('description').value = book.description;
-            document.getElementById('available').checked = book.available == 1;
-            
-            // Mostrar imagem atual se existir
-            const preview = document.getElementById('image-preview');
-            const previewImg = document.getElementById('preview-img');
-            
+        let book = data.book || data.data || data;
+        
+        if (!book || !book.id) {
+            showToast('error', 'Formato de resposta inválido da API', 'Erro');
+            return;
+        }
+        
+        editingBookId = id;
+        document.getElementById('modal-title').textContent = 'Editar Livro';
+        document.getElementById('submit-btn').textContent = 'Atualizar';
+        
+        // Preencher campos
+        document.getElementById('title').value = book.title || '';
+        document.getElementById('author').value = book.author || '';
+        document.getElementById('genre').value = book.genre || '';
+        document.getElementById('year').value = book.year || '';
+        document.getElementById('description').value = book.description || '';
+        
+        const availableCheckbox = document.getElementById('available');
+        if (availableCheckbox) {
+            availableCheckbox.checked = book.available == 1;
+        }
+        
+        // ✅ Mostrar PDF atual se existir
+        const pdfPreview = document.getElementById('pdf-preview');
+        const pdfLink = document.getElementById('pdf-link');
+        
+        if (pdfPreview && pdfLink && book.pdf_file) {
+            pdfLink.href = book.pdf_file;
+            pdfPreview.style.display = 'block';
+        } else if (pdfPreview) {
+            pdfPreview.style.display = 'none';
+        }
+        
+        // Mostrar imagem atual
+        const preview = document.getElementById('image-preview');
+        const previewImg = document.getElementById('preview-img');
+        
+        if (preview && previewImg) {
             if (book.cover_image) {
                 previewImg.src = book.cover_image;
                 preview.style.display = 'block';
             } else {
                 preview.style.display = 'none';
             }
-            
-            document.getElementById('book-modal').style.display = 'block';
-        } else {
-            showToast('error', 'Erro ao carregar dados do livro: ' + (data.error || 'Erro desconhecido'), 'Erro');
         }
+        
+        document.getElementById('book-modal').style.display = 'block';
+        
     } catch (error) {
         console.error('Erro ao carregar livro:', error);
-        showToast('error', 'Erro de conexão ao carregar dados do livro', 'Erro');
+        showToast('error', `Erro ao carregar livro: ${error.message}`, 'Erro');
     }
 }
 
@@ -265,9 +286,12 @@ document.getElementById('book-form').addEventListener('submit', async function(e
     
     const formData = new FormData(this);
     const coverImage = formData.get('cover_image');
+    const pdfFile = formData.get('pdf_file');
     
-    // Verificar se há imagem para upload
+    // Verificar se há arquivos para upload
     const hasImage = coverImage && coverImage.size > 0;
+    const hasPdf = pdfFile && pdfFile.size > 0;
+    const hasFiles = hasImage || hasPdf;
     
     try {
         let url, method, body;
@@ -280,11 +304,22 @@ document.getElementById('book-form').addEventListener('submit', async function(e
             method = 'POST';
         }
 
-        if (hasImage) {
-            // Upload com imagem - usar FormData
+        if (hasFiles) {
+            // ✅ Upload com arquivos - usar FormData
+            // Adiciona os campos de texto ao FormData
+            formData.set('available', formData.get('available') ? '1' : '0');
+            
+            // Remove arquivos vazios do FormData
+            if (!hasImage) {
+                formData.delete('cover_image');
+            }
+            if (!hasPdf) {
+                formData.delete('pdf_file');
+            }
+            
             body = formData;
         } else {
-            // Sem imagem - usar JSON
+            // ✅ Sem arquivos - usar JSON puro
             const bookData = {
                 title: formData.get('title'),
                 author: formData.get('author'),
@@ -298,7 +333,7 @@ document.getElementById('book-form').addEventListener('submit', async function(e
 
         const response = await fetch(url, {
             method: method,
-            headers: hasImage ? {} : {
+            headers: hasFiles ? {} : {
                 'Content-Type': 'application/json'
             },
             body: body

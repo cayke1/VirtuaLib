@@ -57,7 +57,7 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/history" class="nav-link">
+            <a href="/dashboard/historico" class="nav-link">
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>
@@ -122,7 +122,7 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/historico" class="mobile-nav-link">
+            <a href="/dashboard/historico" class="mobile-nav-link">
                 <i class="fas fa-history"></i>
                 <span>Histórico</span>
             </a>

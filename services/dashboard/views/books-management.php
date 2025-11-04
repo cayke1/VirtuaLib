@@ -92,6 +92,11 @@
                         <button type="button" id="remove-image" class="btn-remove-image">Remover imagem</button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label class="form-label" for="pdf_file">Arquivo PDF</label>
+                    <input type="file" id="pdf_file" name="pdf_file" class="form-input" accept="application/pdf" >
+                    <small class="form-help">Somente PDF. Máximo 20MB.</small>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
                     <button type="submit" class="btn-primary" id="submit-btn">Salvar</button>

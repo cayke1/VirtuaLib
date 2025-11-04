@@ -40,7 +40,7 @@ if ($borrowedByCurrentUser) {
 ?>
 
 <div class="book-card" data-book-id="<?php echo $book['id']; ?>">
-  <a href="/details/<?php echo $book['id']; ?>" class="book-link">
+  <a href="/books/details/<?php echo $book['id']; ?>" class="book-link">
     <div class="book-cover-container">
       <?php if (!empty($book['cover_image'])): ?>
         <?php echo ImageUrlHelper::getImageTag(
