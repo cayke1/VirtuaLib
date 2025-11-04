@@ -127,6 +127,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-direction: column;
     gap: 1rem;
   }
   
@@ -162,7 +163,7 @@
     color: #fff;
     cursor: not-allowed;
   }
-  
+   
   /* === ÍCONE FAVORITO === */
   .bookmark-icon {
     padding: 8px;

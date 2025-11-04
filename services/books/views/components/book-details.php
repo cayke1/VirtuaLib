@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../../utils/ImageUrlHelper.php';
 $isAvailable = isset($book['available']) && (int)$book['available'] === 1;
 $borrowedByCurrentUser = !empty($book['borrowed_by_current_user']);
 $requestedByCurrentUser = !empty($book['requested_by_current_user']);
+$pdfAvailable = !empty($book['pdf_src']);
 
 $buttonClass = 'borrow';
 $buttonDisabled = false;
@@ -83,6 +84,18 @@ if ($borrowedByCurrentUser) {
                         <?php echo $buttonDisabled ? 'disabled' : ''; ?>
                         onclick="requestBook(<?php echo $book['id']; ?>)">
                         <?php echo $buttonLabel; ?>
+                    </button>
+                <?php endif; ?>
+                <?php if($pdfAvailable): ?>
+                    <button class="action-button">
+                        <?php if (!empty($book['pdf_src'])): ?>
+                            <a href="<?php echo htmlspecialchars($book['pdf_src']); ?>" target="_blank" class="pdf-link">
+                                ver PDF
+                            </a>
+                        <?php else: ?>
+                            <p class="no-pdf-text">PDF não disponível para este livro.</p>
+                        <?php endif; ?>
+        
                     </button>
                 <?php endif; ?>
             </div>
