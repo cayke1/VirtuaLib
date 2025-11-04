@@ -192,11 +192,6 @@
     margin-left: 0;
 }
 
-/* Remove hide do botão delete */
-.notification-delete-btn {
-    display: flex;
-}
-
 .notification-loading {
     padding: 40px 20px;
     text-align: center;
@@ -328,7 +323,6 @@
 
 .notification-item-mobile {
     position: relative;
-    padding-left: 35px; /* Increased left padding to make room for delete button */
     padding: 16px 20px;
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
@@ -373,7 +367,7 @@
 }
 
 .notification-icon-mobile {
-    margin-left: 25px; /* Move icon to make room for delete button */
+    
     width: 36px;
     height: 36px;
     border-radius: 50%;

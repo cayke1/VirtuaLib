@@ -227,26 +227,7 @@ class NotificationManager {
     }
 
     // Add new method for deletion
-    async deleteNotification(notificationId) {
-        try {
-            const response = await fetch(`/notifications/api/notifications/${notificationId}`, {
-                method: 'DELETE',
-                credentials: 'same-origin'
-            });
-
-            if (!response.ok) return false;
-
-            // Remove from local array
-            this.notifications = this.notifications.filter(n => n.id != notificationId);
-            this.renderNotifications();
-            this.updateUnreadCount();
-            
-            return true;
-        } catch (error) {
-            console.error('Erro ao excluir notificação:', error);
-            return false;
-        }
-    }
+    
 
     /* ========================
      * 🖼️ Renderização
@@ -305,17 +286,7 @@ class NotificationManager {
             
             const mainContent = item.querySelector('.notification-main-content');
 
-            // Delete handler
-            if (deleteArea) {
-                deleteArea.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const notificationId = deleteArea.dataset.id;
-                    if (await this.deleteNotification(notificationId)) {
-                        item.remove();
-                    }
-                });
-            }
-
+           
             // Mark as read handler
             if (mainContent) {
                 mainContent.addEventListener('click', () => {
