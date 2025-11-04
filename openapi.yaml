@@ -1,0 +1,946 @@
+openapi: 3.1.0
+info:
+  title: VirtuaLib API
+  description: |
+    API para o sistema VirtuaLib - Biblioteca Digital
+
+    Arquitetura de microsserviços com 4 serviços principais:
+    - Auth Service (Autenticação e perfil)
+    - Books Service (Gerenciamento de livros e empréstimos)
+    - Notifications Service (Notificações)
+    - Dashboard Service (Dashboard administrativo e estatísticas)
+
+    Todos os requests passam pelo API Gateway na porta 8080.
+  version: 1.0.0
+  contact:
+    name: Equipe VirtuaLib
+
+servers:
+  - url: http://localhost:8080
+    description: API Gateway (desenvolvimento)
+  - url: http://localhost:8081
+    description: Auth Service (direto)
+  - url: http://localhost:8082
+    description: Books Service (direto)
+  - url: http://localhost:8083
+    description: Notifications Service (direto)
+  - url: http://localhost:8084
+    description: Dashboard Service (direto)
+
+tags:
+  - name: Auth
+    description: Autenticação e gerenciamento de usuários
+  - name: Books
+    description: Gerenciamento de livros e empréstimos
+  - name: Notifications
+    description: Sistema de notificações
+  - name: Dashboard
+    description: Dashboard e estatísticas administrativas
+  - name: History
+    description: Histórico de empréstimos
+  - name: Overdue
+    description: Gerenciamento de atrasos
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+      description: Autenticação via sessão PHP (cookie)
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [user, admin]
+        created_at:
+          type: string
+          format: date-time
+
+    Book:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        author:
+          type: string
+        genre:
+          type: string
+        year:
+          type: integer
+        description:
+          type: string
+        available:
+          type: integer
+          description: Quantidade disponível
+        cover_image:
+          type: string
+          format: uri
+          nullable: true
+        pdf_src:
+          type: string
+          format: uri
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    Borrow:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        book_id:
+          type: integer
+        requested_at:
+          type: string
+          format: date-time
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        due_date:
+          type: string
+          format: date
+          nullable: true
+        returned_at:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [pending, approved, returned, late]
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        data:
+          type: object
+          nullable: true
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+paths:
+  # ==================== AUTH SERVICE ====================
+  /auth/api/register:
+    post:
+      tags:
+        - Auth
+      summary: Registrar novo usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Usuário registrado com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '400':
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/api/login:
+    post:
+      tags:
+        - Auth
+      summary: Login de usuário
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+        '401':
+          description: Credenciais inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/api/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout de usuário
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Logout realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+
+  /auth/api/me:
+    get:
+      tags:
+        - Auth
+      summary: Obter informações do usuário autenticado
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Informações do usuário
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Não autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/api/update-profile:
+    post:
+      tags:
+        - Auth
+      summary: Atualizar perfil do usuário
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Perfil atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+
+  /auth/api/user-stats:
+    get:
+      tags:
+        - Auth
+      summary: Obter estatísticas do usuário
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Estatísticas do usuário
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_borrows:
+                    type: integer
+                  active_borrows:
+                    type: integer
+                  overdue_borrows:
+                    type: integer
+
+  # ==================== BOOKS SERVICE ====================
+  /api/search:
+    get:
+      tags:
+        - Books
+      summary: Buscar livros
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Termo de busca
+      responses:
+        '200':
+          description: Resultados da busca
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+  /api/books:
+    get:
+      tags:
+        - Books
+      summary: Listar todos os livros
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Lista de livros
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+
+  /api/books/{id}:
+    get:
+      tags:
+        - Books
+      summary: Obter detalhes de um livro
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Detalhes do livro
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Book'
+        '404':
+          description: Livro não encontrado
+
+  /api/books/create:
+    post:
+      tags:
+        - Books
+      summary: Criar novo livro (Admin)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - author
+                - genre
+                - year
+                - available
+              properties:
+                title:
+                  type: string
+                author:
+                  type: string
+                genre:
+                  type: string
+                year:
+                  type: integer
+                description:
+                  type: string
+                available:
+                  type: integer
+                cover_image:
+                  type: string
+                  format: binary
+                pdf_file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Livro criado com sucesso
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Success'
+                  - type: object
+                    properties:
+                      book:
+                        $ref: '#/components/schemas/Book'
+        '401':
+          description: Não autorizado (requer role admin)
+
+  /api/books/{id}/update:
+    put:
+      tags:
+        - Books
+      summary: Atualizar livro (Admin)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                author:
+                  type: string
+                genre:
+                  type: string
+                year:
+                  type: integer
+                description:
+                  type: string
+                available:
+                  type: integer
+                cover_image:
+                  type: string
+                  format: binary
+                pdf_file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Livro atualizado com sucesso
+        '401':
+          description: Não autorizado
+        '404':
+          description: Livro não encontrado
+
+  /api/books/{id}/delete:
+    delete:
+      tags:
+        - Books
+      summary: Deletar livro (Admin)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Livro deletado com sucesso
+        '401':
+          description: Não autorizado
+        '404':
+          description: Livro não encontrado
+
+  /api/request/{id}:
+    post:
+      tags:
+        - Books
+      summary: Solicitar empréstimo de livro
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID do livro
+      responses:
+        '200':
+          description: Solicitação criada com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '400':
+          description: Livro indisponível ou já solicitado
+
+  /api/return/{id}:
+    post:
+      tags:
+        - Books
+      summary: Devolver livro emprestado
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID do empréstimo (borrow_id)
+      responses:
+        '200':
+          description: Livro devolvido com sucesso
+        '400':
+          description: Empréstimo não encontrado ou já devolvido
+
+  /api/approve/{requestId}:
+    post:
+      tags:
+        - Books
+      summary: Aprovar solicitação de empréstimo (Admin)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Solicitação aprovada
+        '401':
+          description: Não autorizado
+
+  /api/reject/{requestId}:
+    post:
+      tags:
+        - Books
+      summary: Rejeitar solicitação de empréstimo (Admin)
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Solicitação rejeitada
+        '401':
+          description: Não autorizado
+
+  /api/pending-requests:
+    get:
+      tags:
+        - Books
+      summary: Listar solicitações pendentes (Admin)
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Lista de solicitações pendentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Borrow'
+
+  # ==================== NOTIFICATIONS SERVICE ====================
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Listar notificações do usuário
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Lista de notificações
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+  /api/notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: Contar notificações não lidas
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Contagem de não lidas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+
+  /api/notifications/{id}/read:
+    post:
+      tags:
+        - Notifications
+      summary: Marcar notificação como lida
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Marcada como lida
+
+  /api/notifications/{id}/delete:
+    delete:
+      tags:
+        - Notifications
+      summary: Deletar notificação
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Notificação deletada
+
+  /api/notifications/mark-all-read:
+    post:
+      tags:
+        - Notifications
+      summary: Marcar todas como lidas
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Todas marcadas como lidas
+
+  /api/notifications/create:
+    post:
+      tags:
+        - Notifications
+      summary: Criar notificação (Admin)
+      security:
+        - sessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - title
+                - message
+              properties:
+                user_id:
+                  type: integer
+                title:
+                  type: string
+                message:
+                  type: string
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Notificação criada
+
+  /api/notifications/event:
+    post:
+      tags:
+        - Notifications
+      summary: Processar evento (Service-to-Service)
+      description: |
+        Endpoint interno para comunicação entre serviços.
+        Tipos de eventos suportados: book.borrowed, book.returned, book.requested, book.approved, book.rejected
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event
+                - data
+              properties:
+                event:
+                  type: string
+                  enum:
+                    - book.borrowed
+                    - book.returned
+                    - book.requested
+                    - book.approved
+                    - book.rejected
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Evento processado
+
+  # ==================== DASHBOARD SERVICE ====================
+  /api/stats/general:
+    get:
+      tags:
+        - Dashboard
+      summary: Estatísticas gerais (Admin)
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Estatísticas gerais
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_books:
+                    type: integer
+                  total_users:
+                    type: integer
+                  active_borrows:
+                    type: integer
+                  overdue_borrows:
+                    type: integer
+
+  /api/stats/borrows-by-month:
+    get:
+      tags:
+        - Dashboard
+      summary: Empréstimos por mês
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Dados de empréstimos por mês
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    month:
+                      type: string
+                    count:
+                      type: integer
+
+  /api/stats/top-books:
+    get:
+      tags:
+        - Dashboard
+      summary: Livros mais emprestados
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Top livros
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    book_id:
+                      type: integer
+                    title:
+                      type: string
+                    borrow_count:
+                      type: integer
+
+  /api/stats/books-by-category:
+    get:
+      tags:
+        - Dashboard
+      summary: Livros por categoria
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Distribuição por categoria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    genre:
+                      type: string
+                    count:
+                      type: integer
+
+  /api/stats/recent-activities:
+    get:
+      tags:
+        - Dashboard
+      summary: Atividades recentes
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Atividades recentes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  /api/stats/user-profile:
+    get:
+      tags:
+        - Dashboard
+      summary: Estatísticas do perfil do usuário
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Estatísticas do usuário
+
+  /api/stats/history:
+    get:
+      tags:
+        - History
+      summary: Histórico de empréstimos
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Histórico
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Borrow'
+
+  /api/overdue/update:
+    post:
+      tags:
+        - Overdue
+      summary: Atualizar status de atraso (Admin)
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Status atualizado
+
+  /api/overdue/user/{userId}:
+    get:
+      tags:
+        - Overdue
+      summary: Obter empréstimos atrasados do usuário
+      security:
+        - sessionAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Empréstimos atrasados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Borrow'
+
+  /api/overdue/all:
+    get:
+      tags:
+        - Overdue
+      summary: Obter todos os empréstimos atrasados (Admin)
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: Todos os empréstimos atrasados
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Borrow'
