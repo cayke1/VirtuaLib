@@ -1,9 +1,5 @@
 <?php
 
-/**
- * Rotas do serviço Books
- */
-
 class BooksRouter
 {
     private $routes = [];
@@ -16,12 +12,10 @@ class BooksRouter
     private function defineRoutes()
     {
         $this->routes = [
-            // Rotas de view
             '/' => ['BookController', 'listBooks'],
             '/books' => ['BookController', 'listBooks'],
             '/details/{id}' => ['BookController', 'viewBookDetails'],
 
-            // Rotas de API
             '/api/search' => ['BookController', 'searchBooks'],
             '/api/request/{id}' => ['BookController', 'requestBook'],
             '/api/return/{id}' => ['BookController', 'returnBook'],
@@ -29,7 +23,6 @@ class BooksRouter
             '/api/reject/{requestId}' => ['BookController', 'rejectRequest'],
             '/api/pending-requests' => ['BookController', 'getPendingRequests'],
             
-            // Rotas CRUD de Books (ordem específica primeiro)
             '/api/books/{id}/update' => ['BookController', 'updateBook'],
             '/api/books/{id}/delete' => ['BookController', 'deleteBook'],
             '/api/books/create' => ['BookController', 'createBook'],
@@ -43,24 +36,19 @@ class BooksRouter
         $uri = $_SERVER['REQUEST_URI'];
         $method = $_SERVER['REQUEST_METHOD'];
 
-        // Remover query string
         $uri = strtok($uri, '?');
-        
 
-        // Encontrar rota correspondente
         foreach ($this->routes as $route => $handler) {
             if ($this->matchRoute($route, $uri)) {
                 $this->executeHandler($handler, $uri);
                 return;
             }
         }
-        // Rota não encontrada
         $this->notFound();
     }
 
     private function matchRoute($route, $uri)
     {
-        // Converter rota com parâmetros para regex
         $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $route);
         $pattern = '#^' . $pattern . '$#';
         
@@ -74,7 +62,6 @@ class BooksRouter
         if (class_exists($controller)) {
             $controllerInstance = new $controller();
             if (method_exists($controllerInstance, $method)) {
-                // Extrair parâmetros da URI se necessário
                 $params = $this->extractParams($handler, $uri);
                 $controllerInstance->$method(...$params);
                 return;
@@ -86,21 +73,18 @@ class BooksRouter
 
     private function extractParams($handler, $uri)
     {
-        // Encontrar a rota correspondente para extrair parâmetros
         foreach ($this->routes as $route => $routeHandler) {
             if ($routeHandler === $handler) {
-                // Converter rota com parâmetros para regex
                 $pattern = preg_replace('/\{([^}]+)\}/', '([^/]+)', $route);
                 $pattern = '#^' . $pattern . '$#';
-                
+
                 if (preg_match($pattern, $uri, $matches)) {
-                    // Remover o primeiro match (string completa) e retornar apenas os parâmetros
                     array_shift($matches);
                     return $matches;
                 }
             }
         }
-        
+
         return [];
     }
 

@@ -1,15 +1,10 @@
 <?php
-/**
- * Books Service - Ponto de entrada
- */
 
-// Carregar dependências primeiro (antes do autoloader)
 require_once __DIR__ . "/../utils/LoadEnv.php";
 require_once __DIR__ . "/../utils/AuthGuard.php";
 require_once __DIR__ . "/../utils/Database.php";
 require_once __DIR__ . '/../utils/EventDispatcher.php';
 
-// Configurar autoload
 spl_autoload_register(function ($class) {
     $paths = [
         __DIR__ . "/controllers/$class.php",
@@ -27,9 +22,7 @@ spl_autoload_register(function ($class) {
 
 require_once __DIR__ . "/routes.php";
 
-// Carregar configurações
-LoadEnv::loadAll(__DIR__."/../../.env");
+LoadEnv::loadAll(__DIR__ . "/../../.env");
 
-// Inicializar roteador
 $router = new BooksRouter();
 $router->run();
