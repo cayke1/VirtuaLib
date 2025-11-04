@@ -61,10 +61,10 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
     <link rel="stylesheet" href="/public/css/history.css">
 </head>
 <body>
-    <!-- Sidebar -->
-    <?php include __DIR__ . '/components/sidebar.php'; ?>
+    
+   
 
-    <!-- Main Content -->
+    
     <main class="main-content">
         <header class="header">
             <h1>Histórico</h1>

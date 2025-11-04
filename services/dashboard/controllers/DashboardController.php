@@ -29,6 +29,7 @@ class DashboardController
             'user' => $user
         ];
 
+        View::display('/components/sidebar');
         View::display('dashboard', $data);
     }
 
@@ -257,6 +258,8 @@ class DashboardController
             'user' => $user
         ];
 
+        // Render the view
+        View::display('/componentes/sidebar');
         View::display('books-management', $data);
     }
 

@@ -11,9 +11,9 @@
 </head>
 <body>
 
-    <aside class="sidebar">
-        <?php include __DIR__."/components/sidebar.php"?>
-    </aside>
+    
+       
+    
 
     <div class="container">
     <div class="books-management">

@@ -40,9 +40,9 @@
     }
     ?>
 
-    <aside class="sidebar">
-        <?php include __DIR__."/components/sidebar.php"?>
-    </aside>
+    
+        
+    
     
     <div class="container">
         <main class="main-content">
