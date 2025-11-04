@@ -125,13 +125,189 @@ class NotificationModelTest extends TestCase {
      */
     public function testFallbackWhenDatabaseUnavailable(): void {
         $notificationModel = $this->createNotificationModelWithoutConnection();
-        
+
         $result = $notificationModel->getByUserId(1);
-        
+
         // Regra: Sistema deve continuar funcionando com dados de fallback
         $this->assertIsArray($result);
         $this->assertCount(3, $result); // Dados de fallback
         $this->assertEquals('Livro Disponível', $result[0]['title']);
         $this->assertEquals('Empréstimo Aprovado', $result[1]['title']);
+    }
+
+    /**
+     * Teste: Mark as read - sucesso
+     */
+    public function testMarkAsReadSuccess(): void {
+        $this->mockStatement->method('execute')->willReturn(true);
+        $this->mockPdo->method('prepare')->willReturn($this->mockStatement);
+
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+        $this->injectMockPdo($notificationModel);
+
+        $result = $notificationModel->markAsRead(1, 1);
+
+        $this->assertTrue($result);
+    }
+
+    /**
+     * Teste: Mark as read - sem PDO retorna false
+     */
+    public function testMarkAsReadWithoutPdoReturnsFalse(): void {
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+
+        $result = $notificationModel->markAsRead(1, 1);
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Teste: Delete notification - sucesso
+     */
+    public function testDeleteNotificationSuccess(): void {
+        $this->mockStatement->method('execute')->willReturn(true);
+        $this->mockPdo->method('prepare')->willReturn($this->mockStatement);
+
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+        $this->injectMockPdo($notificationModel);
+
+        $result = $notificationModel->delete(1, 1);
+
+        $this->assertTrue($result);
+    }
+
+    /**
+     * Teste: Delete notification - sem PDO retorna false
+     */
+    public function testDeleteNotificationWithoutPdoReturnsFalse(): void {
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+
+        $result = $notificationModel->delete(1, 1);
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Teste: Create bulk notifications - sucesso
+     */
+    public function testCreateBulkNotificationsSuccess(): void {
+        $notifications = [
+            [
+                'user_id' => 1,
+                'title' => 'Teste 1',
+                'message' => 'Mensagem 1',
+                'data' => ['key' => 'value']
+            ],
+            [
+                'user_id' => 2,
+                'title' => 'Teste 2',
+                'message' => 'Mensagem 2',
+                'data' => null
+            ]
+        ];
+
+        $this->mockPdo->method('beginTransaction')->willReturn(true);
+        $this->mockPdo->method('commit')->willReturn(true);
+        $this->mockStatement->method('execute')->willReturn(true);
+        $this->mockPdo->method('prepare')->willReturn($this->mockStatement);
+
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+        $this->injectMockPdo($notificationModel);
+
+        $result = $notificationModel->createBulk($notifications);
+
+        $this->assertTrue($result);
+    }
+
+    /**
+     * Teste: Create bulk notifications - sem PDO retorna false
+     */
+    public function testCreateBulkNotificationsWithoutPdoReturnsFalse(): void {
+        $notifications = [
+            ['user_id' => 1, 'title' => 'Teste', 'message' => 'Mensagem']
+        ];
+
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+
+        $result = $notificationModel->createBulk($notifications);
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Teste: Create notification - sem PDO retorna false
+     */
+    public function testCreateNotificationWithoutPdoReturnsFalse(): void {
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+
+        $result = $notificationModel->create(1, 'Título', 'Mensagem');
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Teste: Count unread - sem PDO retorna 0
+     */
+    public function testCountUnreadWithoutPdoReturnsZero(): void {
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+
+        $result = $notificationModel->countUnreadByUserId(1);
+
+        $this->assertEquals(0, $result);
+    }
+
+    /**
+     * Teste: Mark all read - sem PDO retorna false
+     */
+    public function testMarkAllReadWithoutPdoReturnsFalse(): void {
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+
+        $result = $notificationModel->markAllReadByUserId(1);
+
+        $this->assertFalse($result);
+    }
+
+    /**
+     * Teste: Get user notifications retorna fallback data
+     */
+    public function testGetUserNotificationsReturnsFallbackData(): void {
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+
+        $result = $notificationModel->getUserNotifications();
+
+        $this->assertIsArray($result);
+        $this->assertCount(3, $result);
+        $this->assertEquals('Livro Disponível', $result[0]['title']);
+    }
+
+    /**
+     * Teste: Create notification com data null
+     */
+    public function testCreateNotificationWithNullData(): void {
+        $this->mockPdo->method('lastInsertId')->willReturn('456');
+        $this->mockStatement->method('execute')->willReturn(true);
+        $this->mockPdo->method('prepare')->willReturn($this->mockStatement);
+
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+        $this->injectMockPdo($notificationModel);
+
+        $result = $notificationModel->create(1, 'Título', 'Mensagem', null);
+
+        $this->assertEquals(456, $result);
+    }
+
+    /**
+     * Teste: Create notification com erro no PDO
+     */
+    public function testCreateNotificationWithPdoError(): void {
+        $this->mockStatement->method('execute')->willThrowException(new PDOException());
+        $this->mockPdo->method('prepare')->willReturn($this->mockStatement);
+
+        $notificationModel = $this->createNotificationModelWithoutConnection();
+        $this->injectMockPdo($notificationModel);
+
+        $result = $notificationModel->create(1, 'Título', 'Mensagem');
+
+        $this->assertFalse($result);
     }
 }
