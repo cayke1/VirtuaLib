@@ -259,7 +259,7 @@ class DashboardController
         ];
 
         // Render the view
-        View::display('/componentes/sidebar');
+        View::display('/components/sidebar');
         View::display('books-management', $data);
     }
 

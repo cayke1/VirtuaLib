@@ -26,33 +26,8 @@ class BookController
 
     public function listBooks()
     {
-        $books = $this->bookModel->getBooks();
-
-        $currentUserId = $_SESSION['user']['id'] ?? null;
-        $borrowedLookup = [];
-        $pendingLookup = [];
-        if ($currentUserId) {
-            $borrowedIds = $this->borrowModel->getActiveBorrowedBookIdsByUser((int)$currentUserId);
-            $pendingIds = $this->borrowModel->getPendingRequestBookIdsByUser((int)$currentUserId);
-
-            if (!empty($borrowedIds)) {
-                $borrowedLookup = array_flip($borrowedIds);
-            }
-            if (!empty($pendingIds)) {
-                $pendingLookup = array_flip($pendingIds);
-            }
-        }
-
-        foreach ($books as &$book) {
-            $bookId = (int)($book['id'] ?? 0);
-            $book['available'] = (int)($book['available'] ?? 0);
-            $book['borrowed_by_current_user'] = isset($borrowedLookup[$bookId]);
-            $book['requested_by_current_user'] = isset($pendingLookup[$bookId]);
-        }
-        unset($book);
-
         View::display('partials/header', ['title' => 'Livros']);
-        View::display('home', ['books' => $books]);
+        View::display('home');
         View::display('partials/footer');
     }
 
@@ -143,6 +118,22 @@ class BookController
         header('Content-Type: application/json');
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
+    public function ativeBorrowsByUser($userId)
+    {
+        $this->requireAuth();
+
+        try {
+            $borrows = $this->borrowModel->getActiveBorrowedBookIdsByUser((int)$userId);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => true, 'borrows' => $borrows], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Erro em activeBorrowsByUser: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Erro ao carregar empréstimos ativos']);
+        }
+    }
+
 
     public function approveBorrow($requestId)
     {
@@ -238,10 +229,23 @@ class BookController
             echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
         }
     }
+    public function getBooksJson(){
+        try {
+            $books = $this->bookModel->getBooks();
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => true, 'books' => $books], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Erro em getBooksJson: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Erro ao carregar livros']);
+        }
+    }
+
 
     public function getBookByIdApi($id)
     {
-        $this->requireRole('admin');
+        
         
         try {
             $book = $this->bookModel->getBookById($id);
@@ -665,7 +669,7 @@ class BookController
 
     public function getPendingRequests()
     {
-        $this->requireRole('admin');
+        
 
         $limit = (int)($_GET['limit'] ?? 20);
         $limit = max(1, min(100, $limit));

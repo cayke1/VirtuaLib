@@ -31,6 +31,7 @@ class HistoryController
             'history' => $history,
             'currentUser' => $user
         ];
+        View::display('/components/sidebar');
         View::display('history', $data);
     }
 
