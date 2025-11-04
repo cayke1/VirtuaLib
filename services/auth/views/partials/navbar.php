@@ -57,10 +57,12 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/dashboard/historico" class="nav-link">
-                <i class="fas fa-history"></i>
-                <span>Histórico</span>
+            <?php if($_SESSION['user']['role'] == 'admin'){?>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
             </a>
+            <?php } ?>
             <a href="#" class="nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
@@ -122,10 +124,12 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/dashboard/historico" class="mobile-nav-link">
-                <i class="fas fa-history"></i>
-                <span>Histórico</span>
+            <?php if($_SESSION['user']['role'] == 'admin'){?>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
             </a>
+            <?php } ?>
             <a href="#" class="mobile-nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>

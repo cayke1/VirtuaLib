@@ -66,6 +66,7 @@
             
             <?php if($_SESSION['user'] && $_SESSION['user']['role'] == 'admin'){?>
             
+            
             <a href="/dashboard" class="nav-link">
                 <i class="fas fa-tachometer-alt"></i>
                 <span>Dashboard</span>
@@ -134,8 +135,8 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/dashboard" class="nav-link">
-                <i class="fas fa-tachometer-alt"></i>
+            <a href="/dashboard" class="mobile-nav-link">
+                <i class="fas fa-history"></i>
                 <span>Dashboard</span>
             </a>
             <a href="#" class="mobile-nav-link logout" onclick="window.AuthService.logout(); return false;">
