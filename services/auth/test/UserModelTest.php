@@ -112,19 +112,143 @@ class UserModelTest extends TestCase {
      */
     public function testFallbackWhenDatabaseUnavailable(): void {
         $userModel = new UserModel();
-        
+
         // Simula falha de conexão com banco
         $reflection = new ReflectionClass($userModel);
         $pdoProperty = $reflection->getProperty('pdo');
         $pdoProperty->setAccessible(true);
         $pdoProperty->setValue($userModel, null);
-        
+
         $result = $userModel->getUserData();
-        
+
         // Regra: Sistema deve continuar funcionando com dados de fallback
         $this->assertArrayHasKey('id', $result);
         $this->assertArrayHasKey('name', $result);
         $this->assertArrayHasKey('email', $result);
         $this->assertEquals('Usuário Exemplo', $result['name']);
+    }
+
+    /**
+     * Teste: Buscar todos os usuários
+     */
+    public function testGetAllUsers(): void {
+        $mockUsers = [
+            ['id' => 1, 'name' => 'User 1', 'email' => 'user1@test.com', 'role' => 'user', 'created_at' => '2024-01-01'],
+            ['id' => 2, 'name' => 'User 2', 'email' => 'user2@test.com', 'role' => 'admin', 'created_at' => '2024-01-02']
+        ];
+
+        $this->mockStatement->method('fetchAll')
+            ->willReturn($mockUsers);
+
+        $this->mockStatement->method('rowCount')
+            ->willReturn(2);
+
+        $this->mockPdo->method('query')
+            ->willReturn($this->mockStatement);
+
+        $userModel = $this->createUserModelWithoutConnection();
+        $this->injectMockPdo($userModel);
+
+        $result = $userModel->getAll();
+
+        $this->assertCount(2, $result);
+        $this->assertEquals('User 1', $result[0]['name']);
+        $this->assertEquals('admin', $result[1]['role']);
+    }
+
+    /**
+     * Teste: Buscar usuário por email - sucesso
+     */
+    public function testFindByEmailSuccess(): void {
+        $mockUser = [
+            'id' => 1,
+            'name' => 'João Silva',
+            'email' => 'joao@test.com',
+            'password' => password_hash('password123', PASSWORD_BCRYPT),
+            'role' => 'user'
+        ];
+
+        $this->mockStatement->method('fetch')
+            ->willReturn($mockUser);
+
+        $userModel = $this->createUserModelWithoutConnection();
+        $this->injectMockPdo($userModel);
+
+        $result = $userModel->findByEmail('joao@test.com');
+
+        $this->assertNotNull($result);
+        $this->assertEquals('João Silva', $result['name']);
+        $this->assertEquals('joao@test.com', $result['email']);
+    }
+
+    /**
+     * Teste: Buscar usuário por email - não encontrado
+     */
+    public function testFindByEmailNotFound(): void {
+        $this->mockStatement->method('fetch')
+            ->willReturn(false);
+
+        $userModel = $this->createUserModelWithoutConnection();
+        $this->injectMockPdo($userModel);
+
+        $result = $userModel->findByEmail('naoexiste@test.com');
+
+        $this->assertNull($result);
+    }
+
+    /**
+     * Teste: Contagem de usuários ativos
+     */
+    public function testGetActiveUsersCount(): void {
+        $this->mockStatement->method('fetch')
+            ->willReturn(['total' => 5]);
+
+        $userModel = $this->createUserModelWithoutConnection();
+        $this->injectMockPdo($userModel);
+
+        $result = $userModel->getActiveUsersCount();
+
+        $this->assertEquals(5, $result);
+    }
+
+    /**
+     * Teste: Buscar usuário por ID
+     */
+    public function testGetUserById(): void {
+        $mockUser = [
+            'id' => 1,
+            'name' => 'João Silva',
+            'email' => 'joao@test.com',
+            'role' => 'user',
+            'created_at' => '2024-01-01'
+        ];
+
+        $this->mockStatement->method('fetch')
+            ->willReturn($mockUser);
+
+        $userModel = $this->createUserModelWithoutConnection();
+        $this->injectMockPdo($userModel);
+
+        $result = $userModel->getUserById(1);
+
+        $this->assertNotNull($result);
+        $this->assertEquals('João Silva', $result['name']);
+        $this->assertEquals('joao@test.com', $result['email']);
+    }
+
+    /**
+     * Teste: Verificar senha com usuário não encontrado
+     */
+    public function testVerifyPasswordUserNotFound(): void {
+        $this->mockStatement->method('fetch')
+            ->willReturn(false);
+
+        $userModel = $this->createUserModelWithoutConnection();
+        $this->injectMockPdo($userModel);
+
+        list($isValid, $user) = $userModel->verifyPassword('naoexiste@test.com', 'anypassword');
+
+        $this->assertFalse($isValid);
+        $this->assertNull($user);
     }
 }
