@@ -288,8 +288,6 @@ class NotificationManager {
 
         return `
             <div class="notification-item${prefix} ${isUnread ? 'unread' : ''}" data-id="${notification.id}">
-                <div class="notification-delete-container" data-id="${notification.id}"></div>
-                <div class="notification-main-content">
                     <div class="notification-icon${prefix} ${notificationType}">
                         <i class="${icons[notificationType] || icons.default}"></i>
                     </div>
@@ -298,14 +296,13 @@ class NotificationManager {
                         <div class="notification-message${prefix}">${this.escapeHtml(notification.message)}</div>
                         <div class="notification-time${prefix}">${timeAgo}</div>
                     </div>
-                </div>
             </div>
         `;
     }
 
     setupNotificationClickListeners() {
         document.querySelectorAll('.notification-item, .notification-item-mobile').forEach(item => {
-            const deleteArea = item.querySelector('.notification-delete-container');
+            
             const mainContent = item.querySelector('.notification-main-content');
 
             // Delete handler
