@@ -340,9 +340,10 @@ class BorrowModel extends Database
     {
         try {
             $stmt = $this->pdo->prepare(
-                "SELECT book_id FROM Borrows
-                                 WHERE user_id = :user_id
-                                     AND status IN ('approved', 'late')"
+                "SELECT book_id, status 
+                    FROM Borrows
+                    WHERE user_id = :user_id
+                    AND status IN ('approved', 'late', 'requested')"
             );
             $stmt->execute([':user_id' => $userId]);
             $ids = $stmt->fetchAll(PDO::FETCH_COLUMN);

@@ -4,9 +4,28 @@
             <div class="logo-icon">📚</div>
             VirtuaLib
         </div>
-        <nav>
-            <a href="/dashboard/" class="nav-item">📊 Dashboard</a>
-            <a href="/dashboard/historico" class="nav-item">🕐 Histórico</a>
-            <a href="/dashboard/livros" class="nav-item">📚 Gerenciar Livros</a>
+        
+        <nav class="sidebar-nav">
+            <a href="/books" class="nav-item">
+                <i class="fas fa-book"></i>
+                <span>Home</span>
+            </a>
+            <a href="/dashboard" class="nav-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="/dashboard/historico" class="nav-item">
+                <i class="fas fa-history"></i>
+                <span>Histórico</span>
+            </a>
+            <a href="/dashboard/livros" class="nav-item">
+                <i class="fas fa-books"></i>
+                <span>Gerenciar Livros</span>
+            </a>
         </nav>
-</aside>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+</div>
+
+<script defer src="/public/js/sidebar.js"></script>

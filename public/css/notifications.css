@@ -132,67 +132,28 @@
     background-color: #dbeafe;
 }
 
-/* 🔥 Barra lateral de exclusão (versão com expansão no hover) */
-.notification-delete-container {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 5px;
-    background-color: #ef4444;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
-    overflow: hidden;
-    transition: all 0.25s ease;
-    border-top-left-radius: 12px;
-    border-bottom-left-radius: 12px;
+.notification-title {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 14px;
+    margin-bottom: 4px;
 }
 
-.notification-delete-container i {
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: all 0.25s ease;
-    font-size: 16px;
+.notification-message {
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+    margin-bottom: 8px;
 }
 
-/* Quando o usuário passa o mouse sobre a notificação */
-.notification-item:hover .notification-delete-container,
-.notification-item-mobile:hover .notification-delete-container {
-    width: 45px;
+.notification-time {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 500;
 }
 
-/* Ícone aparece suavemente */
-.notification-item:hover .notification-delete-container i,
-.notification-item-mobile:hover .notification-delete-container i {
-    opacity: 1;
-    transform: translateX(0);
-}
+.notification-icon {
 
-/* Efeito hover mais escuro */
-.notification-delete-container:hover {
-    background-color: #dc2626;
-}
-
-
-/* Main content area */
-.notification-main-content {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 16px;
-    background-color: white;
-    width: 100%;
-}
-
-.notification-icon,
-.notification-icon-mobile {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: 0;
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -229,11 +190,6 @@
 .notification-content-mobile {
     flex: 1;
     margin-left: 0;
-}
-
-/* Remove hide do botão delete */
-.notification-delete-btn {
-    display: flex;
 }
 
 .notification-loading {
@@ -367,7 +323,6 @@
 
 .notification-item-mobile {
     position: relative;
-    padding-left: 35px; /* Increased left padding to make room for delete button */
     padding: 16px 20px;
     border-bottom: 1px solid #f1f5f9;
     cursor: pointer;
@@ -412,7 +367,7 @@
 }
 
 .notification-icon-mobile {
-    margin-left: 25px; /* Move icon to make room for delete button */
+    
     width: 36px;
     height: 36px;
     border-radius: 50%;

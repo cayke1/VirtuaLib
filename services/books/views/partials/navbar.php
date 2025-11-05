@@ -28,6 +28,12 @@
 
         <!-- Menu de navegação desktop -->
         <div class="nav-menu-desktop">
+            <?php if(!isset($_SESSION['user'])) { ?>
+                <a href="/auth/login" class="nav-link">
+                <i class="fas fa-user"></i>
+                <span>Login</span>
+            </a>
+            <?php }else{ ?>
             <!-- Notificações -->
             <div class="notification-container">
                 <button class="notification-btn" id="notification-btn">
@@ -51,19 +57,27 @@
                     </div>
                 </div>
             </div>
-
+            
+            
             <a href="/auth/profile" class="nav-link">
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/dashboard/historico" class="nav-link">
-                <i class="fas fa-history"></i>
-                <span>Histórico</span>
+            
+            <?php if($_SESSION['user'] && $_SESSION['user']['role'] == 'admin'){?>
+            
+            
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
             </a>
+            <?php   }?>
+            
             <a href="#" class="nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
             </a>
+            <?php } ?>
         </div>
 
         <!-- Botão hambúrguer -->
@@ -121,9 +135,9 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/books/history" class="mobile-nav-link">
+            <a href="/dashboard" class="mobile-nav-link">
                 <i class="fas fa-history"></i>
-                <span>Histórico</span>
+                <span>Dashboard</span>
             </a>
             <a href="#" class="mobile-nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
