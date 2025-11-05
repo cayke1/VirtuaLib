@@ -116,11 +116,12 @@ function renderBooksTable() {
 
 // Abrir modal para criar livro
 function openCreateModal() {
+    console.log('Abrindo modal de criação de livro');
     editingBookId = null;
     document.getElementById('modal-title').textContent = 'Adicionar Livro';
     document.getElementById('submit-btn').textContent = 'Salvar';
     clearForm();
-    document.getElementById('available').checked = true;
+    // document.getElementById('available').checked = true;
     document.getElementById('book-modal').style.display = 'block';
 }
 
