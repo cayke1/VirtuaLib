@@ -160,10 +160,14 @@ function createBookCard(book, isBorrowed, isPending) {
   }
 
   card.innerHTML = `
-    <div class="book-cover-container">
+    <div 
+      class="book-cover-container"
+      onclick="window.location.href='/books/details/${book.id}'"
+      style="cursor: pointer;"
+    >
       ${
         book.cover_image
-          ? `<img src="${book.cover_image}" alt="Capa de ${book.title}" class="book-cover-image" />`
+          ? `<img src="${book.cover_image}" alt="Capa de ${book.title}" class="book-cover-image" loading="lazy" />`
           : `<div class="book-cover-placeholder">
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
                 <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
