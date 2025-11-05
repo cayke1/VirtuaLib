@@ -89,6 +89,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
@@ -151,12 +152,8 @@
         </div>
     </div>
 </div>
-<style>
-    <?php include __DIR__ . '/public/css/profile.css'; ?>
-</style>
-<script type="module" >
-    <?php include __DIR__ . '/public/js/profile.js'; ?>
-</script>
+<style src="/public/css/profile.css"></style>
+<script src="/public/js/profile.js"></script>
 
 <script type="module">
     import { 

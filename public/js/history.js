@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const tableBody = document.querySelector('tbody');
     if (!tableBody) return;
 
-    // Mensagem de carregamento
     tableBody.innerHTML = `<tr><td colspan="5" class="no-data">Carregando histórico...</td></tr>`;
 
     try {
@@ -23,13 +22,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             'pending': 'Pendente',
             'approved': 'Aprovado',
             'returned': 'Devolvido',
-            'late': 'Atrasado',
         };
         const statusConfig = {
             'Pendente': { icon: '⏳', text: 'Pendente', class: 'status-pendente' },
             'Aprovado': { icon: '📖', text: 'Emprestado', class: 'status-ativo' },
-            'Devolvido': { icon: '✓', text: 'Devolvido', class: 'status-devolvido' },
-            'Atrasado': { icon: '⚠', text: 'Atrasado', class: 'status-atrasado' }
+            'Devolvido': { icon: '✓', text: 'Devolvido', class: 'status-devolvido' }
         };
 
         tableBody.innerHTML = '';

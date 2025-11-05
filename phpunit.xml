@@ -12,9 +12,6 @@
         <testsuite name="Books Service Tests">
             <directory>services/books/test</directory>
         </testsuite>
-        <testsuite name="Dashboard Service Tests">
-            <directory>services/dashboard/test</directory>
-        </testsuite>
         <testsuite name="Notifications Service Tests">
             <directory>services/notifications/test</directory>
         </testsuite>

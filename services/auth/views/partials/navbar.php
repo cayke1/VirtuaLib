@@ -1,11 +1,3 @@
-<style>
-    <?php 
-        include __DIR__ . '../../public/css/notifications.css';
-        include __DIR__ . '../../public/css/navbar.css';
-     ?>
-
-</style>
-
 <body>    
     <nav class="navbar">
     <div class="nav-container">
@@ -65,10 +57,12 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/history" class="nav-link">
-                <i class="fas fa-history"></i>
-                <span>Histórico</span>
+            <?php if($_SESSION['user']['role'] == 'admin'){?>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
             </a>
+            <?php } ?>
             <a href="#" class="nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
@@ -130,10 +124,12 @@
                 <i class="fas fa-user"></i>
                 <span>Perfil</span>
             </a>
-            <a href="/historico" class="mobile-nav-link">
-                <i class="fas fa-history"></i>
-                <span>Histórico</span>
+            <?php if($_SESSION['user']['role'] == 'admin'){?>
+            <a href="/dashboard" class="nav-link">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
             </a>
+            <?php } ?>
             <a href="#" class="mobile-nav-link logout" onclick="window.AuthService.logout(); return false;">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
@@ -141,14 +137,6 @@
         </div>
     </div>
 </nav>
-<script>
-
-    <?php 
-        include __DIR__ . '../../public/js/auth.js';
-        include __DIR__ . '../../public/js/navbar.js'; 
-        include __DIR__ . '../../public/js/notifications.js';
-    ?>
-</script>
 <style>
     .nav-link {
         color: #1e293b;

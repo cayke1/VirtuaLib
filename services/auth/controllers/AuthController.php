@@ -1,25 +1,23 @@
 <?php
-/**
- * Auth Controller - Serviço de Autenticação
- */
 
-// Include the View utility
 require_once __DIR__ . '/../../utils/View.php';
 
-class AuthController {
+class AuthController
+{
     private $userModel;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->userModel = new UserModel();
+        
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
 
-        // Set the base path for views
         View::setBasePath(__DIR__ . '/../views/');
     }
-    
-     private function json($data, $status = 200)
+
+    private function json($data, $status = 200)
     {
         http_response_code($status);
         header('Content-Type: application/json');
@@ -81,7 +79,6 @@ class AuthController {
         $this->requireAuth();
         
         try {
-            // Debug: verificar se a sessão está correta
             if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
                 $this->json(['error' => 'Usuário não encontrado na sessão'], 401);
                 return;
@@ -91,12 +88,10 @@ class AuthController {
             $borrowModel = new BorrowModel();
             $userModel = new UserModel();
 
-            // Buscar estatísticas do usuário
             $activeBorrows = $borrowModel->getActiveBorrowsCountByUser($userId);
             $totalBorrows = $borrowModel->getTotalBorrowsCountByUser($userId);
             $userInfo = $userModel->getUserById($userId);
 
-            // Calcular dias como membro
             $memberSinceDays = 0;
             $createdAt = null;
             if ($userInfo && isset($userInfo['created_at'])) {
@@ -141,9 +136,9 @@ class AuthController {
     {
         $this->requireAuth();
         $user = $_SESSION['user'];
-        view::display('/partials/header', ['title' => 'Perfil']);
+        view::display('partials/header', ['title' => 'Perfil']);
         View::display('profile', ['user' => $user]);
-        view::display('/partials/footer');
+        view::display('partials/footer');
     }
 
     private function readJsonBody()
@@ -155,6 +150,7 @@ class AuthController {
         $data = json_decode($raw, true);
         return is_array($data) ? $data : null;
     }
+
     private function requireAuth()
     {
         if (empty($_SESSION['user'])) {

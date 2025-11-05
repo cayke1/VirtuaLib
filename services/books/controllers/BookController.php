@@ -1,57 +1,33 @@
 <?php
-/**
- * Book Controller - Serviço de Livros e Empréstimos
- */
 
-// Include the View utility
 require_once __DIR__ . '/../../utils/View.php';
+require_once __DIR__ . '/../../utils/ImageUploader.php';
+require_once __DIR__ . '/../../utils/PdfUploader.php';
 
-class BookController {
+class BookController
+{
     private $bookModel;
     private $borrowModel;
-    
-    public function __construct() {
+    private $imageUploader;
+    private $pdfUploader;
+
+    public function __construct()
+    {
         $this->bookModel = new BookModel();
         $this->borrowModel = new BorrowModel();
+        $this->imageUploader = new ImageUploader();
+        
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        
-        // Set the base path for views
+
         View::setBasePath(__DIR__ . '/../views/');
     }
-    /**
-     * Lista todos os livros disponíveis com informações de empréstimo.
-     */
+
     public function listBooks()
     {
-        $books = $this->bookModel->getBooks();
-
-        $currentUserId = $_SESSION['user']['id'] ?? null;
-        $borrowedLookup = [];
-        $pendingLookup = [];
-        if ($currentUserId) {
-            $borrowedIds = $this->borrowModel->getActiveBorrowedBookIdsByUser((int)$currentUserId);
-            $pendingIds = $this->borrowModel->getPendingRequestBookIdsByUser((int)$currentUserId);
-
-            if (!empty($borrowedIds)) {
-                $borrowedLookup = array_flip($borrowedIds);
-            }
-            if (!empty($pendingIds)) {
-                $pendingLookup = array_flip($pendingIds);
-            }
-        }
-
-        foreach ($books as &$book) {
-            $bookId = (int)($book['id'] ?? 0);
-            $book['available'] = (int)($book['available'] ?? 0);
-            $book['borrowed_by_current_user'] = isset($borrowedLookup[$bookId]);
-            $book['requested_by_current_user'] = isset($pendingLookup[$bookId]);
-        }
-        unset($book);
-
         View::display('partials/header', ['title' => 'Livros']);
-        View::display('home', ['books' => $books]);
+        View::display('home');
         View::display('partials/footer');
     }
 
@@ -89,7 +65,6 @@ class BookController {
             exit;
         }
 
-        // Adicionar informações de empréstimo como no listBooks
         $currentUserId = $_SESSION['user']['id'] ?? null;
         $book['available'] = (int)($book['available'] ?? 0);
         $book['borrowed_by_current_user'] = false;
@@ -117,7 +92,6 @@ class BookController {
             return;
         }
 
-        // Debug: verificar sessão
         error_log('RequestBook - Session data: ' . print_r($_SESSION, true));
         error_log('RequestBook - Book ID: ' . $id);
 
@@ -144,13 +118,28 @@ class BookController {
         header('Content-Type: application/json');
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
+    public function ativeBorrowsByUser($userId)
+    {
+        $this->requireAuth();
+
+        try {
+            $borrows = $this->borrowModel->getActiveBorrowedBookIdsByUser((int)$userId);
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => true, 'borrows' => $borrows], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Erro em activeBorrowsByUser: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Erro ao carregar empréstimos ativos']);
+        }
+    }
+
 
     public function approveBorrow($requestId)
     {
 
         error_log("Aprovando solicitação de empréstimo ID: $requestId");
         
-        // Verificar se é uma chamada entre serviços (com token) ou chamada direta (com sessão)
         $isServiceCall = $this->isServiceCall();
         
         if (!$isServiceCall) {
@@ -164,10 +153,8 @@ class BookController {
             return;
         }
 
-        // Tentar obter adminUserId da sessão ou dos dados POST (para chamadas entre serviços)
         $adminUserId = $_SESSION['user']['id'] ?? null;
         
-        // Se não há sessão, tentar obter dos dados POST (chamada entre serviços)
         if (!$adminUserId) {
             $postData = $this->readJsonBody();
             $adminUserId = $postData['admin_user_id'] ?? null;
@@ -182,7 +169,6 @@ class BookController {
 
         $result = $this->borrowModel->approveBorrow((int)$requestId, (int)$adminUserId);
 
-        // Se aprovado com sucesso, notificar o usuário
         if ($result['success']) {
             $this->notifyUser($result['user_id'], $result['book_title'], 'approved');
         }
@@ -228,27 +214,358 @@ class BookController {
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
+    public function getBooksApi()
+    {
+        $this->requireRole('admin');
+        
+        try {
+            $books = $this->bookModel->getBooks();
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['books' => $books], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in getBooksApi: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+    public function getBooksJson(){
+        try {
+            $books = $this->bookModel->getBooks();
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success' => true, 'books' => $books], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Erro em getBooksJson: " . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Erro ao carregar livros']);
+        }
+    }
+
+
+    public function getBookByIdApi($id)
+    {
+        
+        
+        try {
+            $book = $this->bookModel->getBookById($id);
+            if (!$book) {
+                http_response_code(404);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Livro não encontrado'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+            
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['book' => $book], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in getBookByIdApi: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
     public function createBook()
     {
         $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        $hasImageUpload = isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE;
+        $hasPdfUpload = isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE;
+
+        if ($hasImageUpload || $hasPdfUpload) {
+            $this->createBookWithFiles();
+            return;
+        }
+
         $payload = $this->readJsonBody();
         if (!$this->validateCreatePayload($payload)) {
             http_response_code(400);
             header('Content-Type: application/json');
-            echo json_encode(['error' => 'Campos obrigatórios ausentes']);
+            echo json_encode(['error' => 'Dados inválidos'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        $id = $this->bookModel->createBook($payload);
-        if (!$id) {
+        try {
+            $bookId = $this->bookModel->createBook($payload);
+            if (!$bookId) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao criar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            http_response_code(201);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Livro criado com sucesso', 'id' => $bookId], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in createBook: " . $e->getMessage());
             http_response_code(500);
             header('Content-Type: application/json');
-            echo json_encode(['error' => 'Falha ao criar livro']);
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    private function createBookWithFiles()
+    {
+        try {
+            $requiredFields = ['title', 'author', 'genre', 'year'];
+            foreach ($requiredFields as $field) {
+                if (empty($_POST[$field])) {
+                    http_response_code(400);
+                    header('Content-Type: application/json');
+                    echo json_encode(['error' => "Campo obrigatório: $field"], JSON_UNESCAPED_UNICODE);
+                    return;
+                }
+            }
+
+            $bookData = [
+                'title' => $_POST['title'],
+                'author' => $_POST['author'],
+                'genre' => $_POST['genre'],
+                'year' => (int)$_POST['year'],
+                'description' => $_POST['description'] ?? '',
+                'available' => isset($_POST['available']) ? (int)$_POST['available'] : 1
+            ];
+
+            $bookId = $this->bookModel->createBook($bookData);
+            if (!$bookId) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao criar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $updateData = [];
+            $responseData = ['message' => 'Livro criado com sucesso', 'id' => $bookId];
+
+            if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $uploadResult = $this->imageUploader->uploadImage($_FILES['cover_image'], $bookId);
+                if ($uploadResult['success']) {
+                    $updateData['cover_image'] = $uploadResult['path'];
+                    $responseData['cover_image'] = $uploadResult['path'];
+                }
+            }
+
+            if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+                if (!isset($this->pdfUploader)) {
+                    require_once __DIR__ . '/../../utils/PdfUploader.php';
+                    $this->pdfUploader = new PdfUploader();
+                }
+                
+                $pdfResult = $this->pdfUploader->uploadPdf($_FILES['pdf_file'], $bookId);
+                if ($pdfResult['success']) {
+                    $updateData['pdf_src'] = $pdfResult['path'];
+                    $responseData['pdf_src'] = $pdfResult['path'];
+                }
+            }
+
+            if (!empty($updateData)) {
+                $this->bookModel->updateBook($bookId, $updateData);
+            }
+
+            http_response_code(201);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($responseData, JSON_UNESCAPED_UNICODE);
+
+        } catch (Exception $e) {
+            error_log("Error in createBookWithFiles: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function updateBook($id)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+        
+        $hasImageUpload = isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE;
+        $hasPdfUpload = isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE;
+        
+        if ($hasImageUpload || $hasPdfUpload) {
+            $this->updateBookWithFiles($id);
+            return;
+        }
+        
+        $payload = $this->readJsonBody();
+        if (!$this->validateUpdatePayload($payload)) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Dados inválidos'], JSON_UNESCAPED_UNICODE);
             return;
         }
 
-        header('Content-Type: application/json');
-        echo json_encode(['id' => $id, 'message' => 'Livro criado com sucesso']);
+        try {
+            $success = $this->bookModel->updateBook($id, $payload);
+            if (!$success) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao atualizar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Livro atualizado com sucesso'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in updateBook: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    private function updateBookWithFiles($id)
+    {
+        try {
+            $currentBook = $this->bookModel->getBookById($id);
+            if (!$currentBook) {
+                http_response_code(404);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Livro não encontrado'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            $updateData = [];
+            
+            if (!empty($_POST['title'])) {
+                $updateData['title'] = $_POST['title'];
+            }
+            if (!empty($_POST['author'])) {
+                $updateData['author'] = $_POST['author'];
+            }
+            if (!empty($_POST['genre'])) {
+                $updateData['genre'] = $_POST['genre'];
+            }
+            if (!empty($_POST['year'])) {
+                $updateData['year'] = (int)$_POST['year'];
+            }
+            if (!empty($_POST['description'])) {
+                $updateData['description'] = $_POST['description'];
+            }
+            if (isset($_POST['available'])) {
+                $updateData['available'] = (int)$_POST['available'];
+            }
+
+            $responseData = ['message' => 'Livro atualizado com sucesso'];
+
+            if (isset($_FILES['cover_image']) && $_FILES['cover_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $uploadResult = $this->imageUploader->uploadImage($_FILES['cover_image'], $id);
+                if (!$uploadResult['success']) {
+                    http_response_code(400);
+                    header('Content-Type: application/json');
+                    echo json_encode(['error' => 'Erro no upload da imagem: ' . $uploadResult['message']], JSON_UNESCAPED_UNICODE);
+                    return;
+                }
+                $updateData['cover_image'] = $uploadResult['path'];
+                $responseData['cover_image'] = $uploadResult['path'];
+                $oldImage = $currentBook['cover_image'] ?? null;
+            }
+
+            if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+                if (!isset($this->pdfUploader)) {
+                    require_once __DIR__ . '/../../utils/PdfUploader.php';
+                    $this->pdfUploader = new PdfUploader();
+                }
+                
+                $pdfResult = $this->pdfUploader->uploadPdf($_FILES['pdf_file'], $id);
+                if (!$pdfResult['success']) {
+                    // Se já uploadou imagem, deletar antes de retornar erro
+                    if (isset($uploadResult) && $uploadResult['success']) {
+                        $this->imageUploader->deleteImage($uploadResult['path']);
+                    }
+                    http_response_code(400);
+                    header('Content-Type: application/json');
+                    echo json_encode(['error' => 'Erro no upload do PDF: ' . $pdfResult['message']], JSON_UNESCAPED_UNICODE);
+                    return;
+                }
+                $updateData['pdf_src'] = $pdfResult['path'];
+                $responseData['pdf_src'] = $pdfResult['path'];
+                $oldPdf = $currentBook['pdf_src'] ?? null;
+            }
+
+            $success = $this->bookModel->updateBook($id, $updateData);
+            if (!$success) {
+                if (isset($uploadResult) && $uploadResult['success']) {
+                    $this->imageUploader->deleteImage($uploadResult['path']);
+                }
+                if (isset($pdfResult) && $pdfResult['success']) {
+                    $this->pdfUploader->deletePdf($pdfResult['path']);
+                }
+                
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao atualizar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            if (isset($oldImage) && !empty($oldImage)) {
+                $this->imageUploader->deleteImage($oldImage);
+            }
+            if (isset($oldPdf) && !empty($oldPdf)) {
+                $this->pdfUploader->deletePdf($oldPdf);
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode($responseData, JSON_UNESCAPED_UNICODE);
+            
+        } catch (Exception $e) {
+            error_log("Error in updateBookWithFiles: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
+    }
+
+    public function deleteBook($id)
+    {
+        $this->requireRole('admin');
+        
+        if ($_SERVER['REQUEST_METHOD'] !== 'DELETE' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+            http_response_code(405);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Método não permitido'], JSON_UNESCAPED_UNICODE);
+            return;
+        }
+
+        try {
+            $book = $this->bookModel->getBookById($id);
+            
+            $success = $this->bookModel->deleteBook($id);
+            if (!$success) {
+                http_response_code(500);
+                header('Content-Type: application/json');
+                echo json_encode(['error' => 'Falha ao deletar livro'], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+
+            // Deletar imagem se existir
+            if ($book && !empty($book['cover_image'])) {
+                $this->imageUploader->deleteImage($book['cover_image']);
+            }
+
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Livro deletado com sucesso'], JSON_UNESCAPED_UNICODE);
+        } catch (Exception $e) {
+            error_log("Error in deleteBook: " . $e->getMessage());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Erro interno do servidor'], JSON_UNESCAPED_UNICODE);
+        }
     }
 
     private function readJsonBody()
@@ -278,6 +595,33 @@ class BookController {
         return true;
     }
 
+    private function validateUpdatePayload($data)
+    {
+        if (!is_array($data)) {
+            return false;
+        }
+        
+        $allowedFields = ['title', 'author', 'genre', 'year', 'description', 'cover_image', 'available'];
+        $hasValidField = false;
+        
+        foreach ($allowedFields as $field) {
+            if (isset($data[$field])) {
+                $hasValidField = true;
+                break;
+            }
+        }
+        
+        if (!$hasValidField) {
+            return false;
+        }
+        
+        if (isset($data['year']) && !is_numeric($data['year'])) {
+            return false;
+        }
+        
+        return true;
+    }
+
     public function rejectRequest($requestId)
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -287,17 +631,14 @@ class BookController {
             return;
         }
 
-        // Verificar se é uma chamada entre serviços (com token) ou chamada direta (com sessão)
         $isServiceCall = $this->isServiceCall();
         
         if (!$isServiceCall) {
             $this->requireRole('admin');
         }
 
-        // Tentar obter adminUserId da sessão ou dos dados POST (para chamadas entre serviços)
         $adminUserId = $_SESSION['user']['id'] ?? null;
         
-        // Se não há sessão, tentar obter dos dados POST (chamada entre serviços)
         if (!$adminUserId) {
             $postData = $this->readJsonBody();
             $adminUserId = $postData['admin_user_id'] ?? null;
@@ -312,7 +653,6 @@ class BookController {
 
         $result = $this->borrowModel->rejectRequest((int)$requestId, (int)$adminUserId);
 
-        // Se rejeitado com sucesso, notificar o usuário
         if ($result['success']) {
             $this->notifyUser($result['user_id'], $result['book_title'], 'rejected');
         }
@@ -327,20 +667,16 @@ class BookController {
         echo json_encode($result, JSON_UNESCAPED_UNICODE);
     }
 
-    /**
-     * Obter solicitações pendentes via API
-     */
     public function getPendingRequests()
     {
-        $this->requireRole('admin');
+        
 
         $limit = (int)($_GET['limit'] ?? 20);
-        $limit = max(1, min(100, $limit)); // Limitar entre 1 e 100
+        $limit = max(1, min(100, $limit));
 
         try {
             $requests = $this->borrowModel->getPendingRequests();
             
-            // Limitar resultados
             $requests = array_slice($requests, 0, $limit);
 
             header('Content-Type: application/json; charset=utf-8');
@@ -374,9 +710,6 @@ class BookController {
         }
     }
 
-    /**
-     * Verificar se é uma chamada entre serviços (com token de autenticação)
-     */
     private function isServiceCall()
     {
         $serviceToken = $_SERVER['HTTP_X_SERVICE_AUTH'] ?? '';
@@ -385,9 +718,6 @@ class BookController {
         return !empty($serviceToken) && $serviceToken === $expectedToken;
     }
 
-    /**
-     * Notificar usuário via serviço de notificações
-     */
     private function notifyUser($userId, $bookTitle, $type)
     {
         $notificationsServiceUrl = $_ENV['NOTIFICATIONS_SERVICE_URL'] ?? 'http://notifications-service';
@@ -397,7 +727,7 @@ class BookController {
             'type' => 'book.' . $type,
             'user_id' => $userId,
             'book_title' => $bookTitle,
-            'book_id' => null // Será preenchido pelo serviço se necessário
+            'book_id' => null
         ];
 
         $ch = curl_init();

@@ -43,7 +43,7 @@ class BookModel extends Database
 
     public function search(string $query)
     {
-        $sql = "SELECT id, title, author, genre, year, description 
+        $sql = "SELECT id, title, author, genre, year, description, cover_image 
                 FROM Books 
                 WHERE title LIKE :query 
                    OR author LIKE :query 
@@ -76,8 +76,8 @@ class BookModel extends Database
     
     public function createBook(array $data)
     {
-        $sql = "INSERT INTO Books (title, author, genre, year, description, available) 
-                VALUES (:title, :author, :genre, :year, :description, :available)";
+        $sql = "INSERT INTO Books (title, author, genre, year, description, cover_image, available) 
+                VALUES (:title, :author, :genre, :year, :description, :cover_image, :available)";
         try {
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':title', $data['title'] ?? '', PDO::PARAM_STR);
@@ -85,6 +85,7 @@ class BookModel extends Database
             $stmt->bindValue(':genre', $data['genre'] ?? '', PDO::PARAM_STR);
             $stmt->bindValue(':year', (int)($data['year'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':description', $data['description'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':cover_image', $data['cover_image'] ?? null, PDO::PARAM_STR);
             $stmt->bindValue(':available', isset($data['available']) ? (int)(bool)$data['available'] : 1, PDO::PARAM_INT);
             $stmt->execute();
             return (int)$this->pdo->lastInsertId();

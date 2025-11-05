@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VirtuaLib - Cadastro</title>
+    <link rel="stylesheet" href="/public/css/auth.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<style>
-  <?php include __DIR__ . '/public/css/auth.css'; ?>
-</style>
 <body>
     <div class="container">
         <div class="auth-card">
@@ -64,8 +62,7 @@
         </div>
     </div>
 
-<script>
-  <?php include __DIR__ . '/public/js/auth.js'; ?>
+<script src="/public/js/auth.js">
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {

@@ -25,7 +25,7 @@ class BookModel extends Database
 
     public function search(string $query)
     {
-        $sql = "SELECT id, title, author, genre, year, description 
+        $sql = "SELECT id, title, author, genre, year, description, cover_image 
                 FROM Books 
                 WHERE title LIKE :query 
                    OR author LIKE :query 
@@ -58,8 +58,8 @@ class BookModel extends Database
 
     public function createBook(array $data)
     {
-        $sql = "INSERT INTO Books (title, author, genre, year, description, available) 
-                VALUES (:title, :author, :genre, :year, :description, :available)";
+        $sql = "INSERT INTO Books (title, author, genre, year, description, cover_image, available) 
+                VALUES (:title, :author, :genre, :year, :description, :cover_image, :available)";
         try {
             $stmt = $this->pdo->prepare($sql);
             $stmt->bindValue(':title', $data['title'] ?? '', PDO::PARAM_STR);
@@ -67,12 +67,109 @@ class BookModel extends Database
             $stmt->bindValue(':genre', $data['genre'] ?? '', PDO::PARAM_STR);
             $stmt->bindValue(':year', (int)($data['year'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':description', $data['description'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':cover_image', $data['cover_image'] ?? null, PDO::PARAM_STR);
             $stmt->bindValue(':available', isset($data['available']) ? (int)(bool)$data['available'] : 1, PDO::PARAM_INT);
             $stmt->execute();
             return (int)$this->pdo->lastInsertId();
         } catch (PDOException $e) {
             error_log("Database error in createBook: " . $e->getMessage());
             return 0;
+        }
+    }
+
+    public function updateBook($id, array $data)
+    {
+        $fields = [];
+        $params = [':id' => $id];
+
+        if (isset($data['title'])) {
+            $fields[] = 'title = :title';
+            $params[':title'] = $data['title'];
+        }
+        if (isset($data['author'])) {
+            $fields[] = 'author = :author';
+            $params[':author'] = $data['author'];
+        }
+        if (isset($data['genre'])) {
+            $fields[] = 'genre = :genre';
+            $params[':genre'] = $data['genre'];
+        }
+        if (isset($data['year'])) {
+            $fields[] = 'year = :year';
+            $params[':year'] = (int)$data['year'];
+        }
+        if (isset($data['description'])) {
+            $fields[] = 'description = :description';
+            $params[':description'] = $data['description'];
+        }
+        if (isset($data['cover_image'])) {
+            $fields[] = 'cover_image = :cover_image';
+            $params[':cover_image'] = $data['cover_image'];
+        }
+        // Adiciona suporte para pdf_src (e opcionalmente key/storage)
+        if (isset($data['pdf_src'])) {
+            $fields[] = 'pdf_src = :pdf_src';
+            $params[':pdf_src'] = $data['pdf_src'];
+        }
+        if (isset($data['pdf_key'])) {
+            $fields[] = 'pdf_key = :pdf_key';
+            $params[':pdf_key'] = $data['pdf_key'];
+        }
+        if (isset($data['pdf_storage'])) {
+            $fields[] = 'pdf_storage = :pdf_storage';
+            $params[':pdf_storage'] = $data['pdf_storage'];
+        }
+
+        if (isset($data['available'])) {
+            $fields[] = 'available = :available';
+            $params[':available'] = (int)(bool)$data['available'];
+        }
+
+        // Se não há campos para atualizar: não é erro — apenas não há alterações
+        if (empty($fields)) {
+            return true; // no-op, consideramos sucesso
+        }
+
+        $sql = "UPDATE Books SET " . implode(', ', $fields) . " WHERE id = :id";
+
+        try {
+            $stmt = $this->pdo->prepare($sql);
+
+            // bindValue com tipos onde faz sentido
+            foreach ($params as $key => $val) {
+                if ($key === ':id' || $key === ':year' || $key === ':available') {
+                    $paramType = PDO::PARAM_INT;
+                } else {
+                    $paramType = PDO::PARAM_STR;
+                }
+                $stmt->bindValue($key, $val, $paramType);
+            }
+
+            $executed = $stmt->execute();
+
+            if ($executed) {
+                // Observação: rowCount() pode ser 0 se nenhum valor foi alterado,
+                // então retornamos true quando a execução foi bem-sucedida.
+                return true;
+            }
+
+            return false;
+        } catch (PDOException $e) {
+            error_log("Database error in updateBook: " . $e->getMessage());
+            return false;
+        }
+    }
+
+
+    public function deleteBook($id)
+    {
+        try {
+            $stmt = $this->pdo->prepare("DELETE FROM Books WHERE id = :id");
+            $stmt->execute([':id' => $id]);
+            return $stmt->rowCount() > 0;
+        } catch (PDOException $e) {
+            error_log("Database error in deleteBook: " . $e->getMessage());
+            return false;
         }
     }
 

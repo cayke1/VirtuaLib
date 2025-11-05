@@ -49,3 +49,17 @@ build/
 
 # Cache
 .cache/
+
+# Composer
+vendor/
+composer.phar
+
+# Test files
+test-*.php
+*test*.php
+phpunit.xml
+tests/
+
+# Scripts de desenvolvimento
+setup-*.php
+check-*.php

@@ -8,7 +8,6 @@ $statusAliases = [
     'pending' => 'Pendente',
     'approved' => 'Aprovado',
     'returned' => 'Devolvido',
-    'late' => 'Atrasado',
 ];
 
 $statusConfig = [
@@ -26,11 +25,6 @@ $statusConfig = [
         'icon' => '✓',
         'text' => 'Devolvido',
         'class' => 'status-devolvido'
-    ],
-    'Atrasado' => [
-        'icon' => '⚠',
-        'text' => 'Atrasado',
-        'class' => 'status-atrasado'
     ]
 ];
 
@@ -67,10 +61,10 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
     <link rel="stylesheet" href="/public/css/history.css">
 </head>
 <body>
-    <!-- Sidebar -->
-    <?php include __DIR__ . '/components/sidebar.php'; ?>
+    
+   
 
-    <!-- Main Content -->
+    
     <main class="main-content">
         <header class="header">
             <h1>Histórico</h1>
@@ -89,7 +83,6 @@ $totalPages = max($totalLoans > 0 ? (int)ceil($totalLoans / max($totalLoans, 1))
                     <option value="Pendente">Pendente</option>
                     <option value="Aprovado">Aprovado</option>
                     <option value="Devolvido">Devolvido</option>
-                    <option value="Atrasado">Atrasado</option>
                 </select>
             </div>
 

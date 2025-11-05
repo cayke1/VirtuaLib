@@ -1,30 +1,29 @@
 <?php
-/**
- * Notifications Controller - Serviço de Notificações
- */
 
 require_once __DIR__ . '/../../utils/AuthGuard.php';
 require_once __DIR__ . '/../services/NotificationService.php';
 
-class NotificationsController {
+class NotificationsController
+{
     use AuthGuard;
-    
+
     private $notificationModel;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->notificationModel = new NotificationModel();
+        
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
     }
-    
-    private function json($data, $status = 200) {
+
+    private function json($data, $status = 200)
+    {
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
-
-    // ========== API METHODS ==========
 
     public function listForUser() {
         $this->requireAuth();
@@ -123,8 +122,6 @@ class NotificationsController {
         }
     }
 
-    // ========== HELPER METHODS ==========
-
     private function readJsonBody() {
         $raw = file_get_contents('php://input');
         if (!$raw) {
@@ -133,6 +130,5 @@ class NotificationsController {
         $data = json_decode($raw, true);
         return is_array($data) ? $data : null;
     }
-
-    // Os métodos requireAuth e requireRole são herdados do AuthGuard trait
+    
 }

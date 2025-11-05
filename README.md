@@ -22,6 +22,7 @@
 ## 📌 Navegação
 
 - [📖 Sobre o Projeto](#-sobre-o-projeto)
+- [🏗️ Arquitetura e Documentação](#-arquitetura-e-documentação)
 - [📚 Requisitos Funcionais](#-requisitos-funcionais-rf)
 - [⚙️ Requisitos Não Funcionais](#-requisitos-não-funcionais-rnf)
 - [🎭 User Stories](#-user-stories)
@@ -41,6 +42,65 @@ O **VirtuaLib** é uma **biblioteca digital** que permite aos usuários:
 - Acessar detalhes completos de cada obra (sinopse, ano, autor, categoria) 📖  
 
 O sistema é projetado para oferecer uma **experiência intuitiva e responsiva**, acessível em **desktop** e **dispositivos móveis**.
+
+---
+
+## 🏗️ Arquitetura e Documentação
+
+O VirtuaLib utiliza uma **arquitetura de microsserviços** (SOA - Service-Oriented Architecture) com 4 serviços independentes que se comunicam através de um API Gateway centralizado.
+
+### 📐 Arquitetura
+
+```
+Cliente → Nginx → API Gateway (8080)
+              ├─→ Auth Service (8081)         - Autenticação e perfis
+              ├─→ Books Service (8082)        - Livros e empréstimos
+              ├─→ Notifications Service (8083) - Sistema de notificações
+              └─→ Dashboard Service (8084)     - Estatísticas e dashboard admin
+                      ↓
+                 MySQL (3306) + Redis (6379) + Cloudflare R2
+```
+
+### 📚 Documentação Completa
+
+| Documento | Descrição |
+|-----------|-----------|
+| **[📖 Documentação da API](./docs/API.md)** | Guia completo de todos os endpoints, exemplos de requisição/resposta, autenticação e códigos de status |
+| **[🏗️ Arquitetura do Sistema](./docs/ARCHITECTURE.md)** | Detalhes da arquitetura de microsserviços, fluxo de dados, banco de dados, segurança e escalabilidade |
+| **[📋 Especificação OpenAPI](./openapi.yaml)** | Especificação completa da API em formato OpenAPI 3.0 (compatível com Swagger UI) |
+
+### 🚀 Tecnologias
+
+- **Backend:** PHP 7.4+ com arquitetura SOA/Microsserviços
+- **Database:** MySQL 8.0
+- **Cache/Sessões:** Redis 7.0
+- **Storage:** Cloudflare R2 (para imagens e PDFs)
+- **Containerização:** Docker & Docker Compose
+- **Load Balancer:** Nginx
+- **Padrão:** MVC (Model-View-Controller) em cada serviço
+
+### 🔑 Principais Funcionalidades da API
+
+- **Autenticação:** Sistema de login/registro com sessões Redis
+- **CRUD de Livros:** Gerenciamento completo com upload de capas e PDFs
+- **Sistema de Empréstimos:** Solicitação, aprovação/rejeição, devolução
+- **Notificações:** Sistema event-driven para notificar usuários sobre ações
+- **Dashboard:** Estatísticas e relatórios para administradores
+- **Busca Avançada:** Busca por título, autor ou gênero
+
+### 📝 Visualizar API com Swagger
+
+Para visualizar a API de forma interativa:
+
+1. Acesse [editor.swagger.io](https://editor.swagger.io/)
+2. Importe o arquivo [`openapi.yaml`](./openapi.yaml) da raiz do projeto
+3. Explore os endpoints e teste diretamente na interface
+
+Ou execute localmente com Docker:
+```bash
+docker run -p 8888:8080 -e SWAGGER_JSON=/foo/openapi.yaml -v $(pwd):/foo swaggerapi/swagger-ui
+# Acesse: http://localhost:8888
+```
 
 ---
 
