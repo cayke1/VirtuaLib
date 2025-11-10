@@ -4,3 +4,10 @@ index.php
 /vendor
 .phpunit.result.cache
 public/uploads/*[.jpg|.jpeg|.png|.gif|.webp]
+
+# SSL/HTTPS - Certificados e configurações sensíveis
+certbot/
+*.pem
+*.key
+*.crt
+*.csr
