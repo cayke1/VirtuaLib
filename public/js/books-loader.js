@@ -2,26 +2,36 @@ document.addEventListener("DOMContentLoaded", async () => {
   const grid = document.getElementById("books-grid");
   grid.innerHTML = `<div class="loading">Carregando livros...</div>`;
 
+  let userId = null;
+
   try {
-    // 1️⃣ Obter usuário autenticado
+    // 1️⃣ Obter usuário autenticado (com tratamento seguro)
     const userRes = await fetch("/auth/api/me");
     const userData = await userRes.json();
-    if (!userData?.user?.id) throw new Error("Usuário não autenticado");
 
-    const userId = userData.user.id;
+    // Se houver usuário autenticado, pega o ID; senão, mantém null
+    if (userData && userData.user && userData.user.id) {
+      userId = userData.user.id;
+    } else {
+      console.warn("⚠️ Nenhum usuário autenticado — carregando como visitante.");
+    }
 
-    // 2️⃣ Carregar livros + estados (emprestados / pendentes)
+    // 2️⃣ Carregar livros (sempre, mesmo sem userId)
     await carregarLivros(userId);
 
-    // 3️⃣ Atualizar estatísticas
-    carregarEstatisticas();
+    // 3️⃣ Atualizar estatísticas (só se o usuário estiver logado)
+    if (userId) {
+      carregarEstatisticas();
 
-    // 4️⃣ Atualizar automaticamente a cada 30s
-    setInterval(() => atualizarStatusLivros(userId), 30000);
+      // 4️⃣ Atualizar automaticamente a cada 30s
+      setInterval(() => atualizarStatusLivros(userId), 30000);
+    }
 
   } catch (error) {
     console.error("Erro ao inicializar:", error);
     grid.innerHTML = `<p style="color: red;">Erro ao carregar livros: ${error.message}</p>`;
+    // Em caso de erro, ainda tenta carregar os livros como visitante
+    await carregarLivros(null);
   }
 });
 
@@ -32,26 +42,32 @@ async function carregarLivros(userId) {
   const grid = document.getElementById("books-grid");
 
   try {
-    const [booksRes, borrowsRes, pendingRes] = await Promise.all([
-      fetch("/books/api/list"),
-      fetch(`/books/api/get-user-borrows/${userId}`),
-      fetch("/books/api/pending-requests")
-    ]);
-
+    // Sempre busca os livros
+    const booksRes = await fetch("/books/api/list");
     const booksData = await booksRes.json();
-    const borrowsData = await borrowsRes.json();
-    const pendingData = await pendingRes.json();
 
-    if (!booksData.success || !Array.isArray(booksData.books))
+    if (!booksData.success || !Array.isArray(booksData.books)) {
       throw new Error("Resposta inválida da API de livros");
+    }
 
-    // IDs de livros emprestados (approved, late)
-    const borrowedBookIds = (borrowsData.success ? borrowsData.borrows : []).map(Number);
+    let borrowedBookIds = [];
+    let pendingBookIds = [];
 
-    // IDs de livros pendentes do usuário atual
-    const pendingBookIds = (pendingData.requests || [])
-      .filter(req => req.user_id === userId)
-      .map(req => Number(req.book_id));
+    // Só busca dados específicos se o usuário estiver logado
+    if (userId) {
+      const [borrowsRes, pendingRes] = await Promise.all([
+        fetch(`/books/api/get-user-borrows/${userId}`),
+        fetch("/books/api/pending-requests")
+      ]);
+
+      const borrowsData = await borrowsRes.json();
+      const pendingData = await pendingRes.json();
+
+      borrowedBookIds = (borrowsData.success ? borrowsData.borrows : []).map(Number);
+      pendingBookIds = (pendingData.requests || [])
+        .filter(req => req.user_id === userId)
+        .map(req => Number(req.book_id));
+    }
 
     console.log("📚 Livros carregados:", booksData.books);
     console.log("🧾 Emprestados:", borrowedBookIds);
@@ -59,6 +75,7 @@ async function carregarLivros(userId) {
 
     grid.innerHTML = ""; // limpa o "Carregando..."
 
+    // Renderiza os livros normalmente
     booksData.books.forEach(book => {
       const isBorrowed = borrowedBookIds.includes(Number(book.id));
       const isPending = pendingBookIds.includes(Number(book.id));
