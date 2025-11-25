@@ -217,6 +217,9 @@ Para informações detalhadas sobre a implementação, estratégias de mock e co
 **[📖 Documentação Completa dos Testes](./docs/testing/README.md)**
 
 ---
+## Video de Apresentacao do Produto
+https://www.youtube.com/watch?v=vuQPt59vz-M
+---
 
 ## 🔗 Links Úteis
 
@@ -227,3 +230,4 @@ Para informações detalhadas sobre a implementação, estratégias de mock e co
 - [PDF - SPRINT 3](./docs/sprints/Planejamento%20Tec%20Sprint%203%20-%20ES.pdf)
 
 ---
+
