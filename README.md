@@ -228,9 +228,11 @@ Para informações detalhadas sobre a implementação, estratégias de mock e co
 - [PDF - SPRINT 1](./docs/sprints//Planejamento%20Tec%20Sprint%201%20-%20ES.pdf)
 - [PDF - SPRINT 2](./docs//sprints/Planejamento%20Tec%20Sprint%202%20-%20ES.pdf)
 - [PDF - SPRINT 3](./docs/sprints/Planejamento%20Tec%20Sprint%203%20-%20ES.pdf)
+- [PDF - SPRINT 4](./docs/sprints/Planejamento%20Tec%20Sprint%204%20-%20ES.pdf)
 
 - [Landing-Page](https://cayke1.github.io)
 - [Produto Final](https://caykedev.com)
-
+- [Apresentação Final](./docs/Engenharia%20de%20Software.pdf)
 ---
+
 
