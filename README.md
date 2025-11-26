@@ -217,6 +217,9 @@ Para informações detalhadas sobre a implementação, estratégias de mock e co
 **[📖 Documentação Completa dos Testes](./docs/testing/README.md)**
 
 ---
+## Video de Apresentação do Produto
+* https://www.youtube.com/watch?v=vuQPt59vz-M
+---
 
 ## 🔗 Links Úteis
 
